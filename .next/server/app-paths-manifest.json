@@ -1,0 +1,15 @@
+{
+  "/admin/analytics/page": "app/admin/analytics/page.js",
+  "/admin/devices/page": "app/admin/devices/page.js",
+  "/admin/notifications/page": "app/admin/notifications/page.js",
+  "/admin/login/page": "app/admin/login/page.js",
+  "/admin/teams/page": "app/admin/teams/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/devices/page": "app/devices/page.js",
+  "/admin/roms/page": "app/admin/roms/page.js",
+  "/devices/[codename]/page": "app/devices/[codename]/page.js",
+  "/download/[id]/page": "app/download/[id]/page.js",
+  "/roms/[id]/page": "app/roms/[id]/page.js",
+  "/page": "app/page.js",
+  "/roms/page": "app/roms/page.js"
+}
