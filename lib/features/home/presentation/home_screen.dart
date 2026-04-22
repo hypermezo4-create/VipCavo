@@ -1,4 +1,5 @@
 import 'package:deadzon/core/constants/app_identity.dart';
+import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
 import 'package:deadzon/core/widgets/section_header.dart';
@@ -10,24 +11,24 @@ class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   static const List<_QuickAccess> _entries = <_QuickAccess>[
-    _QuickAccess('Status Bar', 'Resize, battery, clock, icons', Icons.signal_cellular_alt_rounded, '/statusbar'),
-    _QuickAccess('Mount', 'Monet color + component previews', Icons.palette_rounded, '/mount'),
-    _QuickAccess('Settings', 'Appearance, build info, reset', Icons.settings_rounded, '/settings'),
+    _QuickAccess('Statusbar Adjustment', 'Resize, battery, clock, icons and backgrounds', Icons.signal_cellular_alt_rounded, '/statusbar'),
+    _QuickAccess('Mount', 'Monet colors, effect tuning, live component previews', Icons.palette_rounded, '/mount'),
+    _QuickAccess('Spoof device', 'Profile simulation controls and compatibility presets', Icons.smartphone_rounded, null),
+    _QuickAccess('Settings', 'Appearance, build info, reset preferences', Icons.settings_rounded, '/settings'),
+    _QuickAccess('Control center', 'Quick toggles board and grouped utility actions', Icons.tune_rounded, null),
+    _QuickAccess('Notifications', 'Heads-up, compact icons, and stack behavior', Icons.notifications_active_rounded, null),
+    _QuickAccess('Lockscreen', 'Clock and shortcuts composition', Icons.lock_outline_rounded, null),
+    _QuickAccess('More tools', 'Extra ROM utility features for future phases', Icons.auto_awesome_rounded, null),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[Color(0xFF15323D), Color(0xFF10252D), Color(0xFF0B151A)],
-        ),
-      ),
+      decoration: const BoxDecoration(gradient: DesignTokens.baseGradient),
       child: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(18, 14, 18, 120),
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          padding: DesignTokens.pagePadding,
           children: <Widget>[
             const PremiumTopBar(
               title: 'Deadzon',
@@ -36,15 +37,15 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 16),
             const _IdentityHero().animate().fadeIn(duration: 450.ms).slideY(begin: 0.06, end: 0),
             const SizedBox(height: 20),
-            const SectionHeader(title: 'Quick access', subtitle: 'Open the highest-priority sections'),
+            const SectionHeader(title: 'Main hub', subtitle: 'Core destinations for the premium Deadzon experience'),
             const SizedBox(height: 10),
             ..._entries.asMap().entries.map(
                   (entry) => Padding(
                     padding: const EdgeInsets.only(bottom: 10),
                     child: _EntryCard(entry.value)
-                        .animate(delay: (90 * entry.key).ms)
-                        .fadeIn(duration: 380.ms)
-                        .slideX(begin: 0.06, end: 0),
+                        .animate(delay: (75 * entry.key).ms)
+                        .fadeIn(duration: 300.ms)
+                        .slideX(begin: 0.04, end: 0),
                   ),
                 ),
           ],
@@ -84,7 +85,18 @@ class _EntryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GlassCard(
-      onTap: () => context.go(entry.route),
+      onTap: () {
+        if (entry.route != null) {
+          context.go(entry.route!);
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${entry.title} is planned for next implementation phases.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
       child: ListTile(
         contentPadding: EdgeInsets.zero,
         leading: CircleAvatar(
@@ -106,5 +118,5 @@ class _QuickAccess {
   final String title;
   final String subtitle;
   final IconData icon;
-  final String route;
+  final String? route;
 }

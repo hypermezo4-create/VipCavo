@@ -19,7 +19,8 @@ class PremiumTopBar extends StatelessWidget {
           title,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             color: Colors.white,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.3,
           ),
         ),
         const SizedBox(height: 6),
@@ -27,6 +28,7 @@ class PremiumTopBar extends StatelessWidget {
           subtitle,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
             color: Colors.white.withValues(alpha: 0.74),
+            height: 1.35,
           ),
         ),
       ],

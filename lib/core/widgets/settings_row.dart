@@ -24,7 +24,7 @@ class SettingsRow extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
+        padding: const EdgeInsets.symmetric(vertical: 3),
         child: Row(
           children: <Widget>[
             CircleAvatar(
@@ -44,7 +44,7 @@ class SettingsRow extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.7), height: 1.25),
                   ),
                 ],
               ),

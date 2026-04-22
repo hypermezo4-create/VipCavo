@@ -14,6 +14,7 @@ class MountScreen extends StatefulWidget {
 class _MountScreenState extends State<MountScreen> {
   Color monetColor = const Color(0xFF8CEFD2);
   bool colorEffect = true;
+  double previewStrength = 0.65;
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +28,7 @@ class _MountScreenState extends State<MountScreen> {
       ),
       child: SafeArea(
         child: ListView(
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
           padding: const EdgeInsets.fromLTRB(18, 14, 18, 120),
           children: <Widget>[
             const PremiumTopBar(title: 'Mount', subtitle: 'Premium monet color controls and live previews'),
@@ -86,7 +88,7 @@ class _MountScreenState extends State<MountScreen> {
                       activeTrackColor: monetColor,
                       thumbColor: monetColor,
                     ),
-                    child: const Slider(value: 0.65, onChanged: null),
+                    child: Slider(value: previewStrength, onChanged: (value) => setState(() => previewStrength = value)),
                   ),
                   Row(
                     children: <Widget>[
@@ -97,7 +99,7 @@ class _MountScreenState extends State<MountScreen> {
                         activeThumbColor: Colors.white,
                       ),
                       const SizedBox(width: 14),
-                      Checkbox(value: true, onChanged: (_) {}, fillColor: WidgetStatePropertyAll(monetColor)),
+                      Checkbox(value: colorEffect, onChanged: (v) => setState(() => colorEffect = v ?? false), fillColor: WidgetStatePropertyAll(monetColor)),
                       const SizedBox(width: 8),
                       Checkbox(value: false, onChanged: (_) {}),
                     ],

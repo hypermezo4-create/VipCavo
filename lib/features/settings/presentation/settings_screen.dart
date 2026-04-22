@@ -23,6 +23,7 @@ class SettingsScreen extends ConsumerWidget {
       ),
       child: SafeArea(
         child: ListView(
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
           padding: const EdgeInsets.fromLTRB(18, 14, 18, 120),
           children: <Widget>[
             const PremiumTopBar(title: 'Settings', subtitle: 'Appearance, palette, build details and resets'),
@@ -55,6 +56,7 @@ class SettingsScreen extends ConsumerWidget {
                     iconColor: Color(0xFFA992FF),
                     title: 'UI palette',
                     subtitle: 'Blue/green premium glass language',
+                    trailing: const Icon(Icons.color_lens_outlined, color: Colors.white70),
                   ),
                 ],
               ),

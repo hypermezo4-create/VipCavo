@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 
 class GlassCard extends StatelessWidget {
@@ -8,7 +9,7 @@ class GlassCard extends StatelessWidget {
     super.key,
     this.padding = const EdgeInsets.all(16),
     this.onTap,
-    this.borderRadius = 24,
+    this.borderRadius = DesignTokens.radiusCard,
   });
 
   final Widget child;
@@ -22,12 +23,21 @@ class GlassCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(borderRadius),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
+        child: AnimatedContainer(
+          duration: DesignTokens.motionFast,
+          curve: DesignTokens.motionCurve,
           padding: padding,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.11),
+            color: DesignTokens.glassFill,
             borderRadius: BorderRadius.circular(borderRadius),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+            border: Border.all(color: DesignTokens.glassStroke),
+            boxShadow: const <BoxShadow>[
+              BoxShadow(
+                color: Color(0x20000000),
+                blurRadius: 18,
+                offset: Offset(0, 8),
+              ),
+            ],
           ),
           child: child,
         ),

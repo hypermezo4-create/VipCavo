@@ -1,8 +1,10 @@
+import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
 import 'package:deadzon/core/widgets/section_header.dart';
 import 'package:deadzon/core/widgets/settings_row.dart';
 import 'package:deadzon/features/statusbar/helper.dart';
+import 'package:deadzon/features/statusbar/statusbar_detail_content.dart';
 import 'package:deadzon/features/statusbar/statusbar_mapper.dart';
 import 'package:deadzon/features/statusbar/statusbar_models.dart';
 import 'package:deadzon/features/statusbar/statusbar_strings.dart';
@@ -17,16 +19,11 @@ class StatusbarScreen extends StatelessWidget {
     final sections = StatusBarHelper.orderedSections();
 
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: <Color>[Color(0xFF14303A), Color(0xFF10232B), Color(0xFF0A1419)],
-        ),
-      ),
+      decoration: const BoxDecoration(gradient: DesignTokens.baseGradient),
       child: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(18, 14, 18, 120),
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          padding: DesignTokens.pagePadding,
           children: <Widget>[
             const PremiumTopBar(
               title: StatusBarStrings.title,
@@ -88,6 +85,159 @@ class StatusbarScreen extends StatelessWidget {
   }
 }
 
+class _StatusPreviewCard extends StatefulWidget {
+  const _StatusPreviewCard();
+
+  @override
+  State<_StatusPreviewCard> createState() => _StatusPreviewCardState();
+}
+
+class _StatusPreviewCardState extends State<_StatusPreviewCard> {
+  final List<_PreviewGroup> _groups = <_PreviewGroup>[
+    _PreviewGroup('clock', '09:15', const Icon(Icons.access_time_rounded, size: 16, color: Color(0xFF89F3A0))),
+    _PreviewGroup('date', '22 Apr', const Icon(Icons.calendar_month_rounded, size: 16, color: Color(0xFFB7C6FF))),
+    _PreviewGroup('speed', '1.3MB/s', const Icon(Icons.speed_rounded, size: 16, color: Color(0xFF8DE8FF))),
+    _PreviewGroup('network', '5G', const Icon(Icons.signal_cellular_alt_rounded, size: 16, color: Colors.white70)),
+    _PreviewGroup('battery', '84%', const Icon(Icons.battery_5_bar_rounded, size: 16, color: Color(0xFF90FFAC))),
+  ];
+
+  double _leftOffset = 0;
+  double _rightOffset = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const SectionHeader(
+            title: StatusBarStrings.livePreviewTitle,
+            subtitle: StatusBarStrings.livePreviewSubtitle,
+          ),
+          const SizedBox(height: 12),
+          _buildPreviewCanvas(),
+          const SizedBox(height: 14),
+          Text('Icon board (drag to reorder groups)', style: TextStyle(color: Colors.white.withValues(alpha: 0.82), fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _groups.map(_buildDraggableGroup).toList(),
+          ),
+          const SizedBox(height: 12),
+          Text('Left cluster offset', style: TextStyle(color: Colors.white.withValues(alpha: 0.74))),
+          Slider(value: _leftOffset, min: -24, max: 24, onChanged: (v) => setState(() => _leftOffset = v)),
+          Text('Right cluster offset', style: TextStyle(color: Colors.white.withValues(alpha: 0.74))),
+          Slider(value: _rightOffset, min: -24, max: 24, onChanged: (v) => setState(() => _rightOffset = v)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPreviewCanvas() {
+    final leftGroups = _groups.take(2).toList();
+    final rightGroups = _groups.skip(2).toList();
+    return AnimatedContainer(
+      duration: DesignTokens.motionFast,
+      curve: DesignTokens.motionCurve,
+      height: 102,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.black.withValues(alpha: 0.3),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: <Widget>[
+          Transform.translate(
+            offset: Offset(_leftOffset, 0),
+            child: Row(children: leftGroups.map(_groupChip).toList()),
+          ),
+          const Spacer(),
+          Transform.translate(
+            offset: Offset(_rightOffset, 0),
+            child: Row(children: rightGroups.map(_groupChip).toList()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _groupChip(_PreviewGroup group) {
+    return Container(
+      margin: const EdgeInsets.only(right: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          group.icon,
+          const SizedBox(width: 4),
+          Text(group.label, style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDraggableGroup(_PreviewGroup group) {
+    final index = _groups.indexOf(group);
+    return DragTarget<String>(
+      onAcceptWithDetails: (details) {
+        final fromIndex = _groups.indexWhere((g) => g.id == details.data);
+        final toIndex = index;
+        if (fromIndex == -1 || fromIndex == toIndex) return;
+        setState(() {
+          final item = _groups.removeAt(fromIndex);
+          _groups.insert(toIndex, item);
+        });
+      },
+      builder: (context, _, __) {
+        return LongPressDraggable<String>(
+          data: group.id,
+          feedback: Material(
+            color: Colors.transparent,
+            child: _boardPill(group, active: true),
+          ),
+          childWhenDragging: Opacity(opacity: 0.35, child: _boardPill(group)),
+          child: _boardPill(group),
+        );
+      },
+    );
+  }
+
+  Widget _boardPill(_PreviewGroup group, {bool active = false}) {
+    return AnimatedContainer(
+      duration: DesignTokens.motionFast,
+      curve: DesignTokens.motionCurve,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: active ? 0.2 : 0.1),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          group.icon,
+          const SizedBox(width: 6),
+          Text(group.id, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+}
+
+class _PreviewGroup {
+  const _PreviewGroup(this.id, this.label, this.icon);
+
+  final String id;
+  final String label;
+  final Widget icon;
+}
+
 class StatusbarDetailScreen extends StatefulWidget {
   const StatusbarDetailScreen({required this.section, super.key});
 
@@ -133,6 +283,27 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
                   'Reference: ${widget.section.sourceXmlReference ?? 'n/a'}',
                   style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 12),
                 ),
+                const SizedBox(height: 10),
+                ...((statusbarDetailContent[widget.section.id]?.highlights ?? const <String>[])
+                    .map((line) => Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              const Padding(
+                                padding: EdgeInsets.only(top: 6),
+                                child: Icon(Icons.circle, size: 6, color: Color(0xFF8DE8FF)),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  line,
+                                  style: TextStyle(color: Colors.white.withValues(alpha: 0.8), height: 1.25),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ))),
               ],
             ),
           ),
@@ -290,48 +461,5 @@ class _ColorChip extends StatelessWidget {
       return Color(int.parse('FF$value', radix: 16));
     }
     return const Color(0xFF79E3CB);
-  }
-}
-
-class _StatusPreviewCard extends StatelessWidget {
-  const _StatusPreviewCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return GlassCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          const SectionHeader(
-            title: StatusBarStrings.livePreviewTitle,
-            subtitle: StatusBarStrings.livePreviewSubtitle,
-          ),
-          const SizedBox(height: 12),
-          Container(
-            height: 96,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: Colors.black.withValues(alpha: 0.28),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: const Row(
-              children: <Widget>[
-                Text('09:15', style: TextStyle(color: Color(0xFF89F3A0), fontWeight: FontWeight.w700)),
-                SizedBox(width: 8),
-                Text('22 Apr', style: TextStyle(color: Color(0xFFB7C6FF), fontWeight: FontWeight.w500)),
-                Spacer(),
-                Icon(Icons.speed_rounded, color: Color(0xFF8DE8FF), size: 18),
-                SizedBox(width: 6),
-                Icon(Icons.signal_cellular_alt_rounded, color: Colors.white70),
-                SizedBox(width: 6),
-                Icon(Icons.wifi_rounded, color: Colors.white70),
-                SizedBox(width: 6),
-                Icon(Icons.battery_5_bar_rounded, color: Color(0xFF90FFAC)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
