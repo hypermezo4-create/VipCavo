@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<resources offset16="true">
+    <path name="banner_anim" public="false">res/layout/banner_anim.xml</path>
+    <path name="card_item_layout" public="false">res/layout/card_item_layout.xml</path>
+    <path name="card_settings_layout" public="false">res/layout/card_settings_layout.xml</path>
+    <path name="ed_seekbar_layout" public="false">res/layout/ed_seekbar_layout.xml</path>
+    <path name="element_position" public="false">res/layout/element_position.xml</path>
+    <path name="elite_elements_settings" public="false">res/layout/elite_elements_settings.xml</path>
+    <path name="icon_option_battery" public="false">res/layout/icon_option_battery.xml</path>
+    <path name="icon_option_fod" public="false">res/layout/icon_option_fod.xml</path>
+    <path name="icon_option_nav" public="false">res/layout/icon_option_nav.xml</path>
+    <path name="icon_option_vowifi" public="false">res/layout/icon_option_vowifi.xml</path>
+    <path name="icon_option_wifi" public="false">res/layout/icon_option_wifi.xml</path>
+    <path name="item_view" public="false">res/layout/item_view.xml</path>
+    <path name="miuix_dialog_preference_layout" public="false">res/layout/miuix_dialog_preference_layout.xml</path>
+    <path name="miuix_preference_widget_dropdown_seekbar" public="false">res/layout/miuix_preference_widget_dropdown_seekbar.xml</path>
+    <path name="miuix_preference_widget_spinner_seekbar" public="false">res/layout/miuix_preference_widget_spinner_seekbar.xml</path>
+    <path name="point_seekbar_layout" public="false">res/layout/point_seekbar_layout.xml</path>
+    <path name="pref_tile_grid" public="false">res/layout/pref_tile_grid.xml</path>
+    <path name="settings_grid_view" public="false">res/layout/settings_grid_view.xml</path>
+</resources>

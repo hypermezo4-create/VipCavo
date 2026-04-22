@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<resources offset16="true">
+    <color name="button_position_back" public="false">#000000</color>
+    <color name="card_bg_color" public="false">#f7f7f7</color>
+    <color name="card_summary_color" public="false">#d2000000</color>
+    <color name="card_title_color" public="false">#000000</color>
+    <color name="element_position_bg" public="false">#f7f7f7</color>
+    <color name="option_border_color" public="false">res/color/option_border_color.xml</color>
+    <color name="option_grid_icon_color" public="false">res/color/option_grid_icon_color.xml</color>
+    <color name="signals_bg_color" public="false">#0106002b</color>
+    <color name="tab_text_normal_color" public="false">#000000</color>
+</resources>
