@@ -45,7 +45,7 @@ class SettingsScreen extends ConsumerWidget {
                       ],
                       onChanged: (mode) {
                         if (mode == null) return;
-                        ref.read(themeModeProvider.notifier).setThemeMode(mode);
+                        ref.read(themeModeProvider.notifier).state = mode;
                       },
                     ),
                   ),
