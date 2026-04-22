@@ -47,8 +47,14 @@ class _MountScreenState extends State<MountScreen> {
                       const Color(0xFFFF9BC7),
                       const Color(0xFFFFD372),
                     ].map((color) {
+                      final hexColor = color
+                          .toARGB32()
+                          .toRadixString(16)
+                          .padLeft(8, '0')
+                          .substring(2)
+                          .toUpperCase();
                       return ActionChipCell(
-                        label: '#${color.value.toRadixString(16).substring(2, 8).toUpperCase()}',
+                        label: '#$hexColor',
                         icon: Icons.circle,
                         color: color,
                         onTap: () => setState(() => monetColor = color),
@@ -84,7 +90,12 @@ class _MountScreenState extends State<MountScreen> {
                   ),
                   Row(
                     children: <Widget>[
-                      Switch(value: true, onChanged: (_) {}, activeTrackColor: monetColor, activeColor: Colors.white),
+                      Switch(
+                        value: true,
+                        onChanged: (_) {},
+                        activeTrackColor: monetColor,
+                        activeThumbColor: Colors.white,
+                      ),
                       const SizedBox(width: 14),
                       Checkbox(value: true, onChanged: (_) {}, fillColor: WidgetStatePropertyAll(monetColor)),
                       const SizedBox(width: 8),
