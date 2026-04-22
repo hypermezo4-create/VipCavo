@@ -1,0 +1,17 @@
+Continue in the current GitHub repository only.
+
+Do not create a new project.
+Use the existing Flutter project as the base.
+Read AGENTS.md first and follow it strictly.
+
+First:
+- inspect the current codebase
+- fix flutter analyze issues
+- propose a short implementation plan
+
+Then:
+- rebuild the app UI in the approved premium iOS-style glassmorphism direction
+- focus on Home, Statusbar, Mount, and Settings
+- keep the code clean, modular, smooth, and high-end
+
+Use the repository documents as the source of truth.
