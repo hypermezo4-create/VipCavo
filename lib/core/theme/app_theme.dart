@@ -1,3 +1,4 @@
+import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -30,6 +31,10 @@ class AppTheme {
 
     return base.copyWith(
       scaffoldBackgroundColor: const Color(0xFFF2F7F8),
+      pageTransitionsTheme: const PageTransitionsTheme(builders: <TargetPlatform, PageTransitionsBuilder>{
+        TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+      }),
       textTheme: GoogleFonts.interTextTheme(base.textTheme),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
@@ -61,6 +66,11 @@ class AppTheme {
 
     return base.copyWith(
       scaffoldBackgroundColor: darkBg,
+      splashFactory: InkSparkle.splashFactory,
+      pageTransitionsTheme: const PageTransitionsTheme(builders: <TargetPlatform, PageTransitionsBuilder>{
+        TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+      }),
       textTheme: GoogleFonts.interTextTheme(base.textTheme).apply(
         bodyColor: Colors.white,
         displayColor: Colors.white,
@@ -72,6 +82,7 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         color: darkCard.withValues(alpha: 0.58),
+        shadowColor: DesignTokens.glassHighlight.withValues(alpha: 0.28),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(28),

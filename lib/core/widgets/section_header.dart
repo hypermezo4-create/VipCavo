@@ -21,6 +21,7 @@ class SectionHeader extends StatelessWidget {
           style: textTheme.titleLarge?.copyWith(
             color: Colors.white,
             fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
           ),
         ),
         if (subtitle != null) ...<Widget>[
@@ -29,6 +30,7 @@ class SectionHeader extends StatelessWidget {
             subtitle!,
             style: textTheme.bodyMedium?.copyWith(
               color: Colors.white.withValues(alpha: 0.74),
+              height: 1.35,
             ),
           ),
         ],

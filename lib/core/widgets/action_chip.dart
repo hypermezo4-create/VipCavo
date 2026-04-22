@@ -31,7 +31,7 @@ class ActionChipCell extends StatelessWidget {
           children: <Widget>[
             Icon(icon, color: color, size: 16),
             const SizedBox(width: 6),
-            Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+            Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w700, letterSpacing: 0.2)),
           ],
         ),
       ),

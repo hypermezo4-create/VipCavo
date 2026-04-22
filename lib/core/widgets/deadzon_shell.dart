@@ -11,7 +11,7 @@ class DeadzonShell extends StatelessWidget {
 
   static const List<_NavItem> _items = <_NavItem>[
     _NavItem('Home', Icons.home_rounded),
-    _NavItem('Status Bar', Icons.signal_cellular_alt_rounded),
+    _NavItem('Statusbar', Icons.signal_cellular_alt_rounded),
     _NavItem('Mount', Icons.palette_rounded),
     _NavItem('Settings', Icons.settings_rounded),
   ];
