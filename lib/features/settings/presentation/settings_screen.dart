@@ -56,7 +56,7 @@ class SettingsScreen extends ConsumerWidget {
                     iconColor: Color(0xFFA992FF),
                     title: 'UI palette',
                     subtitle: 'Blue/green premium glass language',
-                    trailing: const Icon(Icons.color_lens_outlined, color: Colors.white70),
+                    trailing: Icon(Icons.color_lens_outlined, color: Colors.white70),
                   ),
                 ],
               ),

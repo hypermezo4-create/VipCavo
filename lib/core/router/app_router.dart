@@ -1,5 +1,6 @@
 import 'package:deadzon/core/widgets/deadzon_shell.dart';
 import 'package:deadzon/features/home/presentation/home_screen.dart';
+import 'package:deadzon/features/hub/presentation/additional_pages.dart';
 import 'package:deadzon/features/mount/presentation/mount_screen.dart';
 import 'package:deadzon/features/settings/presentation/settings_screen.dart';
 import 'package:deadzon/features/statusbar/presentation/statusbar_screen.dart';
@@ -33,5 +34,10 @@ final GoRouter appRouter = GoRouter(
         ),
       ],
     ),
+    GoRoute(path: '/spoof-device', builder: (context, state) => const SpoofDeviceScreen()),
+    GoRoute(path: '/control-center', builder: (context, state) => const ControlCenterScreen()),
+    GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
+    GoRoute(path: '/lockscreen', builder: (context, state) => const LockscreenScreen()),
+    GoRoute(path: '/more-tools', builder: (context, state) => const MoreToolsScreen()),
   ],
 );

@@ -3,6 +3,7 @@ import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
 import 'package:deadzon/core/widgets/section_header.dart';
 import 'package:deadzon/core/widgets/settings_row.dart';
+import 'package:deadzon/features/statusbar/statusbar_board_config.dart';
 import 'package:deadzon/features/statusbar/helper.dart';
 import 'package:deadzon/features/statusbar/statusbar_detail_content.dart';
 import 'package:deadzon/features/statusbar/statusbar_mapper.dart';
@@ -93,16 +94,25 @@ class _StatusPreviewCard extends StatefulWidget {
 }
 
 class _StatusPreviewCardState extends State<_StatusPreviewCard> {
-  final List<_PreviewGroup> _groups = <_PreviewGroup>[
-    _PreviewGroup('clock', '09:15', const Icon(Icons.access_time_rounded, size: 16, color: Color(0xFF89F3A0))),
-    _PreviewGroup('date', '22 Apr', const Icon(Icons.calendar_month_rounded, size: 16, color: Color(0xFFB7C6FF))),
-    _PreviewGroup('speed', '1.3MB/s', const Icon(Icons.speed_rounded, size: 16, color: Color(0xFF8DE8FF))),
-    _PreviewGroup('network', '5G', const Icon(Icons.signal_cellular_alt_rounded, size: 16, color: Colors.white70)),
-    _PreviewGroup('battery', '84%', const Icon(Icons.battery_5_bar_rounded, size: 16, color: Color(0xFF90FFAC))),
-  ];
+  late final List<_PreviewGroup> _groups;
 
   double _leftOffset = 0;
   double _rightOffset = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _groups = statusbarBoardModules
+        .map(
+          (module) => _PreviewGroup(
+            module.id,
+            module.label,
+            Icon(module.icon, size: 16, color: module.color),
+            side: module.defaultSide,
+          ),
+        )
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -135,8 +145,8 @@ class _StatusPreviewCardState extends State<_StatusPreviewCard> {
   }
 
   Widget _buildPreviewCanvas() {
-    final leftGroups = _groups.take(2).toList();
-    final rightGroups = _groups.skip(2).toList();
+    final leftGroups = _groups.where((group) => group.side == StatusbarBoardSide.left && group.enabled).toList();
+    final rightGroups = _groups.where((group) => group.side == StatusbarBoardSide.right && group.enabled).toList();
     return AnimatedContainer(
       duration: DesignTokens.motionFast,
       curve: DesignTokens.motionCurve,
@@ -194,7 +204,7 @@ class _StatusPreviewCardState extends State<_StatusPreviewCard> {
           _groups.insert(toIndex, item);
         });
       },
-      builder: (context, _, __) {
+      builder: (context, candidateData, rejectedData) {
         return LongPressDraggable<String>(
           data: group.id,
           feedback: Material(
@@ -224,6 +234,16 @@ class _StatusPreviewCardState extends State<_StatusPreviewCard> {
           group.icon,
           const SizedBox(width: 6),
           Text(group.id, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
+          const SizedBox(width: 8),
+          InkWell(
+            onTap: () => setState(() => group.side = group.side == StatusbarBoardSide.left ? StatusbarBoardSide.right : StatusbarBoardSide.left),
+            child: Icon(group.side == StatusbarBoardSide.left ? Icons.west_rounded : Icons.east_rounded, size: 16, color: Colors.white70),
+          ),
+          const SizedBox(width: 8),
+          InkWell(
+            onTap: () => setState(() => group.enabled = !group.enabled),
+            child: Icon(group.enabled ? Icons.visibility_rounded : Icons.visibility_off_rounded, size: 16, color: Colors.white70),
+          ),
         ],
       ),
     );
@@ -231,11 +251,13 @@ class _StatusPreviewCardState extends State<_StatusPreviewCard> {
 }
 
 class _PreviewGroup {
-  const _PreviewGroup(this.id, this.label, this.icon);
+  _PreviewGroup(this.id, this.label, this.icon, {required this.side, this.enabled = true});
 
   final String id;
   final String label;
   final Widget icon;
+  StatusbarBoardSide side;
+  bool enabled;
 }
 
 class StatusbarDetailScreen extends StatefulWidget {
@@ -280,7 +302,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
                 SectionHeader(title: widget.section.title, subtitle: widget.section.subtitle),
                 const SizedBox(height: 8),
                 Text(
-                  'Reference: ${widget.section.sourceXmlReference ?? 'n/a'}',
+                  'Reference: ${(widget.section.sourceXmlReference ?? 'n/a').replaceAll('elite', 'mezo')}',
                   style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 12),
                 ),
                 const SizedBox(height: 10),

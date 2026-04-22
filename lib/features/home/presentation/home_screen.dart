@@ -13,12 +13,12 @@ class HomeScreen extends StatelessWidget {
   static const List<_QuickAccess> _entries = <_QuickAccess>[
     _QuickAccess('Statusbar Adjustment', 'Resize, battery, clock, icons and backgrounds', Icons.signal_cellular_alt_rounded, '/statusbar'),
     _QuickAccess('Mount', 'Monet colors, effect tuning, live component previews', Icons.palette_rounded, '/mount'),
-    _QuickAccess('Spoof device', 'Profile simulation controls and compatibility presets', Icons.smartphone_rounded, null),
+    _QuickAccess('Spoof device', 'Profile simulation controls and compatibility presets', Icons.smartphone_rounded, '/spoof-device'),
     _QuickAccess('Settings', 'Appearance, build info, reset preferences', Icons.settings_rounded, '/settings'),
-    _QuickAccess('Control center', 'Quick toggles board and grouped utility actions', Icons.tune_rounded, null),
-    _QuickAccess('Notifications', 'Heads-up, compact icons, and stack behavior', Icons.notifications_active_rounded, null),
-    _QuickAccess('Lockscreen', 'Clock and shortcuts composition', Icons.lock_outline_rounded, null),
-    _QuickAccess('More tools', 'Extra ROM utility features for future phases', Icons.auto_awesome_rounded, null),
+    _QuickAccess('Control center', 'Quick toggles board and grouped utility actions', Icons.tune_rounded, '/control-center'),
+    _QuickAccess('Notifications', 'Heads-up, compact icons, and stack behavior', Icons.notifications_active_rounded, '/notifications'),
+    _QuickAccess('Lockscreen', 'Clock and shortcuts composition', Icons.lock_outline_rounded, '/lockscreen'),
+    _QuickAccess('More tools', 'Extra ROM utility features for future phases', Icons.auto_awesome_rounded, '/more-tools'),
   ];
 
   @override
@@ -85,18 +85,7 @@ class _EntryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GlassCard(
-      onTap: () {
-        if (entry.route != null) {
-          context.go(entry.route!);
-          return;
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${entry.title} is planned for next implementation phases.'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      },
+      onTap: () => context.go(entry.route),
       child: ListTile(
         contentPadding: EdgeInsets.zero,
         leading: CircleAvatar(
@@ -118,5 +107,5 @@ class _QuickAccess {
   final String title;
   final String subtitle;
   final IconData icon;
-  final String? route;
+  final String route;
 }
