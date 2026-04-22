@@ -15,7 +15,7 @@ class StatusbarSectionConfigs {
       previewLabel: 'Geometry',
       routeSlug: 'resize',
       sourceXmlReference: 'reference/mezo/mezo/res/xml/settings_resize_elite.smali',
-      legacyPreferenceGroup: 'settings_resize_elite',
+      legacyPreferenceGroup: 'settings_resize_mezo',
     ),
     StatusBarSectionDefinition(
       id: 'battery',
@@ -51,7 +51,7 @@ class StatusbarSectionConfigs {
       previewLabel: 'Speed',
       routeSlug: 'netspeed',
       sourceXmlReference: 'reference/mezo/mezo/res/xml/speed_elite.smali',
-      legacyPreferenceGroup: 'speed_elite',
+      legacyPreferenceGroup: 'speed_mezo',
     ),
     StatusBarSectionDefinition(
       id: 'network',
@@ -63,7 +63,7 @@ class StatusbarSectionConfigs {
       previewLabel: 'Signal',
       routeSlug: 'network',
       sourceXmlReference: 'reference/mezo/mezo/res/xml/elem_net_elite.smali',
-      legacyPreferenceGroup: 'elem_net_elite',
+      legacyPreferenceGroup: 'elem_net_mezo',
     ),
     StatusBarSectionDefinition(
       id: 'notification_icons',
@@ -99,7 +99,7 @@ class StatusbarSectionConfigs {
       previewLabel: 'Date',
       routeSlug: 'date',
       sourceXmlReference: 'reference/mezo/mezo/res/xml/settings_date_elite.smali',
-      legacyPreferenceGroup: 'settings_date_elite',
+      legacyPreferenceGroup: 'settings_date_mezo',
     ),
     StatusBarSectionDefinition(
       id: 'weather',
@@ -135,7 +135,7 @@ class StatusbarSectionConfigs {
       previewLabel: 'Backdrop',
       routeSlug: 'background',
       sourceXmlReference: 'reference/mezo/mezo/res/xml/settings_iback_elite.smali',
-      legacyPreferenceGroup: 'settings_iback_elite',
+      legacyPreferenceGroup: 'settings_iback_mezo',
     ),
   ];
 }
