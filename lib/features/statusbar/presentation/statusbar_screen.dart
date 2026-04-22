@@ -251,13 +251,13 @@ class _StatusPreviewCardState extends State<_StatusPreviewCard> {
 }
 
 class _PreviewGroup {
-  _PreviewGroup(this.id, this.label, this.icon, {required this.side, this.enabled = true});
+  _PreviewGroup(this.id, this.label, this.icon, {required this.side});
 
   final String id;
   final String label;
   final Widget icon;
   StatusbarBoardSide side;
-  bool enabled;
+  bool enabled = true;
 }
 
 class StatusbarDetailScreen extends StatefulWidget {
