@@ -10,7 +10,7 @@ class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   static const List<_QuickAccess> _entries = <_QuickAccess>[
-    _QuickAccess('Statusbar', 'Resize, battery, clock, icons', Icons.signal_cellular_alt_rounded, '/statusbar'),
+    _QuickAccess('Status Bar', 'Resize, battery, clock, icons', Icons.signal_cellular_alt_rounded, '/statusbar'),
     _QuickAccess('Mount', 'Monet color + component previews', Icons.palette_rounded, '/mount'),
     _QuickAccess('Settings', 'Appearance, build info, reset', Icons.settings_rounded, '/settings'),
   ];
