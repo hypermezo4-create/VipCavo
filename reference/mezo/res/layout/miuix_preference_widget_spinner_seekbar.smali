@@ -1,1 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?><androidx.preference.DropDownSeekBar.Spinner xmlns:android="http://schemas.android.com/apk/res/android"    android:layout_gravity="center"    android:id="@id/spinner"    android:layout_width="match_parent"    android:layout_height="wrap_content" />
