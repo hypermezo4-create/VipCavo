@@ -25,6 +25,14 @@ class StatusBarSettingItem {
     this.min,
     this.max,
     this.options = const <StatusBarOption>[],
+    this.step,
+    this.preferenceType,
+    this.intentAction,
+    this.entriesReference,
+    this.entryValuesReference,
+    this.xmlReference,
+    this.layoutReferences = const <String>[],
+    this.drawableReferences = const <String>[],
   });
 
   final String legacyKey;
@@ -36,6 +44,14 @@ class StatusBarSettingItem {
   final double? min;
   final double? max;
   final List<StatusBarOption> options;
+  final double? step;
+  final String? preferenceType;
+  final String? intentAction;
+  final String? entriesReference;
+  final String? entryValuesReference;
+  final String? xmlReference;
+  final List<String> layoutReferences;
+  final List<String> drawableReferences;
 }
 
 class StatusBarSectionDefinition {
