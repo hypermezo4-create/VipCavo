@@ -76,6 +76,119 @@ class MezoStepSlider extends StatelessWidget {
   }
 }
 
+class MezoSourceSeekbarRow extends StatelessWidget {
+  const MezoSourceSeekbarRow({
+    required this.title,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.onChanged,
+    required this.onReset,
+    this.subtitle,
+    super.key,
+  });
+
+  final String title;
+  final String? subtitle;
+  final double value;
+  final double min;
+  final double max;
+  final ValueChanged<double> onChanged;
+  final VoidCallback onReset;
+
+  @override
+  Widget build(BuildContext context) {
+    final safe = value.clamp(min, max).toDouble();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                    if (subtitle != null) ...<Widget>[
+                      const SizedBox(height: 2),
+                      Text(subtitle!, style: TextStyle(color: Colors.white.withValues(alpha: 0.66), fontSize: 12)),
+                    ],
+                  ],
+                ),
+              ),
+              InkWell(
+                onTap: onReset,
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+                  ),
+                  child: const Text('RESET', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w700)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(safe.toStringAsFixed(0), style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
+            ],
+          ),
+          const SizedBox(height: 9),
+          Row(
+            children: <Widget>[
+              _MezoSeekAdjust(onTap: () => onChanged((safe - 1).clamp(min, max).toDouble()), symbol: '−'),
+              const SizedBox(width: 7),
+              Expanded(
+                child: SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: 3.2,
+                    overlayShape: SliderComponentShape.noOverlay,
+                    inactiveTrackColor: Colors.white.withValues(alpha: 0.2),
+                    activeTrackColor: const Color(0xFF8DE8FF),
+                    thumbColor: const Color(0xFFC2FFF5),
+                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7.8),
+                  ),
+                  child: Slider(value: safe, min: min, max: max, onChanged: onChanged),
+                ),
+              ),
+              const SizedBox(width: 7),
+              _MezoSeekAdjust(onTap: () => onChanged((safe + 1).clamp(min, max).toDouble()), symbol: '+'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MezoSeekAdjust extends StatelessWidget {
+  const _MezoSeekAdjust({required this.onTap, required this.symbol});
+
+  final VoidCallback onTap;
+  final String symbol;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 26,
+        height: 27,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(9),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+        ),
+        child: Text(symbol, style: const TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w700, height: 1)),
+      ),
+    );
+  }
+}
+
 class MezoColorChip extends StatelessWidget {
   const MezoColorChip({required this.hex, required this.onTap, super.key});
 
