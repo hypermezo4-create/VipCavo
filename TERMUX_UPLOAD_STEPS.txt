@@ -1,0 +1,66 @@
+# TERMUX / UBUNTU UPLOAD STEPS FOR MEZO PORT
+
+## Goal
+Add the uploaded `mezo.zip` reference pack into the current Flutter repository, commit it, and push it to GitHub.
+
+## Recommended destination inside repo
+Use:
+- `reference/mezo/`
+
+## If the zip is already in Download
+From Termux:
+
+```bash
+cd /storage/emulated/0/VipCavo
+mkdir -p reference/mezo
+cp /storage/emulated/0/Download/mezo.zip reference/mezo/mezo.zip
+```
+
+## If you want to unpack it inside the repo too
+From Termux:
+
+```bash
+cd /storage/emulated/0/VipCavo
+mkdir -p reference/mezo/source
+unzip -o reference/mezo/mezo.zip -d reference/mezo/source
+```
+
+## If unzip is missing
+Install it in Termux:
+```bash
+pkg install unzip -y
+```
+
+## Git safe directory
+If Git complains about dubious ownership:
+```bash
+git config --global --add safe.directory /storage/emulated/0/VipCavo
+git config --global --add safe.directory /storage/self/primary/VipCavo
+```
+
+## Commit and push
+```bash
+cd /storage/emulated/0/VipCavo
+git add reference/mezo
+git commit -m "Add Mezo reference pack for status bar port"
+git push origin main
+```
+
+## If the file is not in Download but already in the project folder
+Use:
+```bash
+cd /storage/emulated/0/VipCavo
+mkdir -p reference/mezo/source
+cp mezo.zip reference/mezo/mezo.zip
+unzip -o reference/mezo/mezo.zip -d reference/mezo/source
+git add reference/mezo
+git commit -m "Add Mezo reference pack for status bar port"
+git push origin main
+```
+
+## Verify on GitHub
+After pushing, the repo should contain:
+- `reference/mezo/mezo.zip`
+- `reference/mezo/source/...`
+
+That gives Codex a stable reference source inside the repo.

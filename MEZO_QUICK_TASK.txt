@@ -1,0 +1,25 @@
+Use the existing Flutter repository only.
+
+Read AGENTS.md first.
+
+Task name: mezo
+
+Fix the current analyze/build error first, then add the Mezo reference pack into the repository under reference/mezo, and build a full helper-driven premium Status Bar port from that reference.
+
+Important rules:
+- no new project
+- Flutter only
+- same repo only
+- replace visible elite naming with Mezo
+- do not show raw keys in UI
+- use clean strings and polished labels
+- make the result ultra smooth, premium, iOS-like, and professional
+
+Focus on:
+- helper.dart
+- status bar section mapping
+- readable strings
+- premium detail pages
+- smooth motion
+- GitHub build passing
+
