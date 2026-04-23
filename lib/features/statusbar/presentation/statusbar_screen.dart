@@ -785,7 +785,7 @@ class _SettingControl extends StatelessWidget {
           return MezoSourceSeekbarRow(
             title: _title,
             subtitle: setting.subtitle,
-            value: current.clamp(min, max),
+            value: current.clamp(min, max).toDouble(),
             min: min,
             max: max,
             onChanged: (v) => onChanged(v),
@@ -803,7 +803,7 @@ class _SettingControl extends StatelessWidget {
               trailing: Text(current.toStringAsFixed(0), style: const TextStyle(color: Colors.white70)),
             ),
             MezoStepSlider(
-              value: current.clamp(min, max),
+              value: current.clamp(min, max).toDouble(),
               min: min,
               max: max,
               onChanged: (v) => onChanged(v),
