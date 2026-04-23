@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:deadzon/core/theme/design_tokens.dart';
@@ -10,7 +11,7 @@ import 'package:deadzon/features/statusbar/data/statusbar_board_model.dart';
 import 'package:deadzon/features/statusbar/data/statusbar_board_service.dart';
 import 'package:deadzon/features/statusbar/presentation/mezo_controls.dart';
 import 'package:deadzon/features/statusbar/statusbar_board_config.dart';
-import 'package:deadzon/features/statusbar/helper.dart';
+import 'package:deadzon/features/statusbar/statusbar_board_source_map.dart';
 import 'package:deadzon/features/statusbar/mezo_port_map.dart';
 import 'package:deadzon/features/statusbar/statusbar_detail_content.dart';
 import 'package:deadzon/features/statusbar/statusbar_mapper.dart';
@@ -28,13 +29,13 @@ class StatusbarScreen extends StatefulWidget {
 }
 
 class _StatusbarScreenState extends State<StatusbarScreen> {
-  late final List<StatusBarSectionDefinition> _sections;
+  late final List<MezoStatusbarCardSource> _cards;
   StatusbarBoardState? _boardState;
 
   @override
   void initState() {
     super.initState();
-    _sections = StatusBarHelper.orderedSections();
+    _cards = MezoStatusbarBoardSourceMap.cards;
     _loadBoard();
   }
 
@@ -83,8 +84,8 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
               ),
             const SizedBox(height: 20),
             const SectionHeader(
-              title: StatusBarStrings.sectionHeader,
-              subtitle: StatusBarStrings.sectionHeaderSubtitle,
+              title: 'Statusbar Adjustment',
+              subtitle: 'Source-mapped board from MyGridView / dummy_one',
             ),
             const SizedBox(height: 12),
             LayoutBuilder(
@@ -93,15 +94,16 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
                 return GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _sections.length,
+                  itemCount: _cards.length,
                   gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                     maxCrossAxisExtent: compact ? 520 : 320,
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
-                    mainAxisExtent: compact ? 122 : 132,
+                    mainAxisExtent: compact ? 154 : 160,
                   ),
                   itemBuilder: (context, index) {
-                    final section = _sections[index];
+                    final card = _cards[index];
+                    final section = MezoStatusbarBoardSourceMap.sectionForCard(card);
                     return GlassCard(
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
@@ -112,31 +114,26 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
-                              Icon(section.icon, color: section.accentColor, size: 18),
+                              _MezoDrawableImage(path: card.drawablePath, size: 32, fallbackIcon: section.icon),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  section.previewLabel ?? StatusBarStrings.customizeLabel,
-                                  style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 12),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                  '${card.titleResId} / ${card.summaryResId}',
+                                  style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 11),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            section.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            card.title,
                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            section.subtitle,
-                            maxLines: compact ? 2 : 3,
-                            overflow: TextOverflow.ellipsis,
+                            card.summary,
                             style: TextStyle(color: Colors.white.withValues(alpha: 0.72), fontSize: 12, height: 1.2),
                           ),
                         ],
@@ -218,37 +215,50 @@ class _StatusControlBoard extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
-            constraints: const BoxConstraints(minHeight: 82),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            constraints: const BoxConstraints(minHeight: 120),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
               color: const Color(0xFF111A20).withValues(alpha: 0.82),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
               children: <Widget>[
-                Expanded(
-                  child: Transform.translate(
-                    offset: Offset(boardState.leftClusterOffset, 0),
-                    child: Wrap(spacing: 6, runSpacing: 6, children: left.map(_previewChip).toList()),
-                  ),
+                Row(
+                  children: <Widget>[
+                    Expanded(child: Text('Left side', style: TextStyle(color: Colors.white.withValues(alpha: 0.75)))),
+                    Text('Right side', style: TextStyle(color: Colors.white.withValues(alpha: 0.75))),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Transform.translate(
-                    offset: Offset(boardState.rightClusterOffset, 0),
-                    child: Align(
-                      alignment: Alignment.topRight,
-                      child: Wrap(
-                        alignment: WrapAlignment.end,
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: right.map(_previewChip).toList(),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Expanded(
+                      child: Transform.translate(
+                        offset: Offset(boardState.leftClusterOffset, 0),
+                        child: Wrap(spacing: 6, runSpacing: 6, children: left.map(_previewChip).toList()),
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Transform.translate(
+                        offset: Offset(boardState.rightClusterOffset, 0),
+                        child: Align(
+                          alignment: Alignment.topRight,
+                          child: Wrap(
+                            alignment: WrapAlignment.end,
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: right.map(_previewChip).toList(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 8),
+                Text('Center', style: TextStyle(color: Colors.white.withValues(alpha: 0.75))),
               ],
             ),
           ),
@@ -267,15 +277,37 @@ class _StatusControlBoard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Icon(module.module.icon, size: 14, color: module.module.color),
-          const SizedBox(width: 4),
-          Text(module.module.previewLabel, style: const TextStyle(color: Colors.white70, fontSize: 11.5, fontWeight: FontWeight.w600)),
-        ],
+      child: _MezoDrawableImage(
+        path: 'reference/mezo/mezo/res/drawable-xxxhdpi/${_boardDrawableForModule(module.id)}.png',
+        size: 20,
+        fallbackIcon: module.module.icon,
       ),
     );
+  }
+
+  String _boardDrawableForModule(String moduleId) {
+    switch (moduleId) {
+      case 'clock':
+        return 'elem_clock_card';
+      case 'battery':
+        return 'elem_bat_card';
+      case 'netspeed':
+        return 'elem_speed_card';
+      case 'network':
+        return 'elem_net_card';
+      case 'notification_icons':
+        return 'elem_notif_card';
+      case 'status_icons':
+        return 'elem_status_card';
+      case 'date':
+        return 'elem_date_card';
+      case 'weather':
+        return 'elem_weather_card';
+      case 'prompt_icon':
+        return 'elem_prompt_card';
+      default:
+        return 'elem_clock_card';
+    }
   }
 
   Widget _buildDraggableModule(StatusbarBoardModuleState module) {
@@ -375,6 +407,27 @@ class _StatusControlBoard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _MezoDrawableImage extends StatelessWidget {
+  const _MezoDrawableImage({
+    required this.path,
+    required this.size,
+    required this.fallbackIcon,
+  });
+
+  final String path;
+  final double size;
+  final IconData fallbackIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    final file = File(path);
+    if (file.existsSync()) {
+      return Image.file(file, width: size, height: size, fit: BoxFit.contain);
+    }
+    return Icon(fallbackIcon, color: Colors.white70, size: size * 0.6);
   }
 }
 
