@@ -152,8 +152,8 @@ class _StatusControlBoard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final leftVisible = boardState.modules.where((m) => m.side == StatusbarBoardSide.left && m.visible).toList();
-    final rightVisible = boardState.modules.where((m) => m.side == StatusbarBoardSide.right && m.visible).toList();
+    final leftVisible = boardState.modules.where((m) => m.side == StatusbarBoardSide.left && m.visible).toList(growable: false);
+    final rightVisible = boardState.modules.where((m) => m.side == StatusbarBoardSide.right && m.visible).toList(growable: false);
 
     return GlassCard(
       child: Column(
@@ -161,46 +161,23 @@ class _StatusControlBoard extends StatelessWidget {
         children: <Widget>[
           const SectionHeader(
             title: 'Statusbar element board',
-            subtitle: 'Mezo orchestration board · drag order, switch side, toggle visibility, spacing, and cluster offsets.',
+            subtitle: 'Source-faithful host from MyGridView / settings_grid_view / element_position.',
           ),
           const SizedBox(height: 10),
-          _buildMezoBoard(leftVisible, rightVisible),
-          const SizedBox(height: 12),
-          Text(
-            'Modules',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.82), fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: boardState.modules.map((module) => _buildDraggableModule(module)).toList(growable: false),
-          ),
-          const SizedBox(height: 12),
-          Text(StatusBarStrings.leftClusterOffsetLabel, style: TextStyle(color: Colors.white.withValues(alpha: 0.74))),
-          MezoStepSlider(
-            value: boardState.leftClusterOffset,
-            min: -30,
-            max: 30,
-            onChanged: (value) => onChanged(boardState.copyWith(leftClusterOffset: value)),
-          ),
-          Text(StatusBarStrings.rightClusterOffsetLabel, style: TextStyle(color: Colors.white.withValues(alpha: 0.74))),
-          MezoStepSlider(
-            value: boardState.rightClusterOffset,
-            min: -30,
-            max: 30,
-            onChanged: (value) => onChanged(boardState.copyWith(rightClusterOffset: value)),
-          ),
+          _buildMezoBoard(leftVisible: leftVisible, rightVisible: rightVisible),
         ],
       ),
     );
   }
 
-  Widget _buildMezoBoard(List<StatusbarBoardModuleState> left, List<StatusbarBoardModuleState> right) {
+  Widget _buildMezoBoard({
+    required List<StatusbarBoardModuleState> leftVisible,
+    required List<StatusbarBoardModuleState> rightVisible,
+  }) {
     return AnimatedContainer(
       duration: DesignTokens.motionFast,
       curve: DesignTokens.motionCurve,
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
+      padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
         color: const Color(0xFF020405),
@@ -225,7 +202,7 @@ class _StatusControlBoard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             SizedBox(
-              height: 86,
+              height: 108,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
@@ -235,8 +212,8 @@ class _StatusControlBoard extends StatelessWidget {
                         offset: Offset(boardState.leftClusterOffset, 0),
                         child: Wrap(
                           spacing: 0,
-                          runSpacing: 6,
-                          children: left.map(_boardModuleToken).toList(growable: false),
+                          runSpacing: 8,
+                          children: _expandForBoard(leftVisible).map(_boardModuleToken).toList(growable: false),
                         ),
                       ),
                     ),
@@ -254,9 +231,9 @@ class _StatusControlBoard extends StatelessWidget {
                           alignment: Alignment.topRight,
                           child: Wrap(
                             spacing: 0,
-                            runSpacing: 6,
+                            runSpacing: 8,
                             alignment: WrapAlignment.end,
-                            children: right.map(_boardModuleToken).toList(growable: false),
+                            children: _expandForBoard(rightVisible).map(_boardModuleToken).toList(growable: false),
                           ),
                         ),
                       ),
@@ -266,138 +243,95 @@ class _StatusControlBoard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 2),
-            Text('Center', style: TextStyle(color: Colors.white.withValues(alpha: 0.64), fontSize: 12)),
+            Align(
+              alignment: Alignment.center,
+              child: Text('Center', style: TextStyle(color: Colors.white.withValues(alpha: 0.64), fontSize: 12)),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _boardModuleToken(StatusbarBoardModuleState module) {
-    final spacing = module.offset.clamp(-16, 16);
-    return AnimatedContainer(
-      duration: DesignTokens.motionFast,
-      curve: DesignTokens.motionCurve,
-      margin: EdgeInsets.only(
-        left: spacing >= 0 ? spacing : 0,
-        right: spacing < 0 ? -spacing : 0,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-      ),
-      child: _MezoDrawableImage(
-        path: MezoStatusbarBoardSourceMap.boardDrawablePath(module.id),
-        size: 18,
-        fallbackIcon: module.module.icon,
-      ),
-    );
+  List<_BoardVisualToken> _expandForBoard(List<StatusbarBoardModuleState> modules) {
+    final expanded = <_BoardVisualToken>[];
+    for (final module in modules) {
+      final id = module.id;
+      if (id == 'network') {
+        expanded
+          ..add(_BoardVisualToken(module: module, drawableName: 'elem_net1'))
+          ..add(_BoardVisualToken(module: module, drawableName: 'elem_net2'))
+          ..add(_BoardVisualToken(module: module, drawableName: 'elem_wifi'));
+        continue;
+      }
+      expanded.add(_BoardVisualToken(module: module, drawableName: _boardDrawableName(id)));
+    }
+    return expanded;
   }
 
-  Widget _buildDraggableModule(StatusbarBoardModuleState module) {
-    final index = boardState.modules.indexOf(module);
-    return DragTarget<String>(
-      onAcceptWithDetails: (details) {
-        final fromIndex = boardState.modules.indexWhere((item) => item.id == details.data);
-        if (fromIndex == -1 || fromIndex == index) {
-          return;
-        }
-        final reordered = List<StatusbarBoardModuleState>.from(boardState.modules);
-        final moved = reordered.removeAt(fromIndex);
-        reordered.insert(index, moved);
-        onChanged(
-          boardState.copyWith(
-            modules: reordered.indexed
-                .map((entry) => entry.$2.copyWith(order: entry.$1))
-                .toList(growable: false),
-          ),
-        );
-      },
-      builder: (context, candidateData, rejectedData) {
-        return LongPressDraggable<String>(
-          data: module.id,
-          feedback: Material(color: Colors.transparent, child: _boardPill(module, active: true)),
-          childWhenDragging: Opacity(opacity: 0.3, child: _boardPill(module)),
-          child: _boardPill(module),
-        );
-      },
-    );
+  String _boardDrawableName(String moduleId) {
+    switch (moduleId) {
+      case 'clock':
+        return 'elem_clock';
+      case 'battery':
+        return 'elem_bat';
+      case 'netspeed':
+        return 'elem_speed';
+      case 'network':
+        return 'elem_net';
+      case 'notification_icons':
+        return 'elem_notif';
+      case 'status_icons':
+        return 'elem_status';
+      case 'date':
+        return 'elem_date';
+      case 'weather':
+        return 'elem_weather';
+      case 'prompt_icon':
+        return 'elem_prompt';
+      default:
+        return 'elem_status';
+    }
   }
 
-  Widget _boardPill(StatusbarBoardModuleState module, {bool active = false}) {
-    return AnimatedContainer(
-      duration: DesignTokens.motionFast,
-      curve: DesignTokens.motionCurve,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: active ? 0.2 : 0.1),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+  Widget _boardModuleToken(_BoardVisualToken token) {
+    final spacing = token.module.offset.clamp(-16, 16);
+    return GestureDetector(
+      onTap: () => onChanged(
+        boardState.copyWith(
+          modules: boardState.modules
+              .map((item) => item.id == token.module.id ? item.copyWith(visible: !item.visible) : item)
+              .toList(growable: false),
+        ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          _MezoDrawableImage(
-            path: MezoStatusbarBoardSourceMap.boardDrawablePath(module.id),
-            size: 16,
-            fallbackIcon: module.module.icon,
-          ),
-          const SizedBox(width: 6),
-          Text(module.module.title, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
-          const SizedBox(width: 8),
-          InkWell(
-            onTap: () => onChanged(
-              boardState.copyWith(
-                modules: boardState.modules
-                    .map((item) => item.id == module.id
-                        ? item.copyWith(side: item.side == StatusbarBoardSide.left ? StatusbarBoardSide.right : StatusbarBoardSide.left)
-                        : item)
-                    .toList(growable: false),
-              ),
-            ),
-            child: Icon(module.side == StatusbarBoardSide.left ? Icons.west_rounded : Icons.east_rounded, size: 16, color: Colors.white70),
-          ),
-          const SizedBox(width: 8),
-          InkWell(
-            onTap: () => onChanged(
-              boardState.copyWith(
-                modules: boardState.modules
-                    .map((item) => item.id == module.id ? item.copyWith(visible: !item.visible) : item)
-                    .toList(growable: false),
-              ),
-            ),
-            child: Icon(module.visible ? Icons.visibility_rounded : Icons.visibility_off_rounded, size: 16, color: Colors.white70),
-          ),
-          const SizedBox(width: 8),
-          MezoAdjustButton(
-            icon: Icons.remove_rounded,
-            onTap: () => onChanged(
-              boardState.copyWith(
-                modules: boardState.modules
-                    .map((item) => item.id == module.id ? item.copyWith(offset: (item.offset - 1).clamp(-20, 20).toDouble()) : item)
-                    .toList(growable: false),
-              ),
-            ),
-          ),
-          const SizedBox(width: 4),
-          Text(module.offset.toStringAsFixed(0), style: const TextStyle(color: Colors.white60, fontSize: 11)),
-          const SizedBox(width: 4),
-          MezoAdjustButton(
-            icon: Icons.add_rounded,
-            onTap: () => onChanged(
-              boardState.copyWith(
-                modules: boardState.modules
-                    .map((item) => item.id == module.id ? item.copyWith(offset: (item.offset + 1).clamp(-20, 20).toDouble()) : item)
-                    .toList(growable: false),
-              ),
-            ),
-          ),
-        ],
+      child: AnimatedContainer(
+        duration: DesignTokens.motionFast,
+        curve: DesignTokens.motionCurve,
+        margin: EdgeInsets.only(
+          left: spacing >= 0 ? spacing : 0,
+          right: spacing < 0 ? -spacing : 0,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        ),
+        child: _MezoDrawableImage(
+          path: 'reference/mezo/mezo/res/drawable-xxxhdpi/${token.drawableName}.png',
+          size: 16,
+          fallbackIcon: token.module.module.icon,
+        ),
       ),
     );
   }
+}
+
+class _BoardVisualToken {
+  const _BoardVisualToken({required this.module, required this.drawableName});
+
+  final StatusbarBoardModuleState module;
+  final String drawableName;
 }
 
 class _MezoDrawableImage extends StatelessWidget {
