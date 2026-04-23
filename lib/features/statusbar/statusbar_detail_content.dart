@@ -9,9 +9,9 @@ const Map<String, StatusbarDetailContent> statusbarDetailContent = <String, Stat
   'resize_statusbar': StatusbarDetailContent(
     title: 'Resize statusbar',
     highlights: <String>[
-      'Tune height, top margin, horizontal margin, and cutout-safe spacing.',
-      'Configure camera location, camera width, left notch behavior, and first element positioning.',
-      'Use remove-camera mode for advanced layouts that ignore notch calculations.',
+      'Source-backed controls mirror settings_resize_elite for height, margins, and cutout spacing.',
+      'Notch Settings includes camera location, camera position line, and camera width behavior.',
+      'Left camera notch settings controls left cutout placement, first element position, and remove-camera behavior.',
     ],
   ),
   'battery': StatusbarDetailContent(
