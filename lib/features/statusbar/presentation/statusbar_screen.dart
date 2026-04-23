@@ -105,6 +105,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
   }
 }
 
+
 class _StatusControlBoard extends StatelessWidget {
   const _StatusControlBoard({
     required this.boardState,
@@ -120,17 +121,15 @@ class _StatusControlBoard extends StatelessWidget {
   Widget build(BuildContext context) {
     final orderedModules = List<StatusbarBoardModuleState>.from(boardState.modules)
       ..sort((a, b) => a.order.compareTo(b.order));
-    final leftVisible = orderedModules.where((module) => module.side == StatusbarBoardSide.left && module.visible).toList(growable: false);
-    final rightVisible = orderedModules.where((module) => module.side == StatusbarBoardSide.right && module.visible).toList(growable: false);
-
-    final leftTop = leftVisible.where((module) => const <String>{'clock', 'date'}.contains(module.id)).toList(growable: false);
-    final leftBottom = leftVisible.where((module) => !const <String>{'clock', 'date'}.contains(module.id)).toList(growable: false);
-
-    final rightTop = rightVisible.where((module) => const <String>{'battery', 'netspeed', 'network'}.contains(module.id)).toList(growable: false);
-    final rightBottom = rightVisible.where((module) => !const <String>{'battery', 'netspeed', 'network'}.contains(module.id)).toList(growable: false);
+    final leftModules = orderedModules
+        .where((module) => module.side == StatusbarBoardSide.left)
+        .toList(growable: false);
+    final rightModules = orderedModules
+        .where((module) => module.side == StatusbarBoardSide.right)
+        .toList(growable: false);
 
     return GlassCard(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -148,12 +147,12 @@ class _StatusControlBoard extends StatelessWidget {
                             fontWeight: FontWeight.w800,
                           ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Text(
                       'Long-press any module to move it. Tap a module to edit its side, visibility, and spacing.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: Colors.white.withValues(alpha: 0.74),
-                            height: 1.35,
+                            height: 1.28,
                           ),
                     ),
                   ],
@@ -167,8 +166,8 @@ class _StatusControlBoard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          _buildBoard(context, leftTop, leftBottom, rightTop, rightBottom),
+          const SizedBox(height: 12),
+          _buildBoard(context, leftModules, rightModules),
         ],
       ),
     );
@@ -176,172 +175,180 @@ class _StatusControlBoard extends StatelessWidget {
 
   Widget _buildBoard(
     BuildContext context,
-    List<StatusbarBoardModuleState> leftTop,
-    List<StatusbarBoardModuleState> leftBottom,
-    List<StatusbarBoardModuleState> rightTop,
-    List<StatusbarBoardModuleState> rightBottom,
+    List<StatusbarBoardModuleState> leftModules,
+    List<StatusbarBoardModuleState> rightModules,
   ) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: const Color(0xFF9E38FF).withValues(alpha: 0.78), width: 1.25),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(color: Color(0x2200FFF0), blurRadius: 18, spreadRadius: -10),
-          BoxShadow(color: Color(0x33000000), blurRadius: 24, offset: Offset(0, 12)),
-        ],
-      ),
-      child: SizedBox(
-        height: 308,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(29),
-          child: Stack(
-          children: <Widget>[
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: <Color>[
-                      const Color(0xFF010304),
-                      const Color(0xFF020608),
-                      const Color(0xFF000000),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: 0,
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: IgnorePointer(
-                child: Column(
-                  children: <Widget>[
-                    Expanded(child: const SizedBox.shrink()),
-                    Container(height: 28, color: Colors.white.withValues(alpha: 0.28)),
-                    Expanded(child: const SizedBox.shrink()),
-                  ],
-                ),
-              ),
-            ),
-            Positioned(
-              top: 18,
-              bottom: 18,
-              left: 0,
-              right: 0,
-              child: IgnorePointer(
-                child: Align(
-                  child: Container(
-                    width: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.86),
-                      borderRadius: BorderRadius.circular(999),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final boardWidth = constraints.maxWidth;
+        final leftSlots = _slotsForSide(StatusbarBoardSide.left, boardWidth);
+        final rightSlots = _slotsForSide(StatusbarBoardSide.right, boardWidth);
+
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: const Color(0xFF9E38FF).withValues(alpha: 0.78), width: 1.15),
+            boxShadow: const <BoxShadow>[
+              BoxShadow(color: Color(0x2200FFF0), blurRadius: 18, spreadRadius: -10),
+              BoxShadow(color: Color(0x33000000), blurRadius: 24, offset: Offset(0, 12)),
+            ],
+          ),
+          child: SizedBox(
+            height: 270,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(29),
+              child: Stack(
+                children: <Widget>[
+                  const Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: <Color>[
+                            Color(0xFF010304),
+                            Color(0xFF020608),
+                            Color(0xFF000000),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ),
-            Positioned.fill(
-              child: DragTarget<String>(
-                onAcceptWithDetails: (details) => _moveModuleToSide(details.data, StatusbarBoardSide.left),
-                builder: (context, candidateData, rejectedData) {
-                  return Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(14, 18, 8, 18),
-                          child: Transform.translate(
-                            offset: Offset(boardState.leftClusterOffset, 0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                _BoardZone(
-                                  alignment: Alignment.topLeft,
-                                  direction: Axis.vertical,
-                                  modules: leftTop,
-                                  buildModule: (module) => _buildModuleBadge(context, module),
-                                ),
-                                const Spacer(),
-                                _BoardZone(
-                                  alignment: Alignment.bottomLeft,
-                                  direction: Axis.vertical,
-                                  modules: leftBottom,
-                                  buildModule: (module) => _buildModuleBadge(context, module),
-                                ),
-                              ],
-                            ),
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Column(
+                        children: <Widget>[
+                          const Expanded(child: SizedBox.shrink()),
+                          Container(height: 28, color: Colors.white.withValues(alpha: 0.28)),
+                          const Expanded(child: SizedBox.shrink()),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 16,
+                    bottom: 16,
+                    left: 0,
+                    right: 0,
+                    child: IgnorePointer(
+                      child: Align(
+                        child: Container(
+                          width: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.86),
+                            borderRadius: BorderRadius.circular(999),
                           ),
                         ),
                       ),
-                      Expanded(
-                        child: DragTarget<String>(
-                          onAcceptWithDetails: (details) => _moveModuleToSide(details.data, StatusbarBoardSide.right),
-                          builder: (context, candidateData, rejectedData) {
-                            return Padding(
-                              padding: const EdgeInsets.fromLTRB(8, 18, 14, 18),
-                              child: Transform.translate(
-                                offset: Offset(boardState.rightClusterOffset, 0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: <Widget>[
-                                    _BoardZone(
-                                      alignment: Alignment.topRight,
-                                      direction: Axis.horizontal,
-                                      modules: rightTop,
-                                      buildModule: (module) => _buildModuleBadge(context, module),
-                                    ),
-                                    const Spacer(),
-                                    _BoardZone(
-                                      alignment: Alignment.bottomRight,
-                                      direction: Axis.horizontal,
-                                      modules: rightBottom,
-                                      buildModule: (module) => _buildModuleBadge(context, module),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  );
-                },
+                    ),
+                  ),
+                  ..._buildSideSlots(
+                    context,
+                    modules: leftModules,
+                    slots: leftSlots,
+                    side: StatusbarBoardSide.left,
+                    clusterOffset: boardState.leftClusterOffset,
+                  ),
+                  ..._buildSideSlots(
+                    context,
+                    modules: rightModules,
+                    slots: rightSlots,
+                    side: StatusbarBoardSide.right,
+                    clusterOffset: boardState.rightClusterOffset,
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-    ),
-  );
-  }
-
-  Widget _buildModuleBadge(BuildContext context, StatusbarBoardModuleState module) {
-    final badge = _BoardModuleBadge(
-      module: module,
-      assetPath: _assetForModule(module.id),
-      onTap: () => _showModuleSheet(context, module),
-    );
-
-    return DragTarget<String>(
-      onAcceptWithDetails: (details) => _reorderModule(details.data, module.id),
-      builder: (context, candidateData, rejectedData) {
-        return LongPressDraggable<String>(
-          data: module.id,
-          feedback: Material(
-            color: Colors.transparent,
-            child: Opacity(
-              opacity: 0.92,
-              child: Transform.scale(scale: 1.06, child: badge),
-            ),
           ),
-          childWhenDragging: Opacity(opacity: 0.28, child: badge),
-          child: badge,
         );
       },
     );
+  }
+
+  List<Widget> _buildSideSlots(
+    BuildContext context, {
+    required List<StatusbarBoardModuleState> modules,
+    required List<_BoardSlot> slots,
+    required StatusbarBoardSide side,
+    required double clusterOffset,
+  }) {
+    final children = <Widget>[];
+    for (var index = 0; index < slots.length; index++) {
+      final slot = slots[index];
+      final module = index < modules.length ? modules[index] : null;
+      children.add(
+        Positioned(
+          left: slot.left + clusterOffset,
+          top: slot.top,
+          child: DragTarget<String>(
+            onAcceptWithDetails: (details) => _moveModuleToSlot(details.data, side, index),
+            builder: (context, candidateData, rejectedData) {
+              final hovering = candidateData.isNotEmpty;
+              if (module == null) {
+                return _BoardSlotTarget(
+                  width: slot.width,
+                  height: slot.height,
+                  hovering: hovering,
+                );
+              }
+              final badge = _BoardModuleBadge(
+                module: module,
+                assetPath: _assetForModule(module.id),
+                width: slot.width,
+                height: slot.height,
+                onTap: () => _showModuleSheet(context, module),
+              );
+              return LongPressDraggable<String>(
+                data: module.id,
+                feedback: Material(
+                  color: Colors.transparent,
+                  child: Opacity(
+                    opacity: 0.94,
+                    child: Transform.scale(scale: 1.04, child: badge),
+                  ),
+                ),
+                childWhenDragging: Opacity(opacity: 0.18, child: badge),
+                child: badge,
+              );
+            },
+          ),
+        ),
+      );
+    }
+    return children;
+  }
+
+  List<_BoardSlot> _slotsForSide(StatusbarBoardSide side, double boardWidth) {
+    const tileHeight = 30.0;
+    const narrowWidth = 46.0;
+    const regularWidth = 52.0;
+    const wideWidth = 60.0;
+    const edge = 18.0;
+    const columnGap = 10.0;
+
+    if (side == StatusbarBoardSide.left) {
+      return const <_BoardSlot>[
+        _BoardSlot(left: edge, top: 20, width: regularWidth, height: tileHeight),
+        _BoardSlot(left: edge + regularWidth + columnGap, top: 20, width: regularWidth, height: tileHeight),
+        _BoardSlot(left: edge, top: 190, width: regularWidth, height: tileHeight),
+        _BoardSlot(left: edge + regularWidth + columnGap, top: 190, width: regularWidth, height: tileHeight),
+      ];
+    }
+
+    final firstColumn = boardWidth - edge - regularWidth;
+    final secondColumn = firstColumn - columnGap - regularWidth;
+    final wideColumn = boardWidth - edge - wideWidth;
+    return <_BoardSlot>[
+      _BoardSlot(left: secondColumn, top: 20, width: narrowWidth, height: tileHeight),
+      _BoardSlot(left: firstColumn, top: 20, width: narrowWidth, height: tileHeight),
+      _BoardSlot(left: secondColumn, top: 66, width: regularWidth, height: tileHeight),
+      _BoardSlot(left: firstColumn, top: 66, width: regularWidth, height: tileHeight),
+      _BoardSlot(left: secondColumn, top: 192, width: regularWidth, height: tileHeight),
+      _BoardSlot(left: firstColumn, top: 192, width: regularWidth, height: tileHeight),
+      _BoardSlot(left: wideColumn - columnGap - regularWidth, top: 224, width: regularWidth, height: tileHeight),
+      _BoardSlot(left: wideColumn, top: 224, width: regularWidth, height: tileHeight),
+      _BoardSlot(left: boardWidth - edge - wideWidth, top: 224, width: wideWidth, height: tileHeight),
+    ];
   }
 
   Future<void> _showModuleSheet(BuildContext context, StatusbarBoardModuleState module) async {
@@ -384,7 +391,7 @@ class _StatusControlBoard extends StatelessWidget {
                     ),
                     Row(
                       children: <Widget>[
-                        _MezoDrawableImage(path: _assetForModule(current.id), width: 64, height: 34, fallbackIcon: current.module.icon),
+                        _MezoDrawableImage(path: _assetForModule(current.id), width: 58, height: 30, fallbackIcon: current.module.icon),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -556,34 +563,29 @@ class _StatusControlBoard extends StatelessWidget {
     );
   }
 
-  void _moveModuleToSide(String moduleId, StatusbarBoardSide side) {
-    final updated = boardState.modules
-        .map((module) => module.id == moduleId ? module.copyWith(side: side, visible: true) : module)
-        .toList(growable: false);
-    onChanged(boardState.copyWith(modules: _normalizeOrders(updated)));
-  }
+  void _moveModuleToSlot(String moduleId, StatusbarBoardSide side, int targetIndex) {
+    final dragged = boardState.modules.firstWhere((module) => module.id == moduleId);
+    final remaining = boardState.modules.where((module) => module.id != moduleId).toList(growable: false);
 
-  void _reorderModule(String draggedId, String targetId) {
-    if (draggedId == targetId) {
-      return;
-    }
+    final leftModules = remaining
+        .where((module) => module.side == StatusbarBoardSide.left)
+        .toList(growable: true)
+      ..sort((a, b) => a.order.compareTo(b.order));
+    final rightModules = remaining
+        .where((module) => module.side == StatusbarBoardSide.right)
+        .toList(growable: true)
+      ..sort((a, b) => a.order.compareTo(b.order));
 
-    final reordered = List<StatusbarBoardModuleState>.from(boardState.modules);
-    final fromIndex = reordered.indexWhere((module) => module.id == draggedId);
-    final toIndex = reordered.indexWhere((module) => module.id == targetId);
-    if (fromIndex == -1 || toIndex == -1) {
-      return;
-    }
+    final updatedDragged = dragged.copyWith(side: side, visible: true);
+    final targetList = side == StatusbarBoardSide.left ? leftModules : rightModules;
+    final insertAt = targetIndex.clamp(0, targetList.length);
+    targetList.insert(insertAt, updatedDragged);
 
-    final moved = reordered.removeAt(fromIndex);
-    final target = reordered[toIndex > fromIndex ? toIndex - 1 : toIndex];
-    final insertAt = reordered.indexWhere((module) => module.id == target.id);
-    reordered.insert(
-      insertAt,
-      moved.copyWith(side: target.side, visible: true),
-    );
-
-    onChanged(boardState.copyWith(modules: _normalizeOrders(reordered)));
+    final rebuilt = <StatusbarBoardModuleState>[
+      ...leftModules,
+      ...rightModules,
+    ];
+    onChanged(boardState.copyWith(modules: _normalizeOrders(rebuilt)));
   }
 
   void _updateSingleModule(StatusbarBoardModuleState next) {
@@ -604,6 +606,93 @@ class _StatusControlBoard extends StatelessWidget {
       return match.first.drawableAssetPath;
     }
     return 'reference/mezo/mezo/res/drawable-xxxhdpi/elem_clock_card.png';
+  }
+}
+
+class _BoardSlot {
+  const _BoardSlot({
+    required this.left,
+    required this.top,
+    required this.width,
+    required this.height,
+  });
+
+  final double left;
+  final double top;
+  final double width;
+  final double height;
+}
+
+class _BoardSlotTarget extends StatelessWidget {
+  const _BoardSlotTarget({
+    required this.width,
+    required this.height,
+    required this.hovering,
+  });
+
+  final double width;
+  final double height;
+  final bool hovering;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: DesignTokens.motionFast,
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: hovering ? const Color(0xFF9E38FF).withValues(alpha: 0.70) : Colors.white.withValues(alpha: 0.05),
+        ),
+        color: hovering ? const Color(0x229E38FF) : Colors.transparent,
+      ),
+    );
+  }
+}
+
+class _BoardModuleBadge extends StatelessWidget {
+  const _BoardModuleBadge({
+    required this.module,
+    required this.assetPath,
+    required this.width,
+    required this.height,
+    required this.onTap,
+  });
+
+  final StatusbarBoardModuleState module;
+  final String assetPath;
+  final double width;
+  final double height;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final opacity = module.visible ? 1.0 : 0.34;
+    final translatedX = module.side == StatusbarBoardSide.left ? module.offset * 0.45 : -module.offset * 0.45;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedOpacity(
+        duration: DesignTokens.motionFast,
+        opacity: opacity,
+        child: Transform.translate(
+          offset: Offset(translatedX, 0),
+          child: AnimatedContainer(
+            duration: DesignTokens.motionFast,
+            curve: DesignTokens.motionCurve,
+            width: width,
+            height: height,
+            alignment: Alignment.center,
+            child: _MezoDrawableImage(
+              path: assetPath,
+              width: width,
+              height: height,
+              fallbackIcon: module.module.icon,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -703,94 +792,6 @@ class _StatusSectionCard extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BoardZone extends StatelessWidget {
-  const _BoardZone({
-    required this.alignment,
-    required this.direction,
-    required this.modules,
-    required this.buildModule,
-  });
-
-  final Alignment alignment;
-  final Axis direction;
-  final List<StatusbarBoardModuleState> modules;
-  final Widget Function(StatusbarBoardModuleState module) buildModule;
-
-  @override
-  Widget build(BuildContext context) {
-    if (modules.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    if (direction == Axis.vertical) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: alignment == Alignment.topLeft || alignment == Alignment.bottomLeft ? CrossAxisAlignment.start : CrossAxisAlignment.end,
-        children: modules
-            .map(
-              (module) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: buildModule(module),
-              ),
-            )
-            .toList(growable: false),
-      );
-    }
-
-    return Align(
-      alignment: alignment,
-      child: Wrap(
-        alignment: WrapAlignment.end,
-        spacing: 10,
-        runSpacing: 10,
-        children: modules.map(buildModule).toList(growable: false),
-      ),
-    );
-  }
-}
-
-class _BoardModuleBadge extends StatelessWidget {
-  const _BoardModuleBadge({
-    required this.module,
-    required this.assetPath,
-    required this.onTap,
-  });
-
-  final StatusbarBoardModuleState module;
-  final String assetPath;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final baseWidth = module.id == 'network' ? 68.0 : module.id == 'prompt_icon' ? 54.0 : 60.0;
-    final width = (baseWidth + (module.offset.abs() * 0.6)).clamp(54.0, 84.0).toDouble();
-    final opacity = module.visible ? 1.0 : 0.32;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedOpacity(
-        duration: DesignTokens.motionFast,
-        opacity: opacity,
-        child: AnimatedContainer(
-          duration: DesignTokens.motionFast,
-          curve: DesignTokens.motionCurve,
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: Colors.white.withValues(alpha: 0.02),
-          ),
-          child: _MezoDrawableImage(
-            path: assetPath,
-            width: width,
-            height: 36,
-            fallbackIcon: module.module.icon,
           ),
         ),
       ),
