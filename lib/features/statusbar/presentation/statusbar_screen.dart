@@ -279,8 +279,8 @@ class _StatusControlBoard extends StatelessWidget {
       duration: DesignTokens.motionFast,
       curve: DesignTokens.motionCurve,
       margin: EdgeInsets.only(
-        left: spacing >= 0 ? spacing : 0,
-        right: spacing < 0 ? -spacing : 0,
+        left: (spacing >= 0 ? spacing : 0).toDouble(),
+        right: (spacing < 0 ? -spacing : 0).toDouble(),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
       decoration: BoxDecoration(
