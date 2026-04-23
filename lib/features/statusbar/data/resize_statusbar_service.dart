@@ -75,6 +75,43 @@ class ResizeStatusbarService {
     }
   }
 
+
+  static Future<int> readInt({
+    required String key,
+    required int fallback,
+    MezoSettingsStoreType storeType = MezoSettingsStoreType.system,
+  }) {
+    return _readInt(key, fallback, storeType);
+  }
+
+  static Future<bool> readBool({
+    required String key,
+    required bool fallback,
+    MezoSettingsStoreType storeType = MezoSettingsStoreType.system,
+  }) {
+    return _readBool(key, fallback, storeType);
+  }
+
+  static Future<void> writeInt({
+    required String key,
+    required int value,
+    MezoSettingsStoreType storeType = MezoSettingsStoreType.system,
+  }) {
+    return _writeInt(key, value, storeType);
+  }
+
+  static Future<void> writeBool({
+    required String key,
+    required bool value,
+    MezoSettingsStoreType storeType = MezoSettingsStoreType.system,
+  }) {
+    return _writeBool(key, value, storeType);
+  }
+
+  static Future<void> sendBroadcastIntent(String action) {
+    return _sendIntent(action);
+  }
+
   static Future<int> _readInt(String key, int fallback, MezoSettingsStoreType storeType) async {
     final current = await _channel.invokeMethod<int>(
       'readInt',

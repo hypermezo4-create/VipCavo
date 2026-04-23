@@ -6,6 +6,8 @@ import 'package:deadzon/core/widgets/premium_top_bar.dart';
 import 'package:deadzon/core/widgets/section_header.dart';
 import 'package:deadzon/core/widgets/settings_row.dart';
 import 'package:deadzon/features/statusbar/data/resize_statusbar_service.dart';
+import 'package:deadzon/features/statusbar/data/statusbar_board_model.dart';
+import 'package:deadzon/features/statusbar/data/statusbar_board_service.dart';
 import 'package:deadzon/features/statusbar/presentation/mezo_controls.dart';
 import 'package:deadzon/features/statusbar/statusbar_board_config.dart';
 import 'package:deadzon/features/statusbar/helper.dart';
@@ -18,13 +20,43 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class StatusbarScreen extends StatelessWidget {
+class StatusbarScreen extends StatefulWidget {
   const StatusbarScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final sections = StatusBarHelper.orderedSections();
+  State<StatusbarScreen> createState() => _StatusbarScreenState();
+}
 
+class _StatusbarScreenState extends State<StatusbarScreen> {
+  late final List<StatusBarSectionDefinition> _sections;
+  StatusbarBoardState? _boardState;
+
+  @override
+  void initState() {
+    super.initState();
+    _sections = StatusBarHelper.orderedSections();
+    _loadBoard();
+  }
+
+  Future<void> _loadBoard() async {
+    final loaded = await StatusbarBoardService.load();
+    if (!mounted) {
+      return;
+    }
+    setState(() => _boardState = loaded);
+  }
+
+  Future<void> _updateBoard(StatusbarBoardState next) async {
+    setState(() => _boardState = next);
+    await StatusbarBoardService.writeModules(next.modules);
+    await StatusbarBoardService.writeClusterOffsets(
+      left: next.leftClusterOffset,
+      right: next.rightClusterOffset,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(gradient: DesignTokens.baseGradient),
       child: SafeArea(
@@ -33,11 +65,22 @@ class StatusbarScreen extends StatelessWidget {
           padding: DesignTokens.pagePadding,
           children: <Widget>[
             const PremiumTopBar(
-              title: StatusBarStrings.title,
+              title: 'Statusbar adjustment',
               subtitle: StatusBarStrings.subtitle,
             ),
             const SizedBox(height: 16),
-            const _StatusPreviewCard(),
+            if (_boardState == null)
+              const GlassCard(
+                child: Padding(
+                  padding: EdgeInsets.all(14),
+                  child: LinearProgressIndicator(minHeight: 2),
+                ),
+              )
+            else
+              _StatusControlBoard(
+                boardState: _boardState!,
+                onChanged: _updateBoard,
+              ),
             const SizedBox(height: 20),
             const SectionHeader(
               title: StatusBarStrings.sectionHeader,
@@ -50,7 +93,7 @@ class StatusbarScreen extends StatelessWidget {
                 return GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: sections.length,
+                  itemCount: _sections.length,
                   gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
                     maxCrossAxisExtent: compact ? 520 : 320,
                     crossAxisSpacing: 10,
@@ -58,7 +101,7 @@ class StatusbarScreen extends StatelessWidget {
                     mainAxisExtent: compact ? 122 : 132,
                   ),
                   itemBuilder: (context, index) {
-                    final section = sections[index];
+                    final section = _sections[index];
                     return GlassCard(
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
@@ -113,95 +156,61 @@ class StatusbarScreen extends StatelessWidget {
   }
 }
 
-class _StatusPreviewCard extends StatefulWidget {
-  const _StatusPreviewCard();
+class _StatusControlBoard extends StatelessWidget {
+  const _StatusControlBoard({required this.boardState, required this.onChanged});
 
-  @override
-  State<_StatusPreviewCard> createState() => _StatusPreviewCardState();
-}
-
-class _StatusPreviewCardState extends State<_StatusPreviewCard> {
-  late final List<_PreviewGroup> _groups;
-
-  double _leftOffset = 0;
-  double _rightOffset = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _groups = statusbarBoardModules
-        .map(
-          (module) => _PreviewGroup(
-            module.id,
-            module.title,
-            module.previewLabel,
-            module.icon,
-            module.color,
-            side: module.defaultSide,
-            spacing: module.defaultSpacing,
-          ),
-        )
-        .toList();
-  }
+  final StatusbarBoardState boardState;
+  final ValueChanged<StatusbarBoardState> onChanged;
 
   @override
   Widget build(BuildContext context) {
+    final left = boardState.modules.where((m) => m.side == StatusbarBoardSide.left && m.visible).toList();
+    final right = boardState.modules.where((m) => m.side == StatusbarBoardSide.right && m.visible).toList();
+
     return GlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const SectionHeader(
-            title: StatusBarStrings.livePreviewTitle,
-            subtitle: StatusBarStrings.livePreviewSubtitle,
-          ),
+          const SectionHeader(title: 'Statusbar adjustment', subtitle: 'Live orchestration board • drag, switch side, hide, offset'),
           const SizedBox(height: 12),
-          _buildPreviewCanvas(),
-          const SizedBox(height: 14),
-          Text(
-            StatusBarStrings.iconBoardTitle,
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.82), fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            StatusBarStrings.iconBoardSubtitle,
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 12),
-          ),
+          _buildPreviewCanvas(left, right),
+          const SizedBox(height: 12),
+          Text(StatusBarStrings.iconBoardTitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.82), fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _groups.map(_buildDraggableGroup).toList(),
+            children: boardState.modules.map((module) => _buildDraggableModule(module)).toList(),
           ),
           const SizedBox(height: 12),
           Text(StatusBarStrings.leftClusterOffsetLabel, style: TextStyle(color: Colors.white.withValues(alpha: 0.74))),
           MezoStepSlider(
-            value: _leftOffset,
-            min: -28,
-            max: 28,
-            onChanged: (v) => setState(() => _leftOffset = v),
+            value: boardState.leftClusterOffset,
+            min: -30,
+            max: 30,
+            onChanged: (value) => onChanged(boardState.copyWith(leftClusterOffset: value)),
           ),
           Text(StatusBarStrings.rightClusterOffsetLabel, style: TextStyle(color: Colors.white.withValues(alpha: 0.74))),
           MezoStepSlider(
-            value: _rightOffset,
-            min: -28,
-            max: 28,
-            onChanged: (v) => setState(() => _rightOffset = v),
+            value: boardState.rightClusterOffset,
+            min: -30,
+            max: 30,
+            onChanged: (value) => onChanged(boardState.copyWith(rightClusterOffset: value)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPreviewCanvas() {
-    final leftGroups = _groups.where((group) => group.side == StatusbarBoardSide.left && group.enabled).toList();
-    final rightGroups = _groups.where((group) => group.side == StatusbarBoardSide.right && group.enabled).toList();
+  Widget _buildPreviewCanvas(List<StatusbarBoardModuleState> left, List<StatusbarBoardModuleState> right) {
     return AnimatedContainer(
       duration: DesignTokens.motionFast,
       curve: DesignTokens.motionCurve,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        color: Colors.black.withValues(alpha: 0.22),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        color: const Color(0xFF050A0D),
+        border: Border.all(color: const Color(0xFF4AD4BF).withValues(alpha: 0.32)),
+        boxShadow: const <BoxShadow>[BoxShadow(color: Color(0x4400FFE1), blurRadius: 18, spreadRadius: -8)],
       ),
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
       child: ClipRRect(
@@ -209,68 +218,38 @@ class _StatusPreviewCardState extends State<_StatusPreviewCard> {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
-            constraints: const BoxConstraints(minHeight: 80),
+            constraints: const BoxConstraints(minHeight: 82),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFF132228).withValues(alpha: 0.58),
+              color: const Color(0xFF111A20).withValues(alpha: 0.82),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
             ),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final compact = constraints.maxWidth < 360;
-                if (compact) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      Transform.translate(
-                        offset: Offset(_leftOffset, 0),
-                        child: Wrap(spacing: 6, runSpacing: 6, children: leftGroups.map(_groupChip).toList()),
-                      ),
-                      const SizedBox(height: 8),
-                      Transform.translate(
-                        offset: Offset(_rightOffset, 0),
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: Wrap(
-                            alignment: WrapAlignment.end,
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: rightGroups.map(_groupChip).toList(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                }
-
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Expanded(
-                      child: Transform.translate(
-                        offset: Offset(_leftOffset, 0),
-                        child: Wrap(spacing: 6, runSpacing: 6, children: leftGroups.map(_groupChip).toList()),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(
+                  child: Transform.translate(
+                    offset: Offset(boardState.leftClusterOffset, 0),
+                    child: Wrap(spacing: 6, runSpacing: 6, children: left.map(_previewChip).toList()),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Transform.translate(
+                    offset: Offset(boardState.rightClusterOffset, 0),
+                    child: Align(
+                      alignment: Alignment.topRight,
+                      child: Wrap(
+                        alignment: WrapAlignment.end,
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: right.map(_previewChip).toList(),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Transform.translate(
-                        offset: Offset(_rightOffset, 0),
-                        child: Align(
-                          alignment: Alignment.topRight,
-                          child: Wrap(
-                            alignment: WrapAlignment.end,
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: rightGroups.map(_groupChip).toList(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -278,10 +257,10 @@ class _StatusPreviewCardState extends State<_StatusPreviewCard> {
     );
   }
 
-  Widget _groupChip(_PreviewGroup group) {
+  Widget _previewChip(StatusbarBoardModuleState module) {
     return AnimatedContainer(
       duration: DesignTokens.motionFast,
-      margin: EdgeInsets.only(right: group.spacing),
+      margin: EdgeInsets.only(left: module.offset > 0 ? module.offset : 0, right: module.offset < 0 ? -module.offset : 0),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.08),
@@ -291,43 +270,45 @@ class _StatusPreviewCardState extends State<_StatusPreviewCard> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(group.icon, size: 14, color: group.color),
+          Icon(module.module.icon, size: 14, color: module.module.color),
           const SizedBox(width: 4),
-          Text(group.label, style: const TextStyle(color: Colors.white70, fontSize: 11.5, fontWeight: FontWeight.w600)),
+          Text(module.module.previewLabel, style: const TextStyle(color: Colors.white70, fontSize: 11.5, fontWeight: FontWeight.w600)),
         ],
       ),
     );
   }
 
-  Widget _buildDraggableGroup(_PreviewGroup group) {
-    final index = _groups.indexOf(group);
+  Widget _buildDraggableModule(StatusbarBoardModuleState module) {
+    final index = boardState.modules.indexOf(module);
     return DragTarget<String>(
       onAcceptWithDetails: (details) {
-        final fromIndex = _groups.indexWhere((g) => g.id == details.data);
-        final toIndex = index;
-        if (fromIndex == -1 || fromIndex == toIndex) {
+        final fromIndex = boardState.modules.indexWhere((item) => item.id == details.data);
+        if (fromIndex == -1 || fromIndex == index) {
           return;
         }
-        setState(() {
-          final item = _groups.removeAt(fromIndex);
-          _groups.insert(toIndex, item);
-        });
+        final reordered = List<StatusbarBoardModuleState>.from(boardState.modules);
+        final picked = reordered.removeAt(fromIndex);
+        reordered.insert(index, picked);
+        onChanged(
+          boardState.copyWith(
+            modules: reordered.indexed
+                .map((entry) => entry.$2.copyWith(order: entry.$1))
+                .toList(growable: false),
+          ),
+        );
       },
       builder: (context, candidateData, rejectedData) {
         return LongPressDraggable<String>(
-          data: group.id,
-          feedback: Material(
-            color: Colors.transparent,
-            child: _boardPill(group, active: true),
-          ),
-          childWhenDragging: Opacity(opacity: 0.35, child: _boardPill(group)),
-          child: _boardPill(group),
+          data: module.id,
+          feedback: Material(color: Colors.transparent, child: _boardPill(module, active: true)),
+          childWhenDragging: Opacity(opacity: 0.35, child: _boardPill(module)),
+          child: _boardPill(module),
         );
       },
     );
   }
 
-  Widget _boardPill(_PreviewGroup group, {bool active = false}) {
+  Widget _boardPill(StatusbarBoardModuleState module, {bool active = false}) {
     return AnimatedContainer(
       duration: DesignTokens.motionFast,
       curve: DesignTokens.motionCurve,
@@ -340,58 +321,61 @@ class _StatusPreviewCardState extends State<_StatusPreviewCard> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(group.icon, size: 15, color: group.color),
+          Icon(module.module.icon, size: 15, color: module.module.color),
           const SizedBox(width: 6),
-          Text(group.title, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
+          Text(module.module.title, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
           const SizedBox(width: 8),
           InkWell(
-            onTap: () => setState(() {
-              group.side = group.side == StatusbarBoardSide.left ? StatusbarBoardSide.right : StatusbarBoardSide.left;
-            }),
-            child: Icon(group.side == StatusbarBoardSide.left ? Icons.west_rounded : Icons.east_rounded, size: 16, color: Colors.white70),
+            onTap: () => onChanged(
+              boardState.copyWith(
+                modules: boardState.modules
+                    .map((item) => item.id == module.id
+                        ? item.copyWith(side: item.side == StatusbarBoardSide.left ? StatusbarBoardSide.right : StatusbarBoardSide.left)
+                        : item)
+                    .toList(growable: false),
+              ),
+            ),
+            child: Icon(module.side == StatusbarBoardSide.left ? Icons.west_rounded : Icons.east_rounded, size: 16, color: Colors.white70),
           ),
           const SizedBox(width: 8),
           InkWell(
-            onTap: () => setState(() => group.enabled = !group.enabled),
-            child: Icon(group.enabled ? Icons.visibility_rounded : Icons.visibility_off_rounded, size: 16, color: Colors.white70),
+            onTap: () => onChanged(
+              boardState.copyWith(
+                modules: boardState.modules
+                    .map((item) => item.id == module.id ? item.copyWith(visible: !item.visible) : item)
+                    .toList(growable: false),
+              ),
+            ),
+            child: Icon(module.visible ? Icons.visibility_rounded : Icons.visibility_off_rounded, size: 16, color: Colors.white70),
           ),
           const SizedBox(width: 8),
           MezoAdjustButton(
             icon: Icons.remove_rounded,
-            onTap: () => setState(() => group.spacing = (group.spacing - 1).clamp(-8, 16)),
+            onTap: () => onChanged(
+              boardState.copyWith(
+                modules: boardState.modules
+                    .map((item) => item.id == module.id ? item.copyWith(offset: (item.offset - 1).clamp(-20, 20).toDouble()) : item)
+                    .toList(growable: false),
+              ),
+            ),
           ),
           const SizedBox(width: 4),
-          Text(group.spacing.toStringAsFixed(0), style: const TextStyle(color: Colors.white60, fontSize: 11)),
+          Text(module.offset.toStringAsFixed(0), style: const TextStyle(color: Colors.white60, fontSize: 11)),
           const SizedBox(width: 4),
           MezoAdjustButton(
             icon: Icons.add_rounded,
-            onTap: () => setState(() => group.spacing = (group.spacing + 1).clamp(-8, 16)),
+            onTap: () => onChanged(
+              boardState.copyWith(
+                modules: boardState.modules
+                    .map((item) => item.id == module.id ? item.copyWith(offset: (item.offset + 1).clamp(-20, 20).toDouble()) : item)
+                    .toList(growable: false),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
-}
-
-class _PreviewGroup {
-  _PreviewGroup(
-    this.id,
-    this.title,
-    this.label,
-    this.icon,
-    this.color, {
-    required this.side,
-    required this.spacing,
-  });
-
-  final String id;
-  final String title;
-  final String label;
-  final IconData icon;
-  final Color color;
-  StatusbarBoardSide side;
-  bool enabled = true;
-  double spacing;
 }
 
 class StatusbarDetailScreen extends StatefulWidget {
