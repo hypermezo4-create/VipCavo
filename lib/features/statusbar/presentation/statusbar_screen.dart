@@ -123,12 +123,6 @@ class _StatusControlBoard extends StatelessWidget {
     final leftVisible = orderedModules.where((module) => module.side == StatusbarBoardSide.left && module.visible).toList(growable: false);
     final rightVisible = orderedModules.where((module) => module.side == StatusbarBoardSide.right && module.visible).toList(growable: false);
 
-    final leftTop = leftVisible.where((module) => const <String>{'clock', 'date'}.contains(module.id)).toList(growable: false);
-    final leftBottom = leftVisible.where((module) => !const <String>{'clock', 'date'}.contains(module.id)).toList(growable: false);
-
-    final rightTop = rightVisible.where((module) => const <String>{'battery', 'netspeed', 'network'}.contains(module.id)).toList(growable: false);
-    final rightBottom = rightVisible.where((module) => !const <String>{'battery', 'netspeed', 'network'}.contains(module.id)).toList(growable: false);
-
     return GlassCard(
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
       child: Column(
@@ -168,7 +162,7 @@ class _StatusControlBoard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          _buildBoard(context, leftTop, leftBottom, rightTop, rightBottom),
+          _buildBoard(context, leftVisible, rightVisible),
         ],
       ),
     );
@@ -176,10 +170,8 @@ class _StatusControlBoard extends StatelessWidget {
 
   Widget _buildBoard(
     BuildContext context,
-    List<StatusbarBoardModuleState> leftTop,
-    List<StatusbarBoardModuleState> leftBottom,
-    List<StatusbarBoardModuleState> rightTop,
-    List<StatusbarBoardModuleState> rightBottom,
+    List<StatusbarBoardModuleState> leftModules,
+    List<StatusbarBoardModuleState> rightModules,
   ) {
     return Container(
       decoration: BoxDecoration(
@@ -254,23 +246,11 @@ class _StatusControlBoard extends StatelessWidget {
                           padding: const EdgeInsets.fromLTRB(14, 18, 8, 18),
                           child: Transform.translate(
                             offset: Offset(boardState.leftClusterOffset, 0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                _BoardZone(
-                                  alignment: Alignment.topLeft,
-                                  direction: Axis.vertical,
-                                  modules: leftTop,
-                                  buildModule: (module) => _buildModuleBadge(context, module),
-                                ),
-                                const Spacer(),
-                                _BoardZone(
-                                  alignment: Alignment.bottomLeft,
-                                  direction: Axis.vertical,
-                                  modules: leftBottom,
-                                  buildModule: (module) => _buildModuleBadge(context, module),
-                                ),
-                              ],
+                            child: _BoardZone(
+                              alignment: Alignment.topLeft,
+                              direction: Axis.horizontal,
+                              modules: leftModules,
+                              buildModule: (module) => _buildModuleBadge(context, module),
                             ),
                           ),
                         ),
@@ -283,23 +263,11 @@ class _StatusControlBoard extends StatelessWidget {
                               padding: const EdgeInsets.fromLTRB(8, 18, 14, 18),
                               child: Transform.translate(
                                 offset: Offset(boardState.rightClusterOffset, 0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: <Widget>[
-                                    _BoardZone(
-                                      alignment: Alignment.topRight,
-                                      direction: Axis.horizontal,
-                                      modules: rightTop,
-                                      buildModule: (module) => _buildModuleBadge(context, module),
-                                    ),
-                                    const Spacer(),
-                                    _BoardZone(
-                                      alignment: Alignment.bottomRight,
-                                      direction: Axis.horizontal,
-                                      modules: rightBottom,
-                                      buildModule: (module) => _buildModuleBadge(context, module),
-                                    ),
-                                  ],
+                                child: _BoardZone(
+                                  alignment: Alignment.topRight,
+                                  direction: Axis.horizontal,
+                                  modules: rightModules,
+                                  buildModule: (module) => _buildModuleBadge(context, module),
                                 ),
                               ),
                             );
@@ -736,7 +704,7 @@ class _BoardZone extends StatelessWidget {
         children: modules
             .map(
               (module) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.symmetric(vertical: 4),
                 child: buildModule(module),
               ),
             )
@@ -747,9 +715,9 @@ class _BoardZone extends StatelessWidget {
     return Align(
       alignment: alignment,
       child: Wrap(
-        alignment: WrapAlignment.end,
-        spacing: 10,
-        runSpacing: 10,
+        alignment: alignment == Alignment.topLeft ? WrapAlignment.start : WrapAlignment.end,
+        spacing: 5,
+        runSpacing: 5,
         children: modules.map(buildModule).toList(growable: false),
       ),
     );
@@ -769,8 +737,8 @@ class _BoardModuleBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseWidth = module.id == 'network' ? 68.0 : module.id == 'prompt_icon' ? 54.0 : 60.0;
-    final width = (baseWidth + (module.offset.abs() * 0.6)).clamp(54.0, 84.0).toDouble();
+    final baseWidth = module.id == 'network' ? 60.0 : module.id == 'prompt_icon' ? 48.0 : 54.0;
+    final width = (baseWidth + (module.offset.abs() * 0.45)).clamp(46.0, 72.0).toDouble();
     final opacity = module.visible ? 1.0 : 0.32;
 
     return GestureDetector(
@@ -781,15 +749,15 @@ class _BoardModuleBadge extends StatelessWidget {
         child: AnimatedContainer(
           duration: DesignTokens.motionFast,
           curve: DesignTokens.motionCurve,
-          padding: const EdgeInsets.all(4),
+          padding: const EdgeInsets.all(2.5),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             color: Colors.white.withValues(alpha: 0.02),
           ),
           child: _MezoDrawableImage(
             path: assetPath,
             width: width,
-            height: 36,
+            height: 30,
             fallbackIcon: module.module.icon,
           ),
         ),
