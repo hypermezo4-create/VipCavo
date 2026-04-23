@@ -712,7 +712,7 @@ class _SettingControl extends StatelessWidget {
       case 'inter':
         return GoogleFonts.inter(textStyle: fallback);
       case 'din':
-        return GoogleFonts.robotoCondensed(textStyle: fallback);
+        return GoogleFonts.getFont('Roboto Condensed', textStyle: fallback);
       case 'mono':
         return GoogleFonts.robotoMono(textStyle: fallback);
       case 'roboto':
@@ -824,7 +824,7 @@ class _BatteryPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final show = (values['elem_bat_element_visible'] as bool?) ?? true;
-    final iconScale = (((values['batteryview_zoom'] as num?) ?? 100).toDouble() / 100).clamp(0.5, 1.5);
+    final iconScale = ((((values['batteryview_zoom'] as num?) ?? 100).toDouble() / 100).clamp(0.5, 1.5)).toDouble();
     final percentSize = ((values['battery_percent_zoom'] as num?) ?? 14).toDouble();
     final batteryColor = _ColorChip.fromHex((values['battery_level_80_color'] as String?) ?? '#90FFAC');
     return Container(
@@ -862,7 +862,7 @@ class _BatteryPreview extends StatelessWidget {
           const SizedBox(width: 12),
           Text(
             '82%',
-            style: TextStyle(color: Colors.white, fontSize: percentSize.clamp(10, 22)),
+            style: TextStyle(color: Colors.white, fontSize: percentSize.clamp(10, 22).toDouble()),
           ),
         ],
       ),
@@ -876,9 +876,9 @@ class _ClockPreview extends StatelessWidget {
   final Map<String, Object?> values;
   @override
   Widget build(BuildContext context) {
-    final size = ((values['status_clock_zoom'] as num?) ?? 14).toDouble().clamp(11, 24);
-    final dateSize = ((values['Notif_date_zoom'] as num?) ?? 18).toDouble().clamp(12, 24);
-    final weatherSize = ((values['weather_notif_text_zoom'] as num?) ?? 16).toDouble().clamp(11, 22);
+    final size = ((values['status_clock_zoom'] as num?) ?? 14).toDouble().clamp(11, 24).toDouble();
+    final dateSize = ((values['Notif_date_zoom'] as num?) ?? 18).toDouble().clamp(12, 24).toDouble();
+    final weatherSize = ((values['weather_notif_text_zoom'] as num?) ?? 16).toDouble().clamp(11, 22).toDouble();
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
