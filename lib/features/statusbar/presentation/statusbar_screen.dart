@@ -616,7 +616,7 @@ class _BackgroundModuleEditor extends StatelessWidget {
               .map((hex) => ListTile(
                     leading: CircleAvatar(backgroundColor: MezoColorChip.fromHex(hex)),
                     title: Text(hex, style: const TextStyle(color: Colors.white)),
-                    onTap: () => Navigator.pop(_, hex),
+                    onTap: () => Navigator.pop(context, hex),
                   ))
               .toList(),
         ),
