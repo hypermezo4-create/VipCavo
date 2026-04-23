@@ -576,7 +576,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     if (widget.section.id == 'battery' && group == StatusBarStrings.groupColor) {
       return 'Battery level colors, charging color, and percent tint.';
     }
-    if (widget.section.id == 'resize_statusbar' && group == 'Notch Settings') {
+    if (widget.section.id == 'resize_statusbar' && group == 'Notch settings') {
       return 'Camera location, vertical alignment, and reserved width tuning.';
     }
     if (widget.section.id == 'resize_statusbar' && group == 'Left camera notch settings') {
