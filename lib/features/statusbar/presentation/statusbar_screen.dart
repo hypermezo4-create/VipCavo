@@ -48,11 +48,11 @@ class StatusbarScreen extends StatelessWidget {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: sections.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: compact ? 1 : 2,
+                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                    maxCrossAxisExtent: compact ? 520 : 320,
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
-                    childAspectRatio: compact ? 2.2 : 1.08,
+                    mainAxisExtent: compact ? 122 : 132,
                   ),
                   itemBuilder: (context, index) {
                     final section = sections[index];
@@ -65,17 +65,33 @@ class StatusbarScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Icon(section.icon, color: section.accentColor),
-                          const Spacer(),
+                          Row(
+                            children: <Widget>[
+                              Icon(section.icon, color: section.accentColor, size: 18),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  section.previewLabel ?? StatusBarStrings.customizeLabel,
+                                  style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 12),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
                           Text(
                             section.title,
-                            maxLines: 2,
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            section.previewLabel ?? StatusBarStrings.customizeLabel,
-                            style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12),
+                            section.subtitle,
+                            maxLines: compact ? 2 : 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: Colors.white.withValues(alpha: 0.72), fontSize: 12, height: 1.2),
                           ),
                         ],
                       ),
@@ -155,9 +171,19 @@ class _StatusPreviewCardState extends State<_StatusPreviewCard> {
           ),
           const SizedBox(height: 12),
           Text(StatusBarStrings.leftClusterOffsetLabel, style: TextStyle(color: Colors.white.withValues(alpha: 0.74))),
-          Slider(value: _leftOffset, min: -28, max: 28, onChanged: (v) => setState(() => _leftOffset = v)),
+          _MezoStepSlider(
+            value: _leftOffset,
+            min: -28,
+            max: 28,
+            onChanged: (v) => setState(() => _leftOffset = v),
+          ),
           Text(StatusBarStrings.rightClusterOffsetLabel, style: TextStyle(color: Colors.white.withValues(alpha: 0.74))),
-          Slider(value: _rightOffset, min: -28, max: 28, onChanged: (v) => setState(() => _rightOffset = v)),
+          _MezoStepSlider(
+            value: _rightOffset,
+            min: -28,
+            max: 28,
+            onChanged: (v) => setState(() => _rightOffset = v),
+          ),
         ],
       ),
     );
@@ -325,6 +351,18 @@ class _StatusPreviewCardState extends State<_StatusPreviewCard> {
           InkWell(
             onTap: () => setState(() => group.enabled = !group.enabled),
             child: Icon(group.enabled ? Icons.visibility_rounded : Icons.visibility_off_rounded, size: 16, color: Colors.white70),
+          ),
+          const SizedBox(width: 8),
+          _SmallAdjustButton(
+            icon: Icons.remove_rounded,
+            onTap: () => setState(() => group.spacing = (group.spacing - 1).clamp(-8, 16)),
+          ),
+          const SizedBox(width: 4),
+          Text(group.spacing.toStringAsFixed(0), style: const TextStyle(color: Colors.white60, fontSize: 11)),
+          const SizedBox(width: 4),
+          _SmallAdjustButton(
+            icon: Icons.add_rounded,
+            onTap: () => setState(() => group.spacing = (group.spacing + 1).clamp(-8, 16)),
           ),
         ],
       ),
@@ -550,7 +588,7 @@ class _SettingControl extends StatelessWidget {
               subtitle: setting.subtitle,
               trailing: Text(current.toStringAsFixed(0), style: const TextStyle(color: Colors.white70)),
             ),
-            Slider(
+            _MezoStepSlider(
               value: current.clamp(min, max),
               min: min,
               max: max,
@@ -720,6 +758,84 @@ class _SettingControl extends StatelessWidget {
       default:
         return fallback;
     }
+  }
+}
+
+class _SmallAdjustButton extends StatelessWidget {
+  const _SmallAdjustButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: 18,
+        height: 18,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+        ),
+        child: Icon(icon, size: 12, color: Colors.white70),
+      ),
+    );
+  }
+}
+
+class _MezoStepSlider extends StatelessWidget {
+  const _MezoStepSlider({
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.onChanged,
+  });
+
+  final double value;
+  final double min;
+  final double max;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final safe = value.clamp(min, max).toDouble();
+    return Row(
+      children: <Widget>[
+        _SmallAdjustButton(
+          icon: Icons.remove_rounded,
+          onTap: () => onChanged((safe - 1).clamp(min, max).toDouble()),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 3,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+              overlayShape: SliderComponentShape.noOverlay,
+              activeTrackColor: const Color(0xFF89E9D3),
+              inactiveTrackColor: Colors.white.withValues(alpha: 0.18),
+              thumbColor: const Color(0xFFB8FFF2),
+            ),
+            child: Slider(
+              value: safe,
+              min: min,
+              max: max,
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(safe.toStringAsFixed(0), style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        const SizedBox(width: 8),
+        _SmallAdjustButton(
+          icon: Icons.add_rounded,
+          onTap: () => onChanged((safe + 1).clamp(min, max).toDouble()),
+        ),
+      ],
+    );
   }
 }
 

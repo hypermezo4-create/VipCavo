@@ -8,7 +8,8 @@ class StatusBarStrings {
   static const sectionHeader = 'Status sections';
   static const sectionHeaderSubtitle = 'Open any section to refine spacing, style, typography, and behavior';
   static const iconBoardTitle = 'Element board';
-  static const iconBoardSubtitle = 'Long press to reorder. Use arrows to switch side and eye icon to toggle visibility.';
+  static const iconBoardSubtitle =
+      'Long press to reorder. Use arrows for side, eye for visibility, and +/- for live spacing.';
   static const leftClusterOffsetLabel = 'Left cluster offset';
   static const rightClusterOffsetLabel = 'Right cluster offset';
   static const customizeLabel = 'Customize';
