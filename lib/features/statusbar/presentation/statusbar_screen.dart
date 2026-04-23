@@ -13,6 +13,7 @@ import 'package:deadzon/features/statusbar/statusbar_models.dart';
 import 'package:deadzon/features/statusbar/statusbar_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class StatusbarScreen extends StatelessWidget {
   const StatusbarScreen({super.key});
@@ -388,6 +389,13 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
         padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
         physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         children: <Widget>[
+          if (_supportsLivePreview) ...<Widget>[
+            _DetailLivePreview(
+              sectionId: widget.section.id,
+              values: _values,
+            ),
+            const SizedBox(height: 12),
+          ],
           GlassCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -419,7 +427,10 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
           ),
           const SizedBox(height: 12),
           for (final entry in grouped.entries) ...<Widget>[
-            SectionHeader(title: entry.key),
+            SectionHeader(
+              title: _groupTitle(entry.key),
+              subtitle: _groupSubtitle(entry.key),
+            ),
             const SizedBox(height: 8),
             GlassCard(
               child: Column(
@@ -437,6 +448,63 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
             ),
             const SizedBox(height: 12),
           ],
+        ],
+      ),
+    );
+  }
+
+  bool get _supportsLivePreview =>
+      widget.section.id == 'resize_statusbar' || widget.section.id == 'battery' || widget.section.id == 'clock';
+
+  String _groupTitle(String group) {
+    switch (group) {
+      case StatusBarStrings.groupLayout:
+        return 'Statusbar height and structure';
+      case StatusBarStrings.groupSpacing:
+        return widget.section.id == 'battery' ? 'Dimensions and measurements' : 'Spacing and margins';
+      case StatusBarStrings.groupNotch:
+        return 'Notch settings';
+      case StatusBarStrings.groupBehavior:
+        return 'Behavior and visibility';
+      default:
+        return group;
+    }
+  }
+
+  String? _groupSubtitle(String group) {
+    if (widget.section.id == 'clock' && group == StatusBarStrings.groupTypography) {
+      return 'Statusbar clock, notification center clock, date, weather, and settings icon scales.';
+    }
+    if (widget.section.id == 'battery' && group == StatusBarStrings.groupColor) {
+      return 'Battery level colors, charging color, and percent tint.';
+    }
+    if (widget.section.id == 'resize_statusbar' && group == StatusBarStrings.groupNotch) {
+      return 'Camera location, camera position, width, and left camera notch behavior.';
+    }
+    return null;
+  }
+}
+
+class _DetailLivePreview extends StatelessWidget {
+  const _DetailLivePreview({required this.sectionId, required this.values});
+
+  final String sectionId;
+  final Map<String, Object?> values;
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const SectionHeader(
+            title: 'Live preview',
+            subtitle: 'Instant response while you tune controls.',
+          ),
+          const SizedBox(height: 12),
+          if (sectionId == 'resize_statusbar') _ResizePreview(values: values),
+          if (sectionId == 'battery') _BatteryPreview(values: values),
+          if (sectionId == 'clock') _ClockPreview(values: values),
         ],
       ),
     );
@@ -528,16 +596,14 @@ class _SettingControl extends StatelessWidget {
           subtitle: setting.subtitle,
           trailing: _ColorChip(
             hex: selected,
-            onTap: () {
-              final next = selected == '#FFFFFF' ? '#79E3CB' : '#FFFFFF';
-              onChanged(next);
-            },
+            onTap: () => _showColorPicker(context, selected),
           ),
         );
     }
   }
 
   Future<void> _showOptionPicker(BuildContext context, String current) async {
+    final isFontPicker = setting.title.toLowerCase().contains('font');
     final selected = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: const Color(0xFF101B1F),
@@ -554,11 +620,24 @@ class _SettingControl extends StatelessWidget {
                 child: Text(setting.title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
               ),
               for (final option in setting.options)
-                ListTile(
-                  title: Text(option.label, style: const TextStyle(color: Colors.white70)),
-                  trailing: option.value == current ? const Icon(Icons.check_rounded, color: Color(0xFF79E3CB)) : null,
-                  onTap: () => Navigator.of(context).pop(option.value),
-                ),
+                isFontPicker
+                    ? ListTile(
+                        title: Text(
+                          option.label,
+                          style: _fontFor(option.value, const TextStyle(color: Colors.white, fontSize: 15)),
+                        ),
+                        subtitle: Text(
+                          '12:48  Wed',
+                          style: _fontFor(option.value, TextStyle(color: Colors.white.withValues(alpha: 0.62), fontSize: 12)),
+                        ),
+                        trailing: option.value == current ? const Icon(Icons.check_rounded, color: Color(0xFF79E3CB)) : null,
+                        onTap: () => Navigator.of(context).pop(option.value),
+                      )
+                    : ListTile(
+                        title: Text(option.label, style: const TextStyle(color: Colors.white70)),
+                        trailing: option.value == current ? const Icon(Icons.check_rounded, color: Color(0xFF79E3CB)) : null,
+                        onTap: () => Navigator.of(context).pop(option.value),
+                      ),
             ],
           ),
         );
@@ -567,6 +646,79 @@ class _SettingControl extends StatelessWidget {
 
     if (selected != null) {
       onChanged(selected);
+    }
+  }
+
+  Future<void> _showColorPicker(BuildContext context, String current) async {
+    const swatches = <String>[
+      '#FFFFFF',
+      '#8DE8FF',
+      '#79E3CB',
+      '#90FFAC',
+      '#FFC66D',
+      '#FF8EA8',
+      '#B9A3FF',
+      '#76A7FF',
+    ];
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: const Color(0xFF101B1F),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(setting.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: swatches
+                    .map(
+                      (hex) => InkWell(
+                        onTap: () => Navigator.of(context).pop(hex),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: _ColorChip.fromHex(hex),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: hex == current ? Colors.white : Colors.white.withValues(alpha: 0.3),
+                              width: hex == current ? 2 : 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (selected != null) {
+      onChanged(selected);
+    }
+  }
+
+  TextStyle _fontFor(String value, TextStyle fallback) {
+    switch (value) {
+      case 'inter':
+        return GoogleFonts.inter(textStyle: fallback);
+      case 'din':
+        return GoogleFonts.robotoCondensed(textStyle: fallback);
+      case 'mono':
+        return GoogleFonts.robotoMono(textStyle: fallback);
+      case 'roboto':
+        return GoogleFonts.roboto(textStyle: fallback);
+      default:
+        return fallback;
     }
   }
 }
@@ -609,10 +761,141 @@ class _ColorChip extends StatelessWidget {
   }
 
   Color _fromHex(String hex) {
+    return fromHex(hex);
+  }
+
+  static Color fromHex(String hex) {
     final value = hex.replaceAll('#', '');
     if (value.length == 6) {
       return Color(int.parse('FF$value', radix: 16));
     }
     return const Color(0xFF79E3CB);
+  }
+}
+
+class _ResizePreview extends StatelessWidget {
+  const _ResizePreview({required this.values});
+
+  final Map<String, Object?> values;
+  @override
+  Widget build(BuildContext context) {
+    final top = ((values['custom_status_bar_top'] as num?) ?? 2).toDouble();
+    final side = ((values['custom_status_bar_left_right'] as num?) ?? 0).toDouble();
+    final cutoutPadding = ((values['status_bar_element_cutout_padding'] as num?) ?? 35).toDouble();
+    final cameraWidth = ((values['status_bar_element_cutout_camera_width'] as num?) ?? 80).toDouble();
+    return Container(
+      height: 130,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: Colors.black.withValues(alpha: 0.22),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Stack(
+        children: <Widget>[
+          Positioned.fill(
+            child: Container(
+              margin: EdgeInsets.fromLTRB(side / 8, top / 2, side / 8, 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: Container(
+              width: cameraWidth.clamp(30, 130),
+              height: 14,
+              margin: EdgeInsets.only(top: cutoutPadding / 14),
+              decoration: BoxDecoration(color: Colors.black87, borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BatteryPreview extends StatelessWidget {
+  const _BatteryPreview({required this.values});
+
+  final Map<String, Object?> values;
+  @override
+  Widget build(BuildContext context) {
+    final show = (values['elem_bat_element_visible'] as bool?) ?? true;
+    final iconScale = (((values['batteryview_zoom'] as num?) ?? 100).toDouble() / 100).clamp(0.5, 1.5);
+    final percentSize = ((values['battery_percent_zoom'] as num?) ?? 14).toDouble();
+    final batteryColor = _ColorChip.fromHex((values['battery_level_80_color'] as String?) ?? '#90FFAC');
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: Colors.black.withValues(alpha: 0.22),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        children: <Widget>[
+          AnimatedOpacity(
+            duration: DesignTokens.motionFast,
+            opacity: show ? 1 : 0.3,
+            child: Transform.scale(
+              scale: iconScale,
+              child: Container(
+                width: 34,
+                height: 16,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: batteryColor, width: 1.6),
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    width: 20,
+                    margin: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(color: batteryColor, borderRadius: BorderRadius.circular(2)),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            '82%',
+            style: TextStyle(color: Colors.white, fontSize: percentSize.clamp(10, 22)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ClockPreview extends StatelessWidget {
+  const _ClockPreview({required this.values});
+
+  final Map<String, Object?> values;
+  @override
+  Widget build(BuildContext context) {
+    final size = ((values['status_clock_zoom'] as num?) ?? 14).toDouble().clamp(11, 24);
+    final dateSize = ((values['Notif_date_zoom'] as num?) ?? 18).toDouble().clamp(12, 24);
+    final weatherSize = ((values['weather_notif_text_zoom'] as num?) ?? 16).toDouble().clamp(11, 22);
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: Colors.black.withValues(alpha: 0.22),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text('12:48', style: TextStyle(color: Colors.white, fontSize: size)),
+          const SizedBox(height: 4),
+          Text('Wed, 23 Apr', style: TextStyle(color: Colors.white70, fontSize: dateSize)),
+          const SizedBox(height: 4),
+          Text('23°  Cloudy', style: TextStyle(color: const Color(0xFF8DE8FF), fontSize: weatherSize)),
+        ],
+      ),
+    );
   }
 }
