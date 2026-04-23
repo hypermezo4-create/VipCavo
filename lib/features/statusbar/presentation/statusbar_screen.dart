@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
@@ -38,45 +40,50 @@ class StatusbarScreen extends StatelessWidget {
               subtitle: StatusBarStrings.sectionHeaderSubtitle,
             ),
             const SizedBox(height: 12),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: sections.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 1.05,
-              ),
-              itemBuilder: (context, index) {
-                final section = sections[index];
-                return GlassCard(
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => StatusbarDetailScreen(section: section),
-                    ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 420;
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: sections.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: compact ? 1 : 2,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: compact ? 2.2 : 1.08,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Icon(section.icon, color: section.accentColor),
-                      const Spacer(),
-                      Text(
-                        section.title,
-                        maxLines: 2,
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                  itemBuilder: (context, index) {
+                    final section = sections[index];
+                    return GlassCard(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => StatusbarDetailScreen(section: section),
+                        ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        section.previewLabel ?? 'Customize',
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Icon(section.icon, color: section.accentColor),
+                          const Spacer(),
+                          Text(
+                            section.title,
+                            maxLines: 2,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            section.previewLabel ?? StatusBarStrings.customizeLabel,
+                            style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                )
-                    .animate(delay: (45 * index).ms)
-                    .fadeIn(duration: 260.ms)
-                    .scale(begin: const Offset(0.96, 0.96), end: const Offset(1, 1));
+                    )
+                        .animate(delay: (45 * index).ms)
+                        .fadeIn(duration: 260.ms)
+                        .scale(begin: const Offset(0.96, 0.96), end: const Offset(1, 1));
+                  },
+                );
               },
             ),
           ],
@@ -106,9 +113,12 @@ class _StatusPreviewCardState extends State<_StatusPreviewCard> {
         .map(
           (module) => _PreviewGroup(
             module.id,
-            module.label,
-            Icon(module.icon, size: 16, color: module.color),
+            module.title,
+            module.previewLabel,
+            module.icon,
+            module.color,
             side: module.defaultSide,
+            spacing: module.defaultSpacing,
           ),
         )
         .toList();
@@ -127,7 +137,15 @@ class _StatusPreviewCardState extends State<_StatusPreviewCard> {
           const SizedBox(height: 12),
           _buildPreviewCanvas(),
           const SizedBox(height: 14),
-          Text('Icon board (drag to reorder groups)', style: TextStyle(color: Colors.white.withValues(alpha: 0.82), fontWeight: FontWeight.w600)),
+          Text(
+            StatusBarStrings.iconBoardTitle,
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.82), fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            StatusBarStrings.iconBoardSubtitle,
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 12),
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -135,10 +153,10 @@ class _StatusPreviewCardState extends State<_StatusPreviewCard> {
             children: _groups.map(_buildDraggableGroup).toList(),
           ),
           const SizedBox(height: 12),
-          Text('Left cluster offset', style: TextStyle(color: Colors.white.withValues(alpha: 0.74))),
-          Slider(value: _leftOffset, min: -24, max: 24, onChanged: (v) => setState(() => _leftOffset = v)),
-          Text('Right cluster offset', style: TextStyle(color: Colors.white.withValues(alpha: 0.74))),
-          Slider(value: _rightOffset, min: -24, max: 24, onChanged: (v) => setState(() => _rightOffset = v)),
+          Text(StatusBarStrings.leftClusterOffsetLabel, style: TextStyle(color: Colors.white.withValues(alpha: 0.74))),
+          Slider(value: _leftOffset, min: -28, max: 28, onChanged: (v) => setState(() => _leftOffset = v)),
+          Text(StatusBarStrings.rightClusterOffsetLabel, style: TextStyle(color: Colors.white.withValues(alpha: 0.74))),
+          Slider(value: _rightOffset, min: -28, max: 28, onChanged: (v) => setState(() => _rightOffset = v)),
         ],
       ),
     );
@@ -150,43 +168,102 @@ class _StatusPreviewCardState extends State<_StatusPreviewCard> {
     return AnimatedContainer(
       duration: DesignTokens.motionFast,
       curve: DesignTokens.motionCurve,
-      height: 102,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: Colors.black.withValues(alpha: 0.3),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        borderRadius: BorderRadius.circular(18),
+        color: Colors.black.withValues(alpha: 0.22),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(
-        children: <Widget>[
-          Transform.translate(
-            offset: Offset(_leftOffset, 0),
-            child: Row(children: leftGroups.map(_groupChip).toList()),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 80),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF132228).withValues(alpha: 0.58),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 360;
+                if (compact) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Transform.translate(
+                        offset: Offset(_leftOffset, 0),
+                        child: Wrap(spacing: 6, runSpacing: 6, children: leftGroups.map(_groupChip).toList()),
+                      ),
+                      const SizedBox(height: 8),
+                      Transform.translate(
+                        offset: Offset(_rightOffset, 0),
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: Wrap(
+                            alignment: WrapAlignment.end,
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: rightGroups.map(_groupChip).toList(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Expanded(
+                      child: Transform.translate(
+                        offset: Offset(_leftOffset, 0),
+                        child: Wrap(spacing: 6, runSpacing: 6, children: leftGroups.map(_groupChip).toList()),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Transform.translate(
+                        offset: Offset(_rightOffset, 0),
+                        child: Align(
+                          alignment: Alignment.topRight,
+                          child: Wrap(
+                            alignment: WrapAlignment.end,
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: rightGroups.map(_groupChip).toList(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
-          const Spacer(),
-          Transform.translate(
-            offset: Offset(_rightOffset, 0),
-            child: Row(children: rightGroups.map(_groupChip).toList()),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _groupChip(_PreviewGroup group) {
-    return Container(
-      margin: const EdgeInsets.only(right: 6),
+    return AnimatedContainer(
+      duration: DesignTokens.motionFast,
+      margin: EdgeInsets.only(right: group.spacing),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          group.icon,
+          Icon(group.icon, size: 14, color: group.color),
           const SizedBox(width: 4),
-          Text(group.label, style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
+          Text(group.label, style: const TextStyle(color: Colors.white70, fontSize: 11.5, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -198,7 +275,9 @@ class _StatusPreviewCardState extends State<_StatusPreviewCard> {
       onAcceptWithDetails: (details) {
         final fromIndex = _groups.indexWhere((g) => g.id == details.data);
         final toIndex = index;
-        if (fromIndex == -1 || fromIndex == toIndex) return;
+        if (fromIndex == -1 || fromIndex == toIndex) {
+          return;
+        }
         setState(() {
           final item = _groups.removeAt(fromIndex);
           _groups.insert(toIndex, item);
@@ -231,12 +310,14 @@ class _StatusPreviewCardState extends State<_StatusPreviewCard> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          group.icon,
+          Icon(group.icon, size: 15, color: group.color),
           const SizedBox(width: 6),
-          Text(group.id, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
+          Text(group.title, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
           const SizedBox(width: 8),
           InkWell(
-            onTap: () => setState(() => group.side = group.side == StatusbarBoardSide.left ? StatusbarBoardSide.right : StatusbarBoardSide.left),
+            onTap: () => setState(() {
+              group.side = group.side == StatusbarBoardSide.left ? StatusbarBoardSide.right : StatusbarBoardSide.left;
+            }),
             child: Icon(group.side == StatusbarBoardSide.left ? Icons.west_rounded : Icons.east_rounded, size: 16, color: Colors.white70),
           ),
           const SizedBox(width: 8),
@@ -251,13 +332,24 @@ class _StatusPreviewCardState extends State<_StatusPreviewCard> {
 }
 
 class _PreviewGroup {
-  _PreviewGroup(this.id, this.label, this.icon, {required this.side});
+  _PreviewGroup(
+    this.id,
+    this.title,
+    this.label,
+    this.icon,
+    this.color, {
+    required this.side,
+    required this.spacing,
+  });
 
   final String id;
+  final String title;
   final String label;
-  final Widget icon;
+  final IconData icon;
+  final Color color;
   StatusbarBoardSide side;
   bool enabled = true;
+  double spacing;
 }
 
 class StatusbarDetailScreen extends StatefulWidget {
@@ -294,17 +386,13 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
       appBar: AppBar(title: Text(widget.section.title)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         children: <Widget>[
           GlassCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 SectionHeader(title: widget.section.title, subtitle: widget.section.subtitle),
-                const SizedBox(height: 8),
-                Text(
-                  'Reference: ${(widget.section.sourceXmlReference ?? 'n/a').replaceAll('elite', 'mezo')}',
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 12),
-                ),
                 const SizedBox(height: 10),
                 ...((statusbarDetailContent[widget.section.id]?.highlights ?? const <String>[])
                     .map((line) => Padding(
@@ -377,7 +465,7 @@ class _SettingControl extends StatelessWidget {
           subtitle: setting.subtitle,
           trailing: Switch(
             value: (value as bool?) ?? false,
-            onChanged: onChanged,
+            onChanged: (next) => onChanged(next),
           ),
         );
       case StatusBarControlType.slider:
@@ -404,21 +492,31 @@ class _SettingControl extends StatelessWidget {
         );
       case StatusBarControlType.select:
         final current = (value as String?) ?? setting.options.first.value;
+        final label = setting.options.firstWhere((option) => option.value == current).label;
         return SettingsRow(
           icon: Icons.view_list_rounded,
           iconColor: const Color(0xFF9FAAFF),
           title: setting.title,
           subtitle: setting.subtitle,
-          trailing: DropdownButton<String>(
-            value: current,
-            dropdownColor: const Color(0xFF12242B),
-            underline: const SizedBox.shrink(),
-            items: setting.options
-                .map((option) => DropdownMenuItem<String>(value: option.value, child: Text(option.label)))
-                .toList(),
-            onChanged: (v) {
-              if (v != null) onChanged(v);
-            },
+          trailing: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => _showOptionPicker(context, current),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Colors.white54),
+                ],
+              ),
+            ),
           ),
         );
       case StatusBarControlType.color:
@@ -436,6 +534,39 @@ class _SettingControl extends StatelessWidget {
             },
           ),
         );
+    }
+  }
+
+  Future<void> _showOptionPicker(BuildContext context, String current) async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: const Color(0xFF101B1F),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+                child: Text(setting.title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+              ),
+              for (final option in setting.options)
+                ListTile(
+                  title: Text(option.label, style: const TextStyle(color: Colors.white70)),
+                  trailing: option.value == current ? const Icon(Icons.check_rounded, color: Color(0xFF79E3CB)) : null,
+                  onTap: () => Navigator.of(context).pop(option.value),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (selected != null) {
+      onChanged(selected);
     }
   }
 }
