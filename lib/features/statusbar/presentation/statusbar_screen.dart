@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
-
 import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
@@ -114,27 +112,19 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              _MezoDrawableImage(path: card.drawablePath, size: 32, fallbackIcon: section.icon),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  '${card.titleResId} / ${card.summaryResId}',
-                                  style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 11),
-                                ),
-                              ),
-                            ],
-                          ),
+                          _MezoDrawableImage(path: card.drawablePath, size: 34, fallbackIcon: section.icon),
                           const SizedBox(height: 10),
                           Text(
                             card.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             card.summary,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(color: Colors.white.withValues(alpha: 0.72), fontSize: 12, height: 1.2),
                           ),
                         ],
@@ -162,23 +152,29 @@ class _StatusControlBoard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final left = boardState.modules.where((m) => m.side == StatusbarBoardSide.left && m.visible).toList();
-    final right = boardState.modules.where((m) => m.side == StatusbarBoardSide.right && m.visible).toList();
+    final leftVisible = boardState.modules.where((m) => m.side == StatusbarBoardSide.left && m.visible).toList();
+    final rightVisible = boardState.modules.where((m) => m.side == StatusbarBoardSide.right && m.visible).toList();
 
     return GlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const SectionHeader(title: 'Statusbar adjustment', subtitle: 'Live orchestration board • drag, switch side, hide, offset'),
+          const SectionHeader(
+            title: 'Statusbar element board',
+            subtitle: 'Mezo orchestration board · drag order, switch side, toggle visibility, spacing, and cluster offsets.',
+          ),
+          const SizedBox(height: 10),
+          _buildMezoBoard(leftVisible, rightVisible),
           const SizedBox(height: 12),
-          _buildPreviewCanvas(left, right),
-          const SizedBox(height: 12),
-          Text(StatusBarStrings.iconBoardTitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.82), fontWeight: FontWeight.w600)),
+          Text(
+            'Modules',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.82), fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: boardState.modules.map((module) => _buildDraggableModule(module)).toList(),
+            children: boardState.modules.map((module) => _buildDraggableModule(module)).toList(growable: false),
           ),
           const SizedBox(height: 12),
           Text(StatusBarStrings.leftClusterOffsetLabel, style: TextStyle(color: Colors.white.withValues(alpha: 0.74))),
@@ -200,115 +196,104 @@ class _StatusControlBoard extends StatelessWidget {
     );
   }
 
-  Widget _buildPreviewCanvas(List<StatusbarBoardModuleState> left, List<StatusbarBoardModuleState> right) {
+  Widget _buildMezoBoard(List<StatusbarBoardModuleState> left, List<StatusbarBoardModuleState> right) {
     return AnimatedContainer(
       duration: DesignTokens.motionFast,
       curve: DesignTokens.motionCurve,
+      padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        color: const Color(0xFF050A0D),
-        border: Border.all(color: const Color(0xFF4AD4BF).withValues(alpha: 0.32)),
-        boxShadow: const <BoxShadow>[BoxShadow(color: Color(0x4400FFE1), blurRadius: 18, spreadRadius: -8)],
+        color: const Color(0xFF020405),
+        border: Border.all(color: const Color(0xFF5BD1C3).withValues(alpha: 0.28)),
       ),
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 120),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF111A20).withValues(alpha: 0.82),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-            ),
-            child: Column(
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          color: const Color(0xFF0A0F11),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        child: Column(
+          children: <Widget>[
+            Row(
               children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Expanded(child: Text('Left side', style: TextStyle(color: Colors.white.withValues(alpha: 0.75)))),
-                    Text('Right side', style: TextStyle(color: Colors.white.withValues(alpha: 0.75))),
-                  ],
+                Expanded(
+                  child: Text('Left side', style: TextStyle(color: Colors.white.withValues(alpha: 0.72), fontSize: 12)),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Expanded(
+                Text('Right side', style: TextStyle(color: Colors.white.withValues(alpha: 0.72), fontSize: 12)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 86,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(
+                    child: ClipRect(
                       child: Transform.translate(
                         offset: Offset(boardState.leftClusterOffset, 0),
-                        child: Wrap(spacing: 6, runSpacing: 6, children: left.map(_previewChip).toList()),
+                        child: Wrap(
+                          spacing: 0,
+                          runSpacing: 6,
+                          children: left.map(_boardModuleToken).toList(growable: false),
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
+                  ),
+                  Container(
+                    width: 1,
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    color: const Color(0xFF41D2C4).withValues(alpha: 0.35),
+                  ),
+                  Expanded(
+                    child: ClipRect(
                       child: Transform.translate(
                         offset: Offset(boardState.rightClusterOffset, 0),
                         child: Align(
                           alignment: Alignment.topRight,
                           child: Wrap(
-                            alignment: WrapAlignment.end,
-                            spacing: 6,
+                            spacing: 0,
                             runSpacing: 6,
-                            children: right.map(_previewChip).toList(),
+                            alignment: WrapAlignment.end,
+                            children: right.map(_boardModuleToken).toList(growable: false),
                           ),
                         ),
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text('Center', style: TextStyle(color: Colors.white.withValues(alpha: 0.75))),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
+            const SizedBox(height: 2),
+            Text('Center', style: TextStyle(color: Colors.white.withValues(alpha: 0.64), fontSize: 12)),
+          ],
         ),
       ),
     );
   }
 
-  Widget _previewChip(StatusbarBoardModuleState module) {
+  Widget _boardModuleToken(StatusbarBoardModuleState module) {
+    final spacing = module.offset.clamp(-16, 16);
     return AnimatedContainer(
       duration: DesignTokens.motionFast,
-      margin: EdgeInsets.only(left: module.offset > 0 ? module.offset : 0, right: module.offset < 0 ? -module.offset : 0),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      curve: DesignTokens.motionCurve,
+      margin: EdgeInsets.only(
+        left: spacing >= 0 ? spacing : 0,
+        right: spacing < 0 ? -spacing : 0,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
       child: _MezoDrawableImage(
-        path: 'reference/mezo/mezo/res/drawable-xxxhdpi/${_boardDrawableForModule(module.id)}.png',
-        size: 20,
+        path: MezoStatusbarBoardSourceMap.boardDrawablePath(module.id),
+        size: 18,
         fallbackIcon: module.module.icon,
       ),
     );
-  }
-
-  String _boardDrawableForModule(String moduleId) {
-    switch (moduleId) {
-      case 'clock':
-        return 'elem_clock_card';
-      case 'battery':
-        return 'elem_bat_card';
-      case 'netspeed':
-        return 'elem_speed_card';
-      case 'network':
-        return 'elem_net_card';
-      case 'notification_icons':
-        return 'elem_notif_card';
-      case 'status_icons':
-        return 'elem_status_card';
-      case 'date':
-        return 'elem_date_card';
-      case 'weather':
-        return 'elem_weather_card';
-      case 'prompt_icon':
-        return 'elem_prompt_card';
-      default:
-        return 'elem_clock_card';
-    }
   }
 
   Widget _buildDraggableModule(StatusbarBoardModuleState module) {
@@ -320,8 +305,8 @@ class _StatusControlBoard extends StatelessWidget {
           return;
         }
         final reordered = List<StatusbarBoardModuleState>.from(boardState.modules);
-        final picked = reordered.removeAt(fromIndex);
-        reordered.insert(index, picked);
+        final moved = reordered.removeAt(fromIndex);
+        reordered.insert(index, moved);
         onChanged(
           boardState.copyWith(
             modules: reordered.indexed
@@ -334,7 +319,7 @@ class _StatusControlBoard extends StatelessWidget {
         return LongPressDraggable<String>(
           data: module.id,
           feedback: Material(color: Colors.transparent, child: _boardPill(module, active: true)),
-          childWhenDragging: Opacity(opacity: 0.35, child: _boardPill(module)),
+          childWhenDragging: Opacity(opacity: 0.3, child: _boardPill(module)),
           child: _boardPill(module),
         );
       },
@@ -354,7 +339,11 @@ class _StatusControlBoard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(module.module.icon, size: 15, color: module.module.color),
+          _MezoDrawableImage(
+            path: MezoStatusbarBoardSourceMap.boardDrawablePath(module.id),
+            size: 16,
+            fallbackIcon: module.module.icon,
+          ),
           const SizedBox(width: 6),
           Text(module.module.title, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
           const SizedBox(width: 8),

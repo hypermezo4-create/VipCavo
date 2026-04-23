@@ -39,25 +39,30 @@ class StatusbarBoardService {
   }
 
   static Future<void> writeModule(StatusbarBoardModuleState module) async {
-    await Future.wait(<Future<void>>[
-      _writeVisible(module),
-      _writeInt(module.module.sideKey, module.side == StatusbarBoardSide.left ? 0 : 1),
-      _writeInt(module.module.orderKey, module.order),
-      _writeInt(module.module.offsetKey, module.offset.round()),
-    ]);
+    await _writeModuleCore(module);
     await _sendRefreshIntent();
   }
 
   static Future<void> writeModules(List<StatusbarBoardModuleState> modules) async {
     for (final module in modules) {
-      await writeModule(module);
+      await _writeModuleCore(module);
     }
+    await _sendRefreshIntent();
   }
 
   static Future<void> writeClusterOffsets({required double left, required double right}) async {
     await _writeInt(statusbarBoardLeftClusterOffsetKey, left.round());
     await _writeInt(statusbarBoardRightClusterOffsetKey, right.round());
     await _sendRefreshIntent();
+  }
+
+  static Future<void> _writeModuleCore(StatusbarBoardModuleState module) async {
+    await Future.wait(<Future<void>>[
+      _writeVisible(module),
+      _writeInt(module.module.sideKey, module.side == StatusbarBoardSide.left ? 0 : 1),
+      _writeInt(module.module.orderKey, module.order),
+      _writeInt(module.module.offsetKey, module.offset.round()),
+    ]);
   }
 
   static Future<bool> _readVisible(StatusbarBoardModule module) async {
