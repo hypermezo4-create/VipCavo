@@ -22,7 +22,7 @@ class ResizeStatusbarService {
     'status_bar_element_cutout_left_not_calculate',
   };
 
-  static const Map<String, _ResizeBinding> bindings = <String, _ResizeBinding>{
+  static const Map<String, _ResizeBinding> _bindings = <String, _ResizeBinding>{
     'custom_status_bar_height': _ResizeBinding.intSetting(defaultValue: 99, storeType: MezoSettingsStoreType.global),
     'status_bar_elem_center_in_island': _ResizeBinding.boolSetting(defaultValue: true),
     'custom_status_bar_top': _ResizeBinding.intSetting(defaultValue: 2),
@@ -38,7 +38,7 @@ class ResizeStatusbarService {
 
   static Future<Map<String, Object?>> loadAll() async {
     final values = <String, Object?>{};
-    for (final entry in bindings.entries) {
+    for (final entry in _bindings.entries) {
       final key = entry.key;
       final binding = entry.value;
       switch (binding.valueType) {
@@ -53,7 +53,7 @@ class ResizeStatusbarService {
   }
 
   static Future<void> write(String key, Object? value) async {
-    final binding = bindings[key];
+    final binding = _bindings[key];
     if (binding == null || value == null) {
       return;
     }
