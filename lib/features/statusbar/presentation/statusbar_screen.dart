@@ -106,7 +106,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
 }
 
 
-class _StatusControlBoard extends StatelessWidget {
+class _StatusControlBoard extends StatefulWidget {
   const _StatusControlBoard({
     required this.boardState,
     required this.onChanged,
@@ -118,18 +118,19 @@ class _StatusControlBoard extends StatelessWidget {
   final ValueChanged<String> onOpenSection;
 
   @override
+  State<_StatusControlBoard> createState() => _StatusControlBoardState();
+}
+
+class _StatusControlBoardState extends State<_StatusControlBoard> {
+  String? _hoverSlotId;
+
+  @override
   Widget build(BuildContext context) {
-    final orderedModules = List<StatusbarBoardModuleState>.from(boardState.modules)
+    final orderedModules = List<StatusbarBoardModuleState>.from(widget.boardState.modules)
       ..sort((a, b) => a.order.compareTo(b.order));
-    final leftModules = orderedModules
-        .where((module) => module.side == StatusbarBoardSide.left)
-        .toList(growable: false);
-    final rightModules = orderedModules
-        .where((module) => module.side == StatusbarBoardSide.right)
-        .toList(growable: false);
 
     return GlassCard(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -145,13 +146,14 @@ class _StatusControlBoard extends StatelessWidget {
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
+                            letterSpacing: -0.2,
                           ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Long-press any module to move it. Tap a module to edit its side, visibility, and spacing.',
+                      'Drag modules directly on the board. Tap any module to adjust side, visibility, and spacing.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.74),
+                            color: Colors.white.withValues(alpha: 0.72),
                             height: 1.28,
                           ),
                     ),
@@ -161,13 +163,20 @@ class _StatusControlBoard extends StatelessWidget {
               IconButton(
                 onPressed: () => _showBoardManager(context),
                 icon: const Icon(Icons.tune_rounded),
-                color: Colors.white.withValues(alpha: 0.82),
-                tooltip: 'Manage hidden modules',
+                color: Colors.white.withValues(alpha: 0.8),
+                tooltip: 'Board manager',
+                visualDensity: VisualDensity.compact,
               ),
             ],
           ),
           const SizedBox(height: 12),
-          _buildBoard(context, leftModules, rightModules),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final slots = _buildSlots(constraints.maxWidth);
+              final placements = _assignModulesToSlots(orderedModules, slots);
+              return _buildBoard(context, slots, placements);
+            },
+          ),
         ],
       ),
     );
@@ -175,180 +184,206 @@ class _StatusControlBoard extends StatelessWidget {
 
   Widget _buildBoard(
     BuildContext context,
-    List<StatusbarBoardModuleState> leftModules,
-    List<StatusbarBoardModuleState> rightModules,
+    List<_BoardSlot> slots,
+    Map<String, _BoardSlot> placements,
   ) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final boardWidth = constraints.maxWidth;
-        final leftSlots = _slotsForSide(StatusbarBoardSide.left, boardWidth);
-        final rightSlots = _slotsForSide(StatusbarBoardSide.right, boardWidth);
+    const double boardHeight = 224;
+    const double boardRadius = 32;
 
-        return Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: const Color(0xFF9E38FF).withValues(alpha: 0.78), width: 1.15),
-            boxShadow: const <BoxShadow>[
-              BoxShadow(color: Color(0x2200FFF0), blurRadius: 18, spreadRadius: -10),
-              BoxShadow(color: Color(0x33000000), blurRadius: 24, offset: Offset(0, 12)),
+    return Container(
+      width: double.infinity,
+      height: boardHeight,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(boardRadius + 2),
+        boxShadow: const <BoxShadow>[
+          BoxShadow(color: Color(0x1F7B5CFF), blurRadius: 28, spreadRadius: -16),
+          BoxShadow(color: Color(0x3A000000), blurRadius: 26, offset: Offset(0, 12)),
+        ],
+      ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(boardRadius),
+          border: Border.all(color: const Color(0xFF8D67FF).withValues(alpha: 0.62), width: 1.2),
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: <Color>[
+              const Color(0xFF121B24),
+              const Color(0xFF090F15).withValues(alpha: 0.98),
             ],
           ),
-          child: SizedBox(
-            height: 270,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(29),
-              child: Stack(
-                children: <Widget>[
-                  const Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: <Color>[
-                            Color(0xFF010304),
-                            Color(0xFF020608),
-                            Color(0xFF000000),
-                          ],
-                        ),
-                      ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(boardRadius),
+          child: Stack(
+            children: <Widget>[
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: <Color>[
+                        const Color(0xFF060B10),
+                        const Color(0xFF000000),
+                      ],
                     ),
                   ),
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: Column(
-                        children: <Widget>[
-                          const Expanded(child: SizedBox.shrink()),
-                          Container(height: 28, color: Colors.white.withValues(alpha: 0.28)),
-                          const Expanded(child: SizedBox.shrink()),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 16,
-                    bottom: 16,
-                    left: 0,
-                    right: 0,
-                    child: IgnorePointer(
-                      child: Align(
-                        child: Container(
-                          width: 4,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.86),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  ..._buildSideSlots(
-                    context,
-                    modules: leftModules,
-                    slots: leftSlots,
-                    side: StatusbarBoardSide.left,
-                    clusterOffset: boardState.leftClusterOffset,
-                  ),
-                  ..._buildSideSlots(
-                    context,
-                    modules: rightModules,
-                    slots: rightSlots,
-                    side: StatusbarBoardSide.right,
-                    clusterOffset: boardState.rightClusterOffset,
-                  ),
-                ],
+                ),
               ),
-            ),
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 104,
+                child: IgnorePointer(
+                  child: Center(
+                    child: Container(
+                      width: 112,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 22,
+                bottom: 18,
+                left: 0,
+                right: 0,
+                child: IgnorePointer(
+                  child: Center(
+                    child: Container(
+                      width: 3,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.88),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              for (final slot in slots)
+                Positioned(
+                  left: slot.left,
+                  top: slot.top,
+                  width: slot.width,
+                  height: slot.height,
+                  child: _BoardSlotTarget(
+                    isActive: _hoverSlotId == slot.id,
+                    onWillAccept: () {
+                      if (_hoverSlotId != slot.id) {
+                        setState(() => _hoverSlotId = slot.id);
+                      }
+                    },
+                    onLeave: () {
+                      if (_hoverSlotId == slot.id) {
+                        setState(() => _hoverSlotId = null);
+                      }
+                    },
+                    onAccept: (moduleId) {
+                      _moveModuleToSlot(moduleId, slot);
+                      setState(() {
+                        _hoverSlotId = null;
+                      });
+                    },
+                  ),
+                ),
+              for (final module in widget.boardState.modules)
+                if (placements.containsKey(module.id))
+                  _buildPositionedModule(
+                    context,
+                    module,
+                    placements[module.id]!,
+                  ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
-  List<Widget> _buildSideSlots(
-    BuildContext context, {
-    required List<StatusbarBoardModuleState> modules,
-    required List<_BoardSlot> slots,
-    required StatusbarBoardSide side,
-    required double clusterOffset,
-  }) {
-    final children = <Widget>[];
-    for (var index = 0; index < slots.length; index++) {
-      final slot = slots[index];
-      final module = index < modules.length ? modules[index] : null;
-      children.add(
-        Positioned(
-          left: slot.left + clusterOffset,
-          top: slot.top,
-          child: DragTarget<String>(
-            onAcceptWithDetails: (details) => _moveModuleToSlot(details.data, side, index),
-            builder: (context, candidateData, rejectedData) {
-              final hovering = candidateData.isNotEmpty;
-              if (module == null) {
-                return _BoardSlotTarget(
-                  width: slot.width,
-                  height: slot.height,
-                  hovering: hovering,
-                );
-              }
-              final badge = _BoardModuleBadge(
-                module: module,
-                assetPath: _assetForModule(module.id),
-                width: slot.width,
-                height: slot.height,
-                onTap: () => _showModuleSheet(context, module),
-              );
-              return LongPressDraggable<String>(
-                data: module.id,
-                feedback: Material(
-                  color: Colors.transparent,
-                  child: Opacity(
-                    opacity: 0.94,
-                    child: Transform.scale(scale: 1.04, child: badge),
-                  ),
-                ),
-                childWhenDragging: Opacity(opacity: 0.18, child: badge),
-                child: badge,
-              );
-            },
+  Widget _buildPositionedModule(
+    BuildContext context,
+    StatusbarBoardModuleState module,
+    _BoardSlot slot,
+  ) {
+    final badge = _BoardModuleBadge(
+      module: module,
+      assetPath: _assetForModule(module.id),
+      onTap: () => _showModuleSheet(context, module),
+    );
+
+    return Positioned(
+      left: slot.left + (module.side == StatusbarBoardSide.left ? widget.boardState.leftClusterOffset : widget.boardState.rightClusterOffset),
+      top: slot.top,
+      width: slot.width,
+      height: slot.height,
+      child: Draggable<String>(
+        data: module.id,
+        onDragEnd: (_) => setState(() {
+          _hoverSlotId = null;
+        }),
+        feedback: Material(
+          color: Colors.transparent,
+          child: Transform.scale(
+            scale: 1.04,
+            child: SizedBox(width: slot.width, height: slot.height, child: badge),
           ),
         ),
-      );
-    }
-    return children;
+        childWhenDragging: Opacity(opacity: 0.1, child: SizedBox(width: slot.width, height: slot.height, child: badge)),
+        child: SizedBox(width: slot.width, height: slot.height, child: badge),
+      ),
+    );
   }
 
-  List<_BoardSlot> _slotsForSide(StatusbarBoardSide side, double boardWidth) {
-    const tileHeight = 30.0;
-    const narrowWidth = 46.0;
-    const regularWidth = 52.0;
-    const wideWidth = 60.0;
-    const edge = 18.0;
-    const columnGap = 10.0;
+  List<_BoardSlot> _buildSlots(double boardWidth) {
+    const double tileWidth = 48;
+    const double tileHeight = 32;
+    const double boardPadding = 12;
+    const double rowGap = 10;
+    const double columnGap = 6;
+    final centerX = (boardWidth / 2) - (tileWidth / 2);
+    final rightOuterX = boardWidth - boardPadding - tileWidth;
+    final rightInnerX = rightOuterX - tileWidth - columnGap;
+    final leftX = boardPadding;
 
-    if (side == StatusbarBoardSide.left) {
-      return const <_BoardSlot>[
-        _BoardSlot(left: edge, top: 20, width: regularWidth, height: tileHeight),
-        _BoardSlot(left: edge + regularWidth + columnGap, top: 20, width: regularWidth, height: tileHeight),
-        _BoardSlot(left: edge, top: 190, width: regularWidth, height: tileHeight),
-        _BoardSlot(left: edge + regularWidth + columnGap, top: 190, width: regularWidth, height: tileHeight),
-      ];
-    }
-
-    final firstColumn = boardWidth - edge - regularWidth;
-    final secondColumn = firstColumn - columnGap - regularWidth;
-    final wideColumn = boardWidth - edge - wideWidth;
     return <_BoardSlot>[
-      _BoardSlot(left: secondColumn, top: 20, width: narrowWidth, height: tileHeight),
-      _BoardSlot(left: firstColumn, top: 20, width: narrowWidth, height: tileHeight),
-      _BoardSlot(left: secondColumn, top: 66, width: regularWidth, height: tileHeight),
-      _BoardSlot(left: firstColumn, top: 66, width: regularWidth, height: tileHeight),
-      _BoardSlot(left: secondColumn, top: 192, width: regularWidth, height: tileHeight),
-      _BoardSlot(left: firstColumn, top: 192, width: regularWidth, height: tileHeight),
-      _BoardSlot(left: wideColumn - columnGap - regularWidth, top: 224, width: regularWidth, height: tileHeight),
-      _BoardSlot(left: wideColumn, top: 224, width: regularWidth, height: tileHeight),
-      _BoardSlot(left: boardWidth - edge - wideWidth, top: 224, width: wideWidth, height: tileHeight),
+      _BoardSlot(id: 'left_0', side: StatusbarBoardSide.left, orderIndex: 0, left: leftX, top: 18, width: tileWidth, height: tileHeight),
+      _BoardSlot(id: 'left_1', side: StatusbarBoardSide.left, orderIndex: 1, left: leftX, top: 18 + tileHeight + rowGap, width: tileWidth, height: tileHeight),
+      _BoardSlot(id: 'left_2', side: StatusbarBoardSide.left, orderIndex: 2, left: leftX, top: 18 + (tileHeight + rowGap) * 2, width: tileWidth, height: tileHeight),
+      _BoardSlot(id: 'left_3', side: StatusbarBoardSide.left, orderIndex: 3, left: leftX, top: 18 + (tileHeight + rowGap) * 3, width: tileWidth, height: tileHeight),
+      _BoardSlot(id: 'right_0', side: StatusbarBoardSide.right, orderIndex: 0, left: rightInnerX, top: 18, width: tileWidth, height: tileHeight),
+      _BoardSlot(id: 'right_1', side: StatusbarBoardSide.right, orderIndex: 1, left: rightOuterX, top: 18, width: tileWidth, height: tileHeight),
+      _BoardSlot(id: 'right_2', side: StatusbarBoardSide.right, orderIndex: 2, left: rightInnerX, top: 18 + tileHeight + rowGap, width: tileWidth, height: tileHeight),
+      _BoardSlot(id: 'right_3', side: StatusbarBoardSide.right, orderIndex: 3, left: rightOuterX, top: 18 + tileHeight + rowGap, width: tileWidth, height: tileHeight),
+      _BoardSlot(id: 'right_4', side: StatusbarBoardSide.right, orderIndex: 4, left: rightInnerX, top: 18 + (tileHeight + rowGap) * 2, width: tileWidth, height: tileHeight),
+      _BoardSlot(id: 'right_5', side: StatusbarBoardSide.right, orderIndex: 5, left: rightOuterX, top: 18 + (tileHeight + rowGap) * 2, width: tileWidth, height: tileHeight),
+      _BoardSlot(id: 'center_hint', side: StatusbarBoardSide.right, orderIndex: 99, left: centerX, top: 85, width: tileWidth, height: tileHeight),
     ];
+  }
+
+  Map<String, _BoardSlot> _assignModulesToSlots(List<StatusbarBoardModuleState> modules, List<_BoardSlot> slots) {
+    final leftSlots = slots.where((slot) => slot.side == StatusbarBoardSide.left && slot.orderIndex != 99).toList(growable: false)
+      ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+    final rightSlots = slots.where((slot) => slot.side == StatusbarBoardSide.right && slot.orderIndex != 99).toList(growable: false)
+      ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+
+    final leftModules = modules.where((module) => module.side == StatusbarBoardSide.left).toList(growable: false)
+      ..sort((a, b) => a.order.compareTo(b.order));
+    final rightModules = modules.where((module) => module.side == StatusbarBoardSide.right).toList(growable: false)
+      ..sort((a, b) => a.order.compareTo(b.order));
+
+    final result = <String, _BoardSlot>{};
+    for (var i = 0; i < leftModules.length && i < leftSlots.length; i++) {
+      result[leftModules[i].id] = leftSlots[i];
+    }
+    for (var i = 0; i < rightModules.length && i < rightSlots.length; i++) {
+      result[rightModules[i].id] = rightSlots[i];
+    }
+    return result;
   }
 
   Future<void> _showModuleSheet(BuildContext context, StatusbarBoardModuleState module) async {
@@ -391,7 +426,7 @@ class _StatusControlBoard extends StatelessWidget {
                     ),
                     Row(
                       children: <Widget>[
-                        _MezoDrawableImage(path: _assetForModule(current.id), width: 58, height: 30, fallbackIcon: current.module.icon),
+                        _MezoDrawableImage(path: _assetForModule(current.id), width: 52, height: 32, fallbackIcon: current.module.icon),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -469,7 +504,7 @@ class _StatusControlBoard extends StatelessWidget {
                       child: FilledButton.icon(
                         onPressed: () {
                           Navigator.of(sheetContext).pop();
-                          onOpenSection(section.id);
+                          widget.onOpenSection(section.id);
                         },
                         icon: const Icon(Icons.open_in_new_rounded),
                         label: const Text('Open section'),
@@ -491,7 +526,7 @@ class _StatusControlBoard extends StatelessWidget {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (sheetContext) {
-        final hiddenModules = boardState.modules.where((module) => !module.visible).toList(growable: false);
+        final hiddenModules = widget.boardState.modules.where((module) => !module.visible).toList(growable: false);
         return Container(
           margin: const EdgeInsets.fromLTRB(12, 12, 12, 18),
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 22),
@@ -543,17 +578,17 @@ class _StatusControlBoard extends StatelessWidget {
                 const SizedBox(height: 18),
                 Text('Left cluster offset', style: TextStyle(color: Colors.white.withValues(alpha: 0.82))),
                 MezoStepSlider(
-                  value: boardState.leftClusterOffset,
+                  value: widget.boardState.leftClusterOffset,
                   min: -30,
                   max: 30,
-                  onChanged: (value) => onChanged(boardState.copyWith(leftClusterOffset: value)),
+                  onChanged: (value) => widget.onChanged(widget.boardState.copyWith(leftClusterOffset: value)),
                 ),
                 Text('Right cluster offset', style: TextStyle(color: Colors.white.withValues(alpha: 0.82))),
                 MezoStepSlider(
-                  value: boardState.rightClusterOffset,
+                  value: widget.boardState.rightClusterOffset,
                   min: -30,
                   max: 30,
-                  onChanged: (value) => onChanged(boardState.copyWith(rightClusterOffset: value)),
+                  onChanged: (value) => widget.onChanged(widget.boardState.copyWith(rightClusterOffset: value)),
                 ),
               ],
             ),
@@ -563,41 +598,55 @@ class _StatusControlBoard extends StatelessWidget {
     );
   }
 
-  void _moveModuleToSlot(String moduleId, StatusbarBoardSide side, int targetIndex) {
-    final dragged = boardState.modules.firstWhere((module) => module.id == moduleId);
-    final remaining = boardState.modules.where((module) => module.id != moduleId).toList(growable: false);
+  void _moveModuleToSlot(String moduleId, _BoardSlot slot) {
+    final modules = List<StatusbarBoardModuleState>.from(widget.boardState.modules);
+    final dragged = modules.firstWhere((module) => module.id == moduleId);
 
-    final leftModules = remaining
-        .where((module) => module.side == StatusbarBoardSide.left)
-        .toList(growable: true)
+    final leftModules = modules.where((module) => module.side == StatusbarBoardSide.left && module.id != moduleId).toList(growable: true)
       ..sort((a, b) => a.order.compareTo(b.order));
-    final rightModules = remaining
-        .where((module) => module.side == StatusbarBoardSide.right)
-        .toList(growable: true)
+    final rightModules = modules.where((module) => module.side == StatusbarBoardSide.right && module.id != moduleId).toList(growable: true)
       ..sort((a, b) => a.order.compareTo(b.order));
 
-    final updatedDragged = dragged.copyWith(side: side, visible: true);
-    final targetList = side == StatusbarBoardSide.left ? leftModules : rightModules;
-    final insertAt = targetIndex.clamp(0, targetList.length);
-    targetList.insert(insertAt, updatedDragged);
+    final updatedDragged = dragged.copyWith(side: slot.side, visible: true);
+    if (slot.side == StatusbarBoardSide.left) {
+      final insertIndex = slot.orderIndex.clamp(0, leftModules.length);
+      leftModules.insert(insertIndex, updatedDragged);
+    } else {
+      final insertIndex = slot.orderIndex.clamp(0, rightModules.length);
+      rightModules.insert(insertIndex, updatedDragged);
+    }
 
-    final rebuilt = <StatusbarBoardModuleState>[
-      ...leftModules,
-      ...rightModules,
-    ];
-    onChanged(boardState.copyWith(modules: _normalizeOrders(rebuilt)));
+    final normalized = <StatusbarBoardModuleState>[];
+    for (final module in leftModules) {
+      normalized.add(module.copyWith(order: normalized.length));
+    }
+    for (final module in rightModules) {
+      normalized.add(module.copyWith(order: normalized.length));
+    }
+
+    widget.onChanged(widget.boardState.copyWith(modules: normalized));
   }
 
   void _updateSingleModule(StatusbarBoardModuleState next) {
-    final updated = boardState.modules
+    final updated = widget.boardState.modules
         .map((module) => module.id == next.id ? next : module)
         .toList(growable: false);
-    onChanged(boardState.copyWith(modules: _normalizeOrders(updated)));
+    widget.onChanged(widget.boardState.copyWith(modules: _normalizeOrders(updated)));
   }
 
   List<StatusbarBoardModuleState> _normalizeOrders(List<StatusbarBoardModuleState> modules) {
-    final ordered = List<StatusbarBoardModuleState>.from(modules);
-    return ordered.indexed.map((entry) => entry.$2.copyWith(order: entry.$1)).toList(growable: false);
+    final left = modules.where((module) => module.side == StatusbarBoardSide.left).toList(growable: false)
+      ..sort((a, b) => a.order.compareTo(b.order));
+    final right = modules.where((module) => module.side == StatusbarBoardSide.right).toList(growable: false)
+      ..sort((a, b) => a.order.compareTo(b.order));
+    final normalized = <StatusbarBoardModuleState>[];
+    for (final module in left) {
+      normalized.add(module.copyWith(order: normalized.length));
+    }
+    for (final module in right) {
+      normalized.add(module.copyWith(order: normalized.length));
+    }
+    return normalized;
   }
 
   String _assetForModule(String moduleId) {
@@ -611,12 +660,18 @@ class _StatusControlBoard extends StatelessWidget {
 
 class _BoardSlot {
   const _BoardSlot({
+    required this.id,
+    required this.side,
+    required this.orderIndex,
     required this.left,
     required this.top,
     required this.width,
     required this.height,
   });
 
+  final String id;
+  final StatusbarBoardSide side;
+  final int orderIndex;
   final double left;
   final double top;
   final double width;
@@ -625,77 +680,43 @@ class _BoardSlot {
 
 class _BoardSlotTarget extends StatelessWidget {
   const _BoardSlotTarget({
-    required this.width,
-    required this.height,
-    required this.hovering,
+    required this.isActive,
+    required this.onWillAccept,
+    required this.onLeave,
+    required this.onAccept,
   });
 
-  final double width;
-  final double height;
-  final bool hovering;
+  final bool isActive;
+  final VoidCallback onWillAccept;
+  final VoidCallback onLeave;
+  final ValueChanged<String> onAccept;
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: DesignTokens.motionFast,
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: hovering ? const Color(0xFF9E38FF).withValues(alpha: 0.70) : Colors.white.withValues(alpha: 0.05),
-        ),
-        color: hovering ? const Color(0x229E38FF) : Colors.transparent,
-      ),
-    );
-  }
-}
-
-class _BoardModuleBadge extends StatelessWidget {
-  const _BoardModuleBadge({
-    required this.module,
-    required this.assetPath,
-    required this.width,
-    required this.height,
-    required this.onTap,
-  });
-
-  final StatusbarBoardModuleState module;
-  final String assetPath;
-  final double width;
-  final double height;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final opacity = module.visible ? 1.0 : 0.34;
-    final translatedX = module.side == StatusbarBoardSide.left ? module.offset * 0.45 : -module.offset * 0.45;
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedOpacity(
-        duration: DesignTokens.motionFast,
-        opacity: opacity,
-        child: Transform.translate(
-          offset: Offset(translatedX, 0),
-          child: AnimatedContainer(
-            duration: DesignTokens.motionFast,
-            curve: DesignTokens.motionCurve,
-            width: width,
-            height: height,
-            alignment: Alignment.center,
-            child: _MezoDrawableImage(
-              path: assetPath,
-              width: width,
-              height: height,
-              fallbackIcon: module.module.icon,
-            ),
+    return DragTarget<String>(
+      onWillAcceptWithDetails: (details) {
+        onWillAccept();
+        return true;
+      },
+      onLeave: (_) => onLeave(),
+      onAcceptWithDetails: (details) => onAccept(details.data),
+      builder: (context, candidateData, rejectedData) {
+        final showOutline = isActive || candidateData.isNotEmpty;
+        return AnimatedContainer(
+          duration: DesignTokens.motionFast,
+          curve: DesignTokens.motionCurve,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: showOutline
+                ? Border.all(color: const Color(0xFFB28CFF).withValues(alpha: 0.72), width: 1.2)
+                : null,
+            color: showOutline ? const Color(0xFFB28CFF).withValues(alpha: 0.08) : Colors.transparent,
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
-
 class _StatusbarSectionGrid extends StatelessWidget {
   const _StatusbarSectionGrid({
     required this.cards,
@@ -792,6 +813,51 @@ class _StatusSectionCard extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BoardModuleBadge extends StatelessWidget {
+  const _BoardModuleBadge({
+    required this.module,
+    required this.assetPath,
+    required this.onTap,
+  });
+
+  final StatusbarBoardModuleState module;
+  final String assetPath;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final baseWidth = module.id == 'network' ? 44.0 : module.id == 'prompt_icon' ? 40.0 : 42.0;
+    final width = (baseWidth + (module.offset.abs() * 0.25)).clamp(38.0, 48.0).toDouble();
+    final opacity = module.visible ? 1.0 : 0.38;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: AnimatedOpacity(
+        duration: DesignTokens.motionFast,
+        opacity: opacity,
+        child: AnimatedContainer(
+          duration: DesignTokens.motionFast,
+          curve: DesignTokens.motionCurve,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 2),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(11),
+            color: Colors.white.withValues(alpha: module.visible ? 0.04 : 0.015),
+            border: Border.all(color: Colors.white.withValues(alpha: module.visible ? 0.08 : 0.03)),
+          ),
+          child: _MezoDrawableImage(
+            path: assetPath,
+            width: width,
+            height: 24,
+            fallbackIcon: module.module.icon,
           ),
         ),
       ),
