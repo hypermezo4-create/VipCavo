@@ -536,10 +536,10 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
       return 'Battery level colors, charging color, and percent tint.';
     }
     if (widget.section.id == 'resize_statusbar' && group == 'Notch Settings') {
-      return 'Camera location, camera position, width, and left camera notch behavior.';
+      return 'Camera location, vertical alignment, and reserved width tuning.';
     }
     if (widget.section.id == 'resize_statusbar' && group == 'Left camera notch settings') {
-      return 'Left cutout layout, first element placement, and remove-camera behavior.';
+      return 'Left camera layout mode, reserved width, and row reservation behavior.';
     }
     return null;
   }
@@ -895,6 +895,34 @@ class _ResizePreview extends StatelessWidget {
   const _ResizePreview({required this.values});
 
   final Map<String, Object?> values;
+
+  String _resizePreviewSummary({
+    required double height,
+    required String cutoutType,
+    required String cutoutPosition,
+    required String removeCameraBehavior,
+  }) {
+    final cameraLocationLabel = switch (cutoutType) {
+      '0' => 'No camera cutout',
+      '2' => 'Left camera cutout',
+      _ => 'Center camera cutout',
+    };
+
+    final cameraPositionLabel = switch (cutoutPosition) {
+      '0' => 'Top aligned',
+      '1' => 'Middle aligned',
+      _ => 'Bottom aligned',
+    };
+
+    final reservationLabel = switch (removeCameraBehavior) {
+      '0' => 'Top row reserved',
+      '1' => 'Bottom row reserved',
+      _ => 'Both rows balanced',
+    };
+
+    return 'Height ${height.toStringAsFixed(0)} • $cameraLocationLabel • $cameraPositionLabel • $reservationLabel';
+  }
+
   @override
   Widget build(BuildContext context) {
     final statusbarHeight = ((values['custom_status_bar_height'] as num?) ?? 99).toDouble();
@@ -959,8 +987,22 @@ class _ResizePreview extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        color: Colors.black.withValues(alpha: 0.22),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[
+            const Color(0xFF153242).withValues(alpha: 0.56),
+            const Color(0xFF0D1A2A).withValues(alpha: 0.34),
+          ],
+        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: const Color(0xFF83E9FF).withValues(alpha: 0.12),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Stack(
         children: <Widget>[
@@ -1024,9 +1066,18 @@ class _ResizePreview extends StatelessWidget {
             right: 0,
             bottom: 2,
             child: Text(
-              'H ${statusbarHeight.toStringAsFixed(0)} • Type $cutoutType • Pos $cutoutPosition • Remove $removeCameraBehavior',
+              _resizePreviewSummary(
+                height: statusbarHeight,
+                cutoutType: cutoutType,
+                cutoutPosition: cutoutPosition,
+                removeCameraBehavior: removeCameraBehavior,
+              ),
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10),
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.7),
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
