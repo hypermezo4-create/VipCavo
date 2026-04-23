@@ -124,4 +124,20 @@ class MezoStatusbarBoardSourceMap {
       sectionId: 'background',
     ),
   ];
+
+  static String boardDrawablePath(String moduleId) {
+    return 'reference/mezo/mezo/res/drawable-xxxhdpi/${_boardDrawableByModule[moduleId] ?? 'elem_clock_card'}.png';
+  }
+
+  static const Map<String, String> _boardDrawableByModule = <String, String>{
+    'clock': 'elem_clock_card',
+    'battery': 'elem_bat_card',
+    'netspeed': 'elem_speed_card',
+    'network': 'elem_net_card',
+    'notification_icons': 'elem_notif_card',
+    'status_icons': 'elem_status_card',
+    'date': 'elem_date_card',
+    'weather': 'elem_weather_card',
+    'prompt_icon': 'elem_prompt_card',
+  };
 }
