@@ -535,8 +535,11 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     if (widget.section.id == 'battery' && group == StatusBarStrings.groupColor) {
       return 'Battery level colors, charging color, and percent tint.';
     }
-    if (widget.section.id == 'resize_statusbar' && group == StatusBarStrings.groupNotch) {
+    if (widget.section.id == 'resize_statusbar' && group == 'Notch Settings') {
       return 'Camera location, camera position, width, and left camera notch behavior.';
+    }
+    if (widget.section.id == 'resize_statusbar' && group == 'Left camera notch settings') {
+      return 'Left cutout layout, first element placement, and remove-camera behavior.';
     }
     return null;
   }
@@ -894,10 +897,63 @@ class _ResizePreview extends StatelessWidget {
   final Map<String, Object?> values;
   @override
   Widget build(BuildContext context) {
+    final statusbarHeight = ((values['custom_status_bar_height'] as num?) ?? 99).toDouble();
     final top = ((values['custom_status_bar_top'] as num?) ?? 2).toDouble();
     final side = ((values['custom_status_bar_left_right'] as num?) ?? 0).toDouble();
     final cutoutPadding = ((values['status_bar_element_cutout_padding'] as num?) ?? 35).toDouble();
     final cameraWidth = ((values['status_bar_element_cutout_camera_width'] as num?) ?? 80).toDouble();
+    final cutoutType = (values['status_bar_element_cutout_type'] as String?) ?? '1';
+    final cutoutPosition = (values['status_bar_element_cutout_center'] as String?) ?? '2';
+    final leftCutoutPlacement = (values['status_bar_element_cutout_left'] as String?) ?? '2';
+    final firstElementPosition = ((values['status_bar_element_cutout_padding_left_camera'] as num?) ?? 75).toDouble();
+    final removeCameraBehavior = (values['status_bar_element_cutout_left_not_calculate'] as String?) ?? '2';
+    final showCenterInIsland = (values['status_bar_elem_center_in_island'] as bool?) ?? true;
+
+    final previewScale = (statusbarHeight / 100).clamp(0.5, 2.5);
+    final barHeight = (34 * previewScale).clamp(24, 70).toDouble();
+    final baseTopMargin = (top / 2).clamp(0, 20).toDouble();
+    final horizontalMargin = (side / 8).clamp(0, 25).toDouble();
+    final cameraPillWidth = cameraWidth.clamp(30, 140).toDouble();
+
+    final bool showCamera = cutoutType != '0';
+    Alignment cameraAlignment = Alignment.topCenter;
+    if (cutoutType == '2') {
+      cameraAlignment = Alignment.topLeft;
+    }
+    final cameraY = switch (cutoutPosition) {
+      '0' => baseTopMargin + 3,
+      '1' => baseTopMargin + (barHeight / 2) - 6,
+      _ => baseTopMargin + barHeight - 12,
+    };
+
+    final reserveTopLine = removeCameraBehavior == '0';
+    final reserveBottomLine = removeCameraBehavior == '1';
+    final leftShift = ((firstElementPosition - 75) / 7).clamp(-8, 12).toDouble();
+
+    double leftTopX = 8 + leftShift;
+    double leftBottomX = 8 + leftShift;
+    double rightTopX = 8;
+    double rightBottomX = 8;
+
+    if (cutoutType == '2') {
+      switch (leftCutoutPlacement) {
+        case '0':
+          rightTopX = 26;
+          rightBottomX = 26;
+          break;
+        case '1':
+          rightTopX = 26;
+          break;
+        case '2':
+          rightBottomX = 26;
+          break;
+        case '3':
+          leftTopX = 22 + leftShift;
+          leftBottomX = 22 + leftShift;
+          break;
+      }
+    }
+
     return Container(
       height: 130,
       padding: const EdgeInsets.all(12),
@@ -910,23 +966,91 @@ class _ResizePreview extends StatelessWidget {
         children: <Widget>[
           Positioned.fill(
             child: Container(
-              margin: EdgeInsets.fromLTRB(side / 8, top / 2, side / 8, 8),
+              margin: EdgeInsets.fromLTRB(horizontalMargin, baseTopMargin, horizontalMargin, 8),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
               ),
             ),
           ),
-          Align(
-            alignment: Alignment.topCenter,
-            child: Container(
-              width: cameraWidth.clamp(30, 130),
-              height: 14,
-              margin: EdgeInsets.only(top: cutoutPadding / 14),
-              decoration: BoxDecoration(color: Colors.black87, borderRadius: BorderRadius.circular(8)),
+          Positioned(
+            left: 12 + leftTopX,
+            top: baseTopMargin + 4,
+            child: _PreviewDot(
+              width: reserveTopLine ? 26 : 18,
+              active: !reserveTopLine,
+            ),
+          ),
+          Positioned(
+            left: 12 + leftBottomX,
+            top: baseTopMargin + barHeight - 14,
+            child: _PreviewDot(
+              width: reserveBottomLine ? 26 : 18,
+              active: !reserveBottomLine,
+            ),
+          ),
+          Positioned(
+            right: 12 + rightTopX,
+            top: baseTopMargin + 4,
+            child: const _PreviewDot(width: 18),
+          ),
+          Positioned(
+            right: 12 + rightBottomX,
+            top: baseTopMargin + barHeight - 14,
+            child: const _PreviewDot(width: 18),
+          ),
+          if (showCenterInIsland)
+            Positioned(
+              left: 0,
+              right: 0,
+              top: baseTopMargin + (barHeight / 2) - 6,
+              child: const Center(child: _PreviewDot(width: 22)),
+            ),
+          if (showCamera)
+            Align(
+              alignment: cameraAlignment,
+              child: Container(
+                width: cameraPillWidth,
+                height: 12,
+                margin: EdgeInsets.only(
+                  top: cameraY + (cutoutPadding / 18),
+                  left: cutoutType == '2' ? 14 : 0,
+                ),
+                decoration: BoxDecoration(color: Colors.black87, borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 2,
+            child: Text(
+              'H ${statusbarHeight.toStringAsFixed(0)} • Type $cutoutType • Pos $cutoutPosition • Remove $removeCameraBehavior',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _PreviewDot extends StatelessWidget {
+  const _PreviewDot({required this.width, this.active = true});
+
+  final double width;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: DesignTokens.motionFast,
+      curve: DesignTokens.motionCurve,
+      width: width,
+      height: 8,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(99),
+        color: active ? const Color(0xFF8DE8FF) : Colors.white.withValues(alpha: 0.28),
       ),
     );
   }
