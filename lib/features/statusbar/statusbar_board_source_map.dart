@@ -1,5 +1,3 @@
-import 'package:deadzon/features/statusbar/statusbar_section_configs.dart';
-
 class MezoStatusbarCardSource {
   const MezoStatusbarCardSource({
     required this.drawable,
@@ -126,8 +124,4 @@ class MezoStatusbarBoardSourceMap {
       sectionId: 'background',
     ),
   ];
-
-  static StatusBarSectionDefinition sectionForCard(MezoStatusbarCardSource card) {
-    return StatusbarSectionConfigs.values.firstWhere((section) => section.id == card.sectionId);
-  }
 }

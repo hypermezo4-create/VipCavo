@@ -16,6 +16,7 @@ import 'package:deadzon/features/statusbar/mezo_port_map.dart';
 import 'package:deadzon/features/statusbar/statusbar_detail_content.dart';
 import 'package:deadzon/features/statusbar/statusbar_mapper.dart';
 import 'package:deadzon/features/statusbar/statusbar_models.dart';
+import 'package:deadzon/features/statusbar/statusbar_section_configs.dart';
 import 'package:deadzon/features/statusbar/statusbar_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -103,7 +104,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
                   ),
                   itemBuilder: (context, index) {
                     final card = _cards[index];
-                    final section = MezoStatusbarBoardSourceMap.sectionForCard(card);
+                    final section = StatusbarSectionConfigs.values.firstWhere((item) => item.id == card.sectionId);
                     return GlassCard(
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute<void>(
