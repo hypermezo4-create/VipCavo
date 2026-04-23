@@ -17,10 +17,10 @@ class StatusBarOption {
 class StatusBarSettingItem {
   const StatusBarSettingItem({
     required this.legacyKey,
-    required this.title,
-    required this.subtitle,
     required this.controlType,
-    required this.group,
+    this.title,
+    this.subtitle,
+    this.group,
     this.defaultValue,
     this.min,
     this.max,
@@ -36,10 +36,10 @@ class StatusBarSettingItem {
   });
 
   final String legacyKey;
-  final String title;
-  final String subtitle;
+  final String? title;
+  final String? subtitle;
   final StatusBarControlType controlType;
-  final String group;
+  final String? group;
   final Object? defaultValue;
   final double? min;
   final double? max;
