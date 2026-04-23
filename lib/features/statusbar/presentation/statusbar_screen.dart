@@ -5,8 +5,10 @@ import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
 import 'package:deadzon/core/widgets/section_header.dart';
 import 'package:deadzon/core/widgets/settings_row.dart';
+import 'package:deadzon/features/statusbar/presentation/mezo_controls.dart';
 import 'package:deadzon/features/statusbar/statusbar_board_config.dart';
 import 'package:deadzon/features/statusbar/helper.dart';
+import 'package:deadzon/features/statusbar/mezo_port_map.dart';
 import 'package:deadzon/features/statusbar/statusbar_detail_content.dart';
 import 'package:deadzon/features/statusbar/statusbar_mapper.dart';
 import 'package:deadzon/features/statusbar/statusbar_models.dart';
@@ -171,14 +173,14 @@ class _StatusPreviewCardState extends State<_StatusPreviewCard> {
           ),
           const SizedBox(height: 12),
           Text(StatusBarStrings.leftClusterOffsetLabel, style: TextStyle(color: Colors.white.withValues(alpha: 0.74))),
-          _MezoStepSlider(
+          MezoStepSlider(
             value: _leftOffset,
             min: -28,
             max: 28,
             onChanged: (v) => setState(() => _leftOffset = v),
           ),
           Text(StatusBarStrings.rightClusterOffsetLabel, style: TextStyle(color: Colors.white.withValues(alpha: 0.74))),
-          _MezoStepSlider(
+          MezoStepSlider(
             value: _rightOffset,
             min: -28,
             max: 28,
@@ -353,14 +355,14 @@ class _StatusPreviewCardState extends State<_StatusPreviewCard> {
             child: Icon(group.enabled ? Icons.visibility_rounded : Icons.visibility_off_rounded, size: 16, color: Colors.white70),
           ),
           const SizedBox(width: 8),
-          _SmallAdjustButton(
+          MezoAdjustButton(
             icon: Icons.remove_rounded,
             onTap: () => setState(() => group.spacing = (group.spacing - 1).clamp(-8, 16)),
           ),
           const SizedBox(width: 4),
           Text(group.spacing.toStringAsFixed(0), style: const TextStyle(color: Colors.white60, fontSize: 11)),
           const SizedBox(width: 4),
-          _SmallAdjustButton(
+          MezoAdjustButton(
             icon: Icons.add_rounded,
             onTap: () => setState(() => group.spacing = (group.spacing + 1).clamp(-8, 16)),
           ),
@@ -410,6 +412,16 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     _settings = StatusBarMapper.settingsForSection(widget.section.id);
     for (final setting in _settings) {
       _values[setting.legacyKey] = setting.defaultValue;
+    }
+    if (widget.section.id == 'background') {
+      for (final target in MezoPortMap.backgroundTargets) {
+        for (final key in target.colorKeys) {
+          _values.putIfAbsent(key, () => '#00000000');
+        }
+        for (final key in target.sliderKeys) {
+          _values.putIfAbsent(key, () => key.endsWith('_stroke_width') ? 0.0 : key.contains('_corner') ? 35.0 : 0.0);
+        }
+      }
     }
   }
 
@@ -464,6 +476,13 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
             ),
           ),
           const SizedBox(height: 12),
+          if (widget.section.id == 'background') ...<Widget>[
+            _BackgroundModuleEditor(
+              values: _values,
+              onChanged: (key, value) => setState(() => _values[key] = value),
+            ),
+            const SizedBox(height: 12),
+          ],
           for (final entry in grouped.entries) ...<Widget>[
             SectionHeader(
               title: _groupTitle(entry.key),
@@ -520,6 +539,114 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
       return 'Camera location, camera position, width, and left camera notch behavior.';
     }
     return null;
+  }
+}
+
+class _BackgroundModuleEditor extends StatelessWidget {
+  const _BackgroundModuleEditor({required this.values, required this.onChanged});
+
+  final Map<String, Object?> values;
+  final void Function(String key, Object? value) onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const SectionHeader(
+            title: 'Background of statusbar icons',
+            subtitle: 'Source-backed editor from settings_iback + elem_bg_* references.',
+          ),
+          const SizedBox(height: 10),
+          ...MezoPortMap.backgroundTargets.map((target) {
+            return ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              collapsedIconColor: Colors.white70,
+              iconColor: Colors.white,
+              title: Text(target.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+              subtitle: Text(target.xmlSource, style: TextStyle(color: Colors.white.withValues(alpha: 0.56), fontSize: 11)),
+              children: <Widget>[
+                for (final colorKey in target.colorKeys) ...<Widget>[
+                  SettingsRow(
+                    icon: Icons.palette_outlined,
+                    iconColor: const Color(0xFF94E0D4),
+                    title: _prettyKey(colorKey),
+                    subtitle: colorKey,
+                    trailing: MezoColorChip(
+                      hex: (values[colorKey] as String?) ?? '#00000000',
+                      onTap: () => _showColorPicker(context, colorKey),
+                    ),
+                  ),
+                  const Divider(height: 18),
+                ],
+                for (final sliderKey in target.sliderKeys) ...<Widget>[
+                  SettingsRow(
+                    icon: Icons.tune_rounded,
+                    iconColor: const Color(0xFF8FCBFF),
+                    title: _prettyKey(sliderKey),
+                    subtitle: sliderKey,
+                    trailing: Text(((values[sliderKey] as num?) ?? 0).toStringAsFixed(0), style: const TextStyle(color: Colors.white70)),
+                  ),
+                  MezoStepSlider(
+                    value: ((values[sliderKey] as num?) ?? 0).toDouble(),
+                    min: _minForSlider(sliderKey),
+                    max: _maxForSlider(sliderKey),
+                    onChanged: (v) => onChanged(sliderKey, v),
+                  ),
+                  const Divider(height: 18),
+                ],
+              ],
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showColorPicker(BuildContext context, String key) async {
+    final options = <String>['#00000000', '#142D35', '#1E4C59', '#79E3CB', '#90FFAC', '#FFFFFF'];
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: const Color(0xFF101A1F),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
+      builder: (_) => SafeArea(
+        child: Wrap(
+          children: options
+              .map((hex) => ListTile(
+                    leading: CircleAvatar(backgroundColor: MezoColorChip.fromHex(hex)),
+                    title: Text(hex, style: const TextStyle(color: Colors.white)),
+                    onTap: () => Navigator.pop(_, hex),
+                  ))
+              .toList(),
+        ),
+      ),
+    );
+    if (picked != null) {
+      onChanged(key, picked);
+    }
+  }
+
+  static String _prettyKey(String key) => key
+      .replaceAll('elem_', '')
+      .replaceAll('_bg_', ' ')
+      .replaceAll('_', ' ')
+      .replaceAll('padd', 'padding')
+      .replaceAll('LT', 'top-left')
+      .replaceAll('RT', 'top-right')
+      .replaceAll('LB', 'bottom-left')
+      .replaceAll('RB', 'bottom-right');
+
+  static double _minForSlider(String key) {
+    if (key.endsWith('_stroke_width')) return 0;
+    if (key.contains('_corner')) return -25;
+    return -10;
+  }
+
+  static double _maxForSlider(String key) {
+    if (key.endsWith('_stroke_width')) return 5;
+    if (key.contains('_corner')) return 90;
+    return 30;
   }
 }
 
@@ -588,7 +715,7 @@ class _SettingControl extends StatelessWidget {
               subtitle: setting.subtitle,
               trailing: Text(current.toStringAsFixed(0), style: const TextStyle(color: Colors.white70)),
             ),
-            _MezoStepSlider(
+            MezoStepSlider(
               value: current.clamp(min, max),
               min: min,
               max: max,
@@ -632,7 +759,7 @@ class _SettingControl extends StatelessWidget {
           iconColor: const Color(0xFFA1E9DB),
           title: setting.title,
           subtitle: setting.subtitle,
-          trailing: _ColorChip(
+          trailing: MezoColorChip(
             hex: selected,
             onTap: () => _showColorPicker(context, selected),
           ),
@@ -723,7 +850,7 @@ class _SettingControl extends StatelessWidget {
                           width: 34,
                           height: 34,
                           decoration: BoxDecoration(
-                            color: _ColorChip.fromHex(hex),
+                            color: MezoColorChip.fromHex(hex),
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: hex == current ? Colors.white : Colors.white.withValues(alpha: 0.3),
@@ -758,134 +885,6 @@ class _SettingControl extends StatelessWidget {
       default:
         return fallback;
     }
-  }
-}
-
-class _SmallAdjustButton extends StatelessWidget {
-  const _SmallAdjustButton({required this.icon, required this.onTap});
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: 18,
-        height: 18,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
-        ),
-        child: Icon(icon, size: 12, color: Colors.white70),
-      ),
-    );
-  }
-}
-
-class _MezoStepSlider extends StatelessWidget {
-  const _MezoStepSlider({
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.onChanged,
-  });
-
-  final double value;
-  final double min;
-  final double max;
-  final ValueChanged<double> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final safe = value.clamp(min, max).toDouble();
-    return Row(
-      children: <Widget>[
-        _SmallAdjustButton(
-          icon: Icons.remove_rounded,
-          onTap: () => onChanged((safe - 1).clamp(min, max).toDouble()),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              trackHeight: 3,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-              overlayShape: SliderComponentShape.noOverlay,
-              activeTrackColor: const Color(0xFF89E9D3),
-              inactiveTrackColor: Colors.white.withValues(alpha: 0.18),
-              thumbColor: const Color(0xFFB8FFF2),
-            ),
-            child: Slider(
-              value: safe,
-              min: min,
-              max: max,
-              onChanged: onChanged,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(safe.toStringAsFixed(0), style: const TextStyle(color: Colors.white70, fontSize: 12)),
-        const SizedBox(width: 8),
-        _SmallAdjustButton(
-          icon: Icons.add_rounded,
-          onTap: () => onChanged((safe + 1).clamp(min, max).toDouble()),
-        ),
-      ],
-    );
-  }
-}
-
-class _ColorChip extends StatelessWidget {
-  const _ColorChip({required this.hex, required this.onTap});
-
-  final String hex;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _fromHex(hex),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(hex, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Color _fromHex(String hex) {
-    return fromHex(hex);
-  }
-
-  static Color fromHex(String hex) {
-    final value = hex.replaceAll('#', '');
-    if (value.length == 6) {
-      return Color(int.parse('FF$value', radix: 16));
-    }
-    return const Color(0xFF79E3CB);
   }
 }
 
@@ -942,7 +941,7 @@ class _BatteryPreview extends StatelessWidget {
     final show = (values['elem_bat_element_visible'] as bool?) ?? true;
     final iconScale = ((((values['batteryview_zoom'] as num?) ?? 100).toDouble() / 100).clamp(0.5, 1.5)).toDouble();
     final percentSize = ((values['battery_percent_zoom'] as num?) ?? 14).toDouble();
-    final batteryColor = _ColorChip.fromHex((values['battery_level_80_color'] as String?) ?? '#90FFAC');
+    final batteryColor = MezoColorChip.fromHex((values['battery_level_80_color'] as String?) ?? '#90FFAC');
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
       decoration: BoxDecoration(
