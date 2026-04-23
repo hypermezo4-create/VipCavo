@@ -274,7 +274,7 @@ class _StatusControlBoard extends StatelessWidget {
   }
 
   Widget _boardModuleToken(StatusbarBoardModuleState module) {
-    final spacing = module.offset.clamp(-16, 16);
+    final double spacing = module.offset.clamp(-16, 16).toDouble();
     return AnimatedContainer(
       duration: DesignTokens.motionFast,
       curve: DesignTokens.motionCurve,
