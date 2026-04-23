@@ -460,7 +460,8 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
   Widget build(BuildContext context) {
     final grouped = <String, List<StatusBarSettingItem>>{};
     for (final setting in _settings) {
-      grouped.putIfAbsent(setting.group, () => <StatusBarSettingItem>[]).add(setting);
+      final groupKey = setting.group ?? 'General';
+      grouped.putIfAbsent(groupKey, () => <StatusBarSettingItem>[]).add(setting);
     }
 
     return Scaffold(
@@ -733,6 +734,8 @@ class _SettingControl extends StatelessWidget {
   final ValueChanged<Object?> onChanged;
   final bool isResizeSection;
 
+  String get _title => setting.title ?? setting.legacyKey;
+
   @override
   Widget build(BuildContext context) {
     switch (setting.controlType) {
@@ -740,7 +743,7 @@ class _SettingControl extends StatelessWidget {
         return SettingsRow(
           icon: Icons.toggle_on_rounded,
           iconColor: const Color(0xFF87EED8),
-          title: setting.title,
+          title: _title,
           subtitle: setting.subtitle,
           trailing: Switch(
             value: (value as bool?) ?? false,
@@ -753,7 +756,7 @@ class _SettingControl extends StatelessWidget {
         final current = (value as num?)?.toDouble() ?? min;
         if (isResizeSection) {
           return MezoSourceSeekbarRow(
-            title: setting.title,
+            title: _title,
             subtitle: setting.subtitle,
             value: current.clamp(min, max),
             min: min,
@@ -768,7 +771,7 @@ class _SettingControl extends StatelessWidget {
             SettingsRow(
               icon: Icons.tune_rounded,
               iconColor: const Color(0xFF8FCBFF),
-              title: setting.title,
+              title: _title,
               subtitle: setting.subtitle,
               trailing: Text(current.toStringAsFixed(0), style: const TextStyle(color: Colors.white70)),
             ),
@@ -786,7 +789,7 @@ class _SettingControl extends StatelessWidget {
         return SettingsRow(
           icon: Icons.view_list_rounded,
           iconColor: const Color(0xFF9FAAFF),
-          title: setting.title,
+          title: _title,
           subtitle: setting.subtitle,
           trailing: InkWell(
             borderRadius: BorderRadius.circular(12),
@@ -814,7 +817,7 @@ class _SettingControl extends StatelessWidget {
         return SettingsRow(
           icon: Icons.palette_rounded,
           iconColor: const Color(0xFFA1E9DB),
-          title: setting.title,
+          title: _title,
           subtitle: setting.subtitle,
           trailing: MezoColorChip(
             hex: selected,
@@ -825,7 +828,7 @@ class _SettingControl extends StatelessWidget {
   }
 
   Future<void> _showOptionPicker(BuildContext context, String current) async {
-    final isFontPicker = setting.title.toLowerCase().contains('font');
+    final isFontPicker = _title.toLowerCase().contains('font');
     final selected = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: const Color(0xFF101B1F),
@@ -839,7 +842,7 @@ class _SettingControl extends StatelessWidget {
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
-                child: Text(setting.title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                child: Text(_title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
               ),
               for (final option in setting.options)
                 isFontPicker
@@ -893,7 +896,7 @@ class _SettingControl extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(setting.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              Text(_title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
               const SizedBox(height: 14),
               Wrap(
                 spacing: 10,

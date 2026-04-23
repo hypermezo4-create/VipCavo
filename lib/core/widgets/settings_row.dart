@@ -5,7 +5,7 @@ class SettingsRow extends StatelessWidget {
     required this.icon,
     required this.iconColor,
     required this.title,
-    required this.subtitle,
+    this.subtitle,
     this.trailing,
     this.onTap,
     super.key,
@@ -14,7 +14,7 @@ class SettingsRow extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final String title;
-  final String subtitle;
+  final String? subtitle;
   final Widget? trailing;
   final VoidCallback? onTap;
 
@@ -41,11 +41,13 @@ class SettingsRow extends StatelessWidget {
                     title,
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.7), height: 1.25),
-                  ),
+                  if (subtitle != null) ...<Widget>[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle!,
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.7), height: 1.25),
+                    ),
+                  ],
                 ],
               ),
             ),
