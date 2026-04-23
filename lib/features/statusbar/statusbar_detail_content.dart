@@ -9,89 +9,89 @@ const Map<String, StatusbarDetailContent> statusbarDetailContent = <String, Stat
   'resize_statusbar': StatusbarDetailContent(
     title: 'Resize statusbar',
     highlights: <String>[
-      'Adjust global top margin and safe area fit.',
-      'Choose center/left cutout behavior.',
-      'Fine tune balance for Dynamic Island style layouts.',
+      'Tune height, top margin, horizontal margin, and cutout-safe spacing.',
+      'Configure camera location, camera width, left notch behavior, and first element positioning.',
+      'Use remove-camera mode for advanced layouts that ignore notch calculations.',
     ],
   ),
   'battery': StatusbarDetailContent(
     title: 'Battery',
     highlights: <String>[
-      'Control battery icon visibility and scale.',
-      'Switch indicator style families.',
-      'Prepare for charging/percentage expansion presets.',
+      'Control battery visibility, style family, icon profile, and percent marker behavior.',
+      'Adjust icon, charge indicator, and percent measurements independently.',
+      'Customize battery font and color layers for a premium high-contrast finish.',
     ],
   ),
   'clock': StatusbarDetailContent(
     title: 'Clock',
     highlights: <String>[
-      'Enable seconds and smooth transitions.',
-      'Adjust typography size and style.',
-      'Tune animation mode for time updates.',
+      'Manage statusbar and notification center clock blocks with independent controls.',
+      'Set 24-hour mode, blinking dots, seconds, animation style, and format presets.',
+      'Customize date, weather, and settings icon blocks with refined typography controls.',
     ],
   ),
   'netspeed': StatusbarDetailContent(
     title: 'Netspeed',
     highlights: <String>[
-      'Toggle live upload/download text.',
-      'Adjust text scale for dense layouts.',
-      'Apply readable accents.',
+      'Switch between traffic display modes and tune refresh behavior.',
+      'Refine speed text sizing, spacing, and color for dense top bars.',
+      'Keep traffic telemetry clean and readable on compact devices.',
     ],
   ),
   'network': StatusbarDetailContent(
     title: 'Network',
     highlights: <String>[
-      'Pick signal icon family and spacing.',
-      'Control Wi-Fi/mobile icon rhythm.',
-      'Prepare compact and classic modes.',
+      'Configure Wi-Fi, signal, VoWiFi, and VoLTE style hierarchies.',
+      'Tune icon sizes, spacing, rotation, and typography for every network cluster.',
+      'Preserve structure while enabling cleaner and more organized sub-control groups.',
     ],
   ),
   'notification_icons': StatusbarDetailContent(
     title: 'Notification icons',
     highlights: <String>[
-      'Choose max visible icons before overflow.',
-      'Set compact tint style.',
-      'Balance with other right-side groups.',
+      'Control visibility, ordering behavior, icon size, spacing, and tint.',
+      'Keep alert symbols compact without clipping in right-side clusters.',
+      'Blend notification symbols with glassy statusbar styling.',
     ],
   ),
   'status_icons': StatusbarDetailContent(
     title: 'Status icons',
     highlights: <String>[
-      'Manage utility icons like alarm/headset.',
-      'Scale icon set for compact bars.',
-      'Switch profile presets quickly.',
+      'Manage utility icons such as Bluetooth, alarm, and headset indicators.',
+      'Tune icon size and spacing to avoid crowding in compact widths.',
+      'Apply dedicated color tint for consistency with your Mezo palette.',
     ],
   ),
   'date': StatusbarDetailContent(
     title: 'Date',
     highlights: <String>[
-      'Pick date format and text size.',
-      'Set accent color and spacing behavior.',
-      'Align with clock layout in live preview.',
+      'Enable date in statusbar and choose polished date formats.',
+      'Adjust date typography sizing and spacing for balanced hierarchy.',
+      'Use dedicated color control for readable glass overlays.',
     ],
   ),
   'weather': StatusbarDetailContent(
     title: 'Weather',
     highlights: <String>[
-      'Show condition text/icon in status area.',
-      'Control icon style family.',
-      'Keep text readable with dark glass backgrounds.',
+      'Show weather with optional animation and dedicated style controls.',
+      'Tune weather typography and spacing for compact statusbar placement.',
+      'Maintain readability with custom color controls on dark glass layers.',
     ],
   ),
   'prompt_icon': StatusbarDetailContent(
     title: 'Prompt icon',
     highlights: <String>[
-      'Enable or hide prompt icon instantly.',
-      'Adjust icon scale and color accent.',
-      'Keep icon behavior subtle and premium.',
+      'Enable prompt icon visibility and tune scale/offset behavior.',
+      'Use color accent controls to match your global status palette.',
+      'Keep the prompt module subtle while preserving quick recognizability.',
     ],
   ),
   'background': StatusbarDetailContent(
     title: 'Background',
     highlights: <String>[
-      'Enable translucent status backdrop.',
-      'Tune blur strength and tint.',
-      'Balance depth against icon readability.',
+      'Configure per-item backgrounds for clock, battery, SIM, Wi-Fi, and more.',
+      'Set distinct background tones for notification, status, weather, date, and prompt items.',
+      'Build a layered translucent aesthetic without crowding the status layout.',
     ],
   ),
 };
