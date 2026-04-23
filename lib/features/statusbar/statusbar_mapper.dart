@@ -126,9 +126,9 @@ class StatusBarMapper {
         group: 'Left camera notch settings',
         defaultValue: '2',
         options: <StatusBarOption>[
-          StatusBarOption(label: 'Reserve camera space on top row', value: '0'),
-          StatusBarOption(label: 'Reserve camera space on bottom row', value: '1'),
-          StatusBarOption(label: 'Keep camera space on both rows', value: '2'),
+          StatusBarOption(label: 'From top line', value: '0'),
+          StatusBarOption(label: 'From bottom line', value: '1'),
+          StatusBarOption(label: 'Dont remove', value: '2'),
         ],
       ),
     ],

@@ -5,6 +5,7 @@ import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
 import 'package:deadzon/core/widgets/section_header.dart';
 import 'package:deadzon/core/widgets/settings_row.dart';
+import 'package:deadzon/features/statusbar/data/resize_statusbar_service.dart';
 import 'package:deadzon/features/statusbar/presentation/mezo_controls.dart';
 import 'package:deadzon/features/statusbar/statusbar_board_config.dart';
 import 'package:deadzon/features/statusbar/helper.dart';
@@ -405,6 +406,7 @@ class StatusbarDetailScreen extends StatefulWidget {
 class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
   late final List<StatusBarSettingItem> _settings;
   final Map<String, Object?> _values = <String, Object?>{};
+  bool _isLoadingResize = false;
 
   @override
   void initState() {
@@ -423,6 +425,35 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
         }
       }
     }
+    if (widget.section.id == 'resize_statusbar') {
+      _isLoadingResize = true;
+      _loadResizeValues();
+    }
+  }
+
+  Future<void> _loadResizeValues() async {
+    try {
+      final loaded = await ResizeStatusbarService.loadAll();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _values.addAll(loaded);
+      });
+    } catch (_) {
+      // Keep source defaults when device settings read path is unavailable.
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingResize = false);
+      }
+    }
+  }
+
+  void _handleSettingChanged(StatusBarSettingItem setting, Object? value) {
+    setState(() => _values[setting.legacyKey] = value);
+    if (widget.section.id == 'resize_statusbar') {
+      ResizeStatusbarService.write(setting.legacyKey, value);
+    }
   }
 
   @override
@@ -439,6 +470,15 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
         padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
         physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         children: <Widget>[
+          if (_isLoadingResize)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: LinearProgressIndicator(
+                minHeight: 2,
+                color: const Color(0xFF8DE8FF),
+                backgroundColor: Colors.white.withValues(alpha: 0.08),
+              ),
+            ),
           if (_supportsLivePreview) ...<Widget>[
             _DetailLivePreview(
               sectionId: widget.section.id,
@@ -495,8 +535,9 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
                   for (var i = 0; i < entry.value.length; i++) ...<Widget>[
                     _SettingControl(
                       setting: entry.value[i],
+                      isResizeSection: widget.section.id == 'resize_statusbar',
                       value: _values[entry.value[i].legacyKey],
-                      onChanged: (value) => setState(() => _values[entry.value[i].legacyKey] = value),
+                      onChanged: (value) => _handleSettingChanged(entry.value[i], value),
                     ),
                     if (i != entry.value.length - 1) const Divider(height: 22),
                   ],
@@ -684,11 +725,13 @@ class _SettingControl extends StatelessWidget {
     required this.setting,
     required this.value,
     required this.onChanged,
+    required this.isResizeSection,
   });
 
   final StatusBarSettingItem setting;
   final Object? value;
   final ValueChanged<Object?> onChanged;
+  final bool isResizeSection;
 
   @override
   Widget build(BuildContext context) {
@@ -708,6 +751,17 @@ class _SettingControl extends StatelessWidget {
         final min = setting.min ?? 0;
         final max = setting.max ?? 100;
         final current = (value as num?)?.toDouble() ?? min;
+        if (isResizeSection) {
+          return MezoSourceSeekbarRow(
+            title: setting.title,
+            subtitle: setting.subtitle,
+            value: current.clamp(min, max),
+            min: min,
+            max: max,
+            onChanged: (v) => onChanged(v),
+            onReset: () => onChanged(setting.defaultValue),
+          );
+        }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
