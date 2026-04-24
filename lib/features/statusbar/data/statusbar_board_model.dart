@@ -28,31 +28,48 @@ class StatusbarBoardModuleState {
   const StatusbarBoardModuleState({
     required this.module,
     required this.side,
+    required this.row,
+    required this.orderIndex,
     required this.visible,
-    required this.order,
-    required this.offset,
+    required this.enabled,
+    required this.size,
+    required this.offsetX,
+    required this.offsetY,
   });
 
   final StatusbarBoardModule module;
   final StatusbarBoardSide side;
+  final int row;
+  final int orderIndex;
   final bool visible;
-  final int order;
-  final double offset;
+  final bool enabled;
+  final double size;
+  final double offsetX;
+  final double offsetY;
 
   String get id => module.id;
+  String get sourceSmaliClass => module.sourceSmaliClass;
 
   StatusbarBoardModuleState copyWith({
     StatusbarBoardSide? side,
+    int? row,
+    int? orderIndex,
     bool? visible,
-    int? order,
-    double? offset,
+    bool? enabled,
+    double? size,
+    double? offsetX,
+    double? offsetY,
   }) {
     return StatusbarBoardModuleState(
       module: module,
       side: side ?? this.side,
+      row: row ?? this.row,
+      orderIndex: orderIndex ?? this.orderIndex,
       visible: visible ?? this.visible,
-      order: order ?? this.order,
-      offset: offset ?? this.offset,
+      enabled: enabled ?? this.enabled,
+      size: size ?? this.size,
+      offsetX: offsetX ?? this.offsetX,
+      offsetY: offsetY ?? this.offsetY,
     );
   }
 }

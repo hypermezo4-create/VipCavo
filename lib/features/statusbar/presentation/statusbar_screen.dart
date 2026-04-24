@@ -122,59 +122,56 @@ class _StatusControlBoard extends StatefulWidget {
 }
 
 class _StatusControlBoardState extends State<_StatusControlBoard> {
-  String? _hoverSlotId;
+  static const double _boardHeight = 236;
+  static const double _tileWidth = 48;
+  static const double _tileHeight = 36;
+  static const double _padding = 14;
+
+  String? _draggingId;
+  Offset _dragOffset = Offset.zero;
 
   @override
   Widget build(BuildContext context) {
-    final orderedModules = List<StatusbarBoardModuleState>.from(widget.boardState.modules)
-      ..sort((a, b) => a.order.compareTo(b.order));
-
     return GlassCard(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      'Statusbar adjustment',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.2,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Drag modules directly on the board. Tap any module to adjust side, visibility, and spacing.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.72),
-                            height: 1.28,
-                          ),
-                    ),
-                  ],
+                child: Text(
+                  'Statusbar adjustment',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
                 ),
               ),
-              IconButton(
-                onPressed: () => _showBoardManager(context),
-                icon: const Icon(Icons.tune_rounded),
-                color: Colors.white.withValues(alpha: 0.8),
-                tooltip: 'Board manager',
-                visualDensity: VisualDensity.compact,
+              TextButton.icon(
+                onPressed: _resetBoard,
+                icon: const Icon(Icons.restart_alt_rounded),
+                label: const Text('Reset'),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           LayoutBuilder(
             builder: (context, constraints) {
-              final slots = _buildSlots(constraints.maxWidth);
-              final placements = _assignModulesToSlots(orderedModules, slots);
-              return _buildBoard(context, slots, placements);
+              final zones = _zones(constraints.maxWidth);
+              return SizedBox(
+                height: _boardHeight,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: const Color(0xFF8D67FF).withValues(alpha: 0.55)),
+                    color: const Color(0xFF060B10),
+                  ),
+                  child: Stack(
+                    children: <Widget>[
+                      Positioned.fill(child: _BoardGuides(zones: zones)),
+                      ...widget.boardState.modules.map((module) => _moduleWidget(module, zones)).toList(),
+                    ],
+                  ),
+                ),
+              );
             },
           ),
         ],
@@ -182,208 +179,83 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
     );
   }
 
-  Widget _buildBoard(
-    BuildContext context,
-    List<_BoardSlot> slots,
-    Map<String, _BoardSlot> placements,
-  ) {
-    const double boardHeight = 224;
-    const double boardRadius = 32;
-
-    return Container(
-      width: double.infinity,
-      height: boardHeight,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(boardRadius + 2),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(color: Color(0x1F7B5CFF), blurRadius: 28, spreadRadius: -16),
-          BoxShadow(color: Color(0x3A000000), blurRadius: 26, offset: Offset(0, 12)),
-        ],
-      ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(boardRadius),
-          border: Border.all(color: const Color(0xFF8D67FF).withValues(alpha: 0.62), width: 1.2),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: <Color>[
-              const Color(0xFF121B24),
-              const Color(0xFF090F15).withValues(alpha: 0.98),
-            ],
-          ),
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(boardRadius),
-          child: Stack(
-            children: <Widget>[
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: <Color>[
-                        const Color(0xFF060B10),
-                        const Color(0xFF000000),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 0,
-                right: 0,
-                top: 104,
-                child: IgnorePointer(
-                  child: Center(
-                    child: Container(
-                      width: 112,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 22,
-                bottom: 18,
-                left: 0,
-                right: 0,
-                child: IgnorePointer(
-                  child: Center(
-                    child: Container(
-                      width: 3,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.88),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              for (final slot in slots)
-                Positioned(
-                  left: slot.left,
-                  top: slot.top,
-                  width: slot.width,
-                  height: slot.height,
-                  child: _BoardSlotTarget(
-                    isActive: _hoverSlotId == slot.id,
-                    onWillAccept: () {
-                      if (_hoverSlotId != slot.id) {
-                        setState(() => _hoverSlotId = slot.id);
-                      }
-                    },
-                    onLeave: () {
-                      if (_hoverSlotId == slot.id) {
-                        setState(() => _hoverSlotId = null);
-                      }
-                    },
-                    onAccept: (moduleId) {
-                      _moveModuleToSlot(moduleId, slot);
-                      setState(() {
-                        _hoverSlotId = null;
-                      });
-                    },
-                  ),
-                ),
-              for (final module in widget.boardState.modules)
-                if (placements.containsKey(module.id))
-                  _buildPositionedModule(
-                    context,
-                    module,
-                    placements[module.id]!,
-                  ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPositionedModule(
-    BuildContext context,
-    StatusbarBoardModuleState module,
-    _BoardSlot slot,
-  ) {
-    final badge = _BoardModuleBadge(
-      module: module,
-      assetPath: _assetForModule(module.id),
-      onTap: () => _showModuleSheet(context, module),
-    );
-
-    return Positioned(
-      left: slot.left + (module.side == StatusbarBoardSide.left ? widget.boardState.leftClusterOffset : widget.boardState.rightClusterOffset),
-      top: slot.top,
-      width: slot.width,
-      height: slot.height,
-      child: Draggable<String>(
-        data: module.id,
-        onDragEnd: (_) => setState(() {
-          _hoverSlotId = null;
-        }),
-        feedback: Material(
-          color: Colors.transparent,
-          child: Transform.scale(
-            scale: 1.04,
-            child: SizedBox(width: slot.width, height: slot.height, child: badge),
-          ),
-        ),
-        childWhenDragging: Opacity(opacity: 0.1, child: SizedBox(width: slot.width, height: slot.height, child: badge)),
-        child: SizedBox(width: slot.width, height: slot.height, child: badge),
-      ),
-    );
-  }
-
-  List<_BoardSlot> _buildSlots(double boardWidth) {
-    const double tileWidth = 48;
-    const double tileHeight = 32;
-    const double boardPadding = 12;
-    const double rowGap = 10;
-    const double columnGap = 6;
-    final centerX = (boardWidth / 2) - (tileWidth / 2);
-    final rightOuterX = boardWidth - boardPadding - tileWidth;
-    final rightInnerX = rightOuterX - tileWidth - columnGap;
-    final leftX = boardPadding;
-
-    return <_BoardSlot>[
-      _BoardSlot(id: 'left_0', side: StatusbarBoardSide.left, orderIndex: 0, left: leftX, top: 18, width: tileWidth, height: tileHeight),
-      _BoardSlot(id: 'left_1', side: StatusbarBoardSide.left, orderIndex: 1, left: leftX, top: 18 + tileHeight + rowGap, width: tileWidth, height: tileHeight),
-      _BoardSlot(id: 'left_2', side: StatusbarBoardSide.left, orderIndex: 2, left: leftX, top: 18 + (tileHeight + rowGap) * 2, width: tileWidth, height: tileHeight),
-      _BoardSlot(id: 'left_3', side: StatusbarBoardSide.left, orderIndex: 3, left: leftX, top: 18 + (tileHeight + rowGap) * 3, width: tileWidth, height: tileHeight),
-      _BoardSlot(id: 'right_0', side: StatusbarBoardSide.right, orderIndex: 0, left: rightInnerX, top: 18, width: tileWidth, height: tileHeight),
-      _BoardSlot(id: 'right_1', side: StatusbarBoardSide.right, orderIndex: 1, left: rightOuterX, top: 18, width: tileWidth, height: tileHeight),
-      _BoardSlot(id: 'right_2', side: StatusbarBoardSide.right, orderIndex: 2, left: rightInnerX, top: 18 + tileHeight + rowGap, width: tileWidth, height: tileHeight),
-      _BoardSlot(id: 'right_3', side: StatusbarBoardSide.right, orderIndex: 3, left: rightOuterX, top: 18 + tileHeight + rowGap, width: tileWidth, height: tileHeight),
-      _BoardSlot(id: 'right_4', side: StatusbarBoardSide.right, orderIndex: 4, left: rightInnerX, top: 18 + (tileHeight + rowGap) * 2, width: tileWidth, height: tileHeight),
-      _BoardSlot(id: 'right_5', side: StatusbarBoardSide.right, orderIndex: 5, left: rightOuterX, top: 18 + (tileHeight + rowGap) * 2, width: tileWidth, height: tileHeight),
-      _BoardSlot(id: 'center_hint', side: StatusbarBoardSide.right, orderIndex: 99, left: centerX, top: 85, width: tileWidth, height: tileHeight),
+  List<_Zone> _zones(double width) {
+    final centerX = width / 2;
+    final row1Y = 58.0;
+    final row2Y = 138.0;
+    return <_Zone>[
+      _Zone(side: StatusbarBoardSide.left, row: 1, left: _padding, right: centerX - 6, top: row1Y, bottom: row1Y + _tileHeight),
+      _Zone(side: StatusbarBoardSide.left, row: 2, left: _padding, right: centerX - 6, top: row2Y, bottom: row2Y + _tileHeight),
+      _Zone(side: StatusbarBoardSide.right, row: 1, left: centerX + 6, right: width - _padding, top: row1Y, bottom: row1Y + _tileHeight),
+      _Zone(side: StatusbarBoardSide.right, row: 2, left: centerX + 6, right: width - _padding, top: row2Y, bottom: row2Y + _tileHeight),
     ];
   }
 
-  Map<String, _BoardSlot> _assignModulesToSlots(List<StatusbarBoardModuleState> modules, List<_BoardSlot> slots) {
-    final leftSlots = slots.where((slot) => slot.side == StatusbarBoardSide.left && slot.orderIndex != 99).toList(growable: false)
-      ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-    final rightSlots = slots.where((slot) => slot.side == StatusbarBoardSide.right && slot.orderIndex != 99).toList(growable: false)
-      ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+  Widget _moduleWidget(StatusbarBoardModuleState module, List<_Zone> zones) {
+    final zone = zones.firstWhere((z) => z.side == module.side && z.row == module.row);
+    final group = widget.boardState.modules.where((m) => m.side == module.side && m.row == module.row).toList()..sort((a,b)=>a.orderIndex.compareTo(b.orderIndex));
+    final index = group.indexWhere((m) => m.id == module.id).clamp(0, 99);
+    final left = zone.left + (index * (_tileWidth + 6)) + (module.side == StatusbarBoardSide.left ? widget.boardState.leftClusterOffset : widget.boardState.rightClusterOffset);
+    final top = zone.top + module.offsetY;
+    final dragging = _draggingId == module.id;
+    final pos = dragging ? _dragOffset : Offset(left, top);
 
-    final leftModules = modules.where((module) => module.side == StatusbarBoardSide.left).toList(growable: false)
-      ..sort((a, b) => a.order.compareTo(b.order));
-    final rightModules = modules.where((module) => module.side == StatusbarBoardSide.right).toList(growable: false)
-      ..sort((a, b) => a.order.compareTo(b.order));
+    return Positioned(
+      left: pos.dx,
+      top: pos.dy,
+      child: GestureDetector(
+        onTap: () => _showModuleSheet(context, module),
+        onPanStart: (d) => setState(() {
+          _draggingId = module.id;
+          _dragOffset = Offset(left, top);
+        }),
+        onPanUpdate: (d) {
+          setState(() => _dragOffset += d.delta);
+          _liveRelayout(module.id, _dragOffset, zones);
+        },
+        onPanEnd: (_) {
+          _draggingId = null;
+          widget.onChanged(widget.boardState.copyWith(modules: _normalize(widget.boardState.modules)));
+        },
+        child: SizedBox(
+          width: _tileWidth,
+          height: _tileHeight,
+          child: _BoardModuleBadge(module: module, assetPath: module.module.iconAsset, onTap: () => _showModuleSheet(context, module)),
+        ),
+      ),
+    );
+  }
 
-    final result = <String, _BoardSlot>{};
-    for (var i = 0; i < leftModules.length && i < leftSlots.length; i++) {
-      result[leftModules[i].id] = leftSlots[i];
+  void _liveRelayout(String moduleId, Offset pos, List<_Zone> zones) {
+    final crossing = zones.firstWhere(
+      (z) => pos.dx + (_tileWidth / 2) >= z.left && pos.dx + (_tileWidth / 2) <= z.right,
+      orElse: () => pos.dx < (zones.first.right + zones.first.left) / 2 ? zones.first : zones[2],
+    );
+    final row = (pos.dy + (_tileHeight / 2)) > 118 ? 2 : 1;
+    final side = crossing.side;
+    final inGroup = widget.boardState.modules.where((m) => m.id != moduleId && m.side == side && m.row == row).toList()..sort((a,b)=>a.orderIndex.compareTo(b.orderIndex));
+    final index = (((pos.dx - crossing.left) / (_tileWidth + 6)).round()).clamp(0, inGroup.length);
+    final moved = widget.boardState.modules.firstWhere((m) => m.id == moduleId).copyWith(side: side, row: row, orderIndex: index, visible: true, enabled: true);
+    final updated = <StatusbarBoardModuleState>[...widget.boardState.modules.where((m) => m.id != moduleId), moved];
+    widget.onChanged(widget.boardState.copyWith(modules: _normalize(updated)));
+  }
+
+  List<StatusbarBoardModuleState> _normalize(List<StatusbarBoardModuleState> modules) {
+    final out = <StatusbarBoardModuleState>[];
+    for (final side in <StatusbarBoardSide>[StatusbarBoardSide.left, StatusbarBoardSide.right]) {
+      for (var row = 1; row <= 2; row++) {
+        final group = modules.where((m) => m.side == side && m.row == row).toList()..sort((a,b)=>a.orderIndex.compareTo(b.orderIndex));
+        for (var i = 0; i < group.length; i++) {
+          out.add(group[i].copyWith(orderIndex: i));
+        }
+      }
     }
-    for (var i = 0; i < rightModules.length && i < rightSlots.length; i++) {
-      result[rightModules[i].id] = rightSlots[i];
-    }
-    return result;
+    return out;
+  }
+
+  Future<void> _resetBoard() async {
+    final next = widget.boardState.copyWith(modules: StatusbarBoardService.defaultModules());
+    widget.onChanged(next);
   }
 
   Future<void> _showModuleSheet(BuildContext context, StatusbarBoardModuleState module) async {
@@ -391,332 +263,61 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            final section = StatusbarSectionConfigs.values.firstWhere((item) => item.id == current.id);
-            return Container(
-              margin: const EdgeInsets.fromLTRB(12, 12, 12, 18),
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 22),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(28),
-                color: const Color(0xFF0B1418).withValues(alpha: 0.96),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-                boxShadow: const <BoxShadow>[
-                  BoxShadow(color: Color(0x44000000), blurRadius: 32, offset: Offset(0, 14)),
-                ],
-              ),
-              child: SafeArea(
-                top: false,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Center(
-                      child: Container(
-                        width: 42,
-                        height: 4,
-                        margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                      ),
-                    ),
-                    Row(
-                      children: <Widget>[
-                        _MezoDrawableImage(path: _assetForModule(current.id), width: 52, height: 32, fallbackIcon: current.module.icon),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            current.module.title,
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
-                    _ModuleControlRow(
-                      label: 'Visible',
-                      child: Switch.adaptive(
-                        value: current.visible,
-                        onChanged: (value) {
-                          final updated = current.copyWith(visible: value);
-                          setModalState(() => current = updated);
-                          _updateSingleModule(updated);
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _ModuleControlRow(
-                      label: 'Side',
-                      child: SegmentedButton<StatusbarBoardSide>(
-                        segments: const <ButtonSegment<StatusbarBoardSide>>[
-                          ButtonSegment<StatusbarBoardSide>(value: StatusbarBoardSide.left, label: Text('Left')),
-                          ButtonSegment<StatusbarBoardSide>(value: StatusbarBoardSide.right, label: Text('Right')),
-                        ],
-                        selected: <StatusbarBoardSide>{current.side},
-                        onSelectionChanged: (value) {
-                          final updated = current.copyWith(side: value.first);
-                          setModalState(() => current = updated);
-                          _updateSingleModule(updated);
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _ModuleControlRow(
-                      label: 'Spacing',
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          MezoAdjustButton(
-                            icon: Icons.remove_rounded,
-                            onTap: () {
-                              final updated = current.copyWith(offset: (current.offset - 1).clamp(-20.0, 20.0).toDouble());
-                              setModalState(() => current = updated);
-                              _updateSingleModule(updated);
-                            },
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            current.offset.toStringAsFixed(0),
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(width: 10),
-                          MezoAdjustButton(
-                            icon: Icons.add_rounded,
-                            onTap: () {
-                              final updated = current.copyWith(offset: (current.offset + 1).clamp(-20.0, 20.0).toDouble());
-                              setModalState(() => current = updated);
-                              _updateSingleModule(updated);
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed: () {
-                          Navigator.of(sheetContext).pop();
-                          widget.onOpenSection(section.id);
-                        },
-                        icon: const Icon(Icons.open_in_new_rounded),
-                        label: const Text('Open section'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Future<void> _showBoardManager(BuildContext context) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (sheetContext) {
-        final hiddenModules = widget.boardState.modules.where((module) => !module.visible).toList(growable: false);
-        return Container(
-          margin: const EdgeInsets.fromLTRB(12, 12, 12, 18),
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 22),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            color: const Color(0xFF0B1418).withValues(alpha: 0.96),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  'Board manager',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Restore hidden modules and fine-tune the global left/right cluster offsets.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white.withValues(alpha: 0.72), height: 1.35),
-                ),
-                if (hiddenModules.isNotEmpty) ...<Widget>[
-                  const SizedBox(height: 18),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: hiddenModules
-                        .map(
-                          (module) => ActionChip(
-                            onPressed: () {
-                              final updated = module.copyWith(visible: true);
-                              _updateSingleModule(updated);
-                              Navigator.of(sheetContext).pop();
-                            },
-                            avatar: _MezoDrawableImage(
-                              path: _assetForModule(module.id),
-                              width: 34,
-                              height: 18,
-                              fallbackIcon: module.module.icon,
-                            ),
-                            label: Text(module.module.title),
-                          ),
-                        )
-                        .toList(growable: false),
-                  ),
-                ],
-                const SizedBox(height: 18),
-                Text('Left cluster offset', style: TextStyle(color: Colors.white.withValues(alpha: 0.82))),
-                MezoStepSlider(
-                  value: widget.boardState.leftClusterOffset,
-                  min: -30,
-                  max: 30,
-                  onChanged: (value) => widget.onChanged(widget.boardState.copyWith(leftClusterOffset: value)),
-                ),
-                Text('Right cluster offset', style: TextStyle(color: Colors.white.withValues(alpha: 0.82))),
-                MezoStepSlider(
-                  value: widget.boardState.rightClusterOffset,
-                  min: -30,
-                  max: 30,
-                  onChanged: (value) => widget.onChanged(widget.boardState.copyWith(rightClusterOffset: value)),
-                ),
-              ],
+      builder: (sheetContext) => Container(
+        margin: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(color: const Color(0xFF0B1418), borderRadius: BorderRadius.circular(24)),
+        child: StatefulBuilder(
+          builder: (context, setModal) => Column(mainAxisSize: MainAxisSize.min, children: [
+            Text(current.module.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            SwitchListTile.adaptive(
+              value: current.visible,
+              onChanged: (v) {
+                final n = current.copyWith(visible: v);
+                setModal(() => current = n);
+                _updateSingle(n);
+              },
+              title: const Text('Visible', style: TextStyle(color: Colors.white)),
             ),
-          ),
-        );
-      },
+          ]),
+        ),
+      ),
     );
   }
 
-  void _moveModuleToSlot(String moduleId, _BoardSlot slot) {
-    final modules = List<StatusbarBoardModuleState>.from(widget.boardState.modules);
-    final dragged = modules.firstWhere((module) => module.id == moduleId);
-
-    final leftModules = modules.where((module) => module.side == StatusbarBoardSide.left && module.id != moduleId).toList(growable: true)
-      ..sort((a, b) => a.order.compareTo(b.order));
-    final rightModules = modules.where((module) => module.side == StatusbarBoardSide.right && module.id != moduleId).toList(growable: true)
-      ..sort((a, b) => a.order.compareTo(b.order));
-
-    final updatedDragged = dragged.copyWith(side: slot.side, visible: true);
-    if (slot.side == StatusbarBoardSide.left) {
-      final insertIndex = slot.orderIndex.clamp(0, leftModules.length);
-      leftModules.insert(insertIndex, updatedDragged);
-    } else {
-      final insertIndex = slot.orderIndex.clamp(0, rightModules.length);
-      rightModules.insert(insertIndex, updatedDragged);
-    }
-
-    final normalized = <StatusbarBoardModuleState>[];
-    for (final module in leftModules) {
-      normalized.add(module.copyWith(order: normalized.length));
-    }
-    for (final module in rightModules) {
-      normalized.add(module.copyWith(order: normalized.length));
-    }
-
-    widget.onChanged(widget.boardState.copyWith(modules: normalized));
-  }
-
-  void _updateSingleModule(StatusbarBoardModuleState next) {
-    final updated = widget.boardState.modules
-        .map((module) => module.id == next.id ? next : module)
-        .toList(growable: false);
-    widget.onChanged(widget.boardState.copyWith(modules: _normalizeOrders(updated)));
-  }
-
-  List<StatusbarBoardModuleState> _normalizeOrders(List<StatusbarBoardModuleState> modules) {
-    final left = modules.where((module) => module.side == StatusbarBoardSide.left).toList(growable: false)
-      ..sort((a, b) => a.order.compareTo(b.order));
-    final right = modules.where((module) => module.side == StatusbarBoardSide.right).toList(growable: false)
-      ..sort((a, b) => a.order.compareTo(b.order));
-    final normalized = <StatusbarBoardModuleState>[];
-    for (final module in left) {
-      normalized.add(module.copyWith(order: normalized.length));
-    }
-    for (final module in right) {
-      normalized.add(module.copyWith(order: normalized.length));
-    }
-    return normalized;
-  }
-
-  String _assetForModule(String moduleId) {
-    final match = MezoStatusbarBoardSourceMap.cards.where((card) => card.sectionId == moduleId);
-    if (match.isNotEmpty) {
-      return match.first.drawableAssetPath;
-    }
-    return 'reference/mezo/mezo/res/drawable-xxxhdpi/elem_clock_card.png';
+  void _updateSingle(StatusbarBoardModuleState next) {
+    final updated = widget.boardState.modules.map((m) => m.id == next.id ? next : m).toList(growable: false);
+    widget.onChanged(widget.boardState.copyWith(modules: _normalize(updated)));
   }
 }
 
-class _BoardSlot {
-  const _BoardSlot({
-    required this.id,
-    required this.side,
-    required this.orderIndex,
-    required this.left,
-    required this.top,
-    required this.width,
-    required this.height,
-  });
+class _Zone {
+  const _Zone({required this.side, required this.row, required this.left, required this.right, required this.top, required this.bottom});
 
-  final String id;
   final StatusbarBoardSide side;
-  final int orderIndex;
+  final int row;
   final double left;
+  final double right;
   final double top;
-  final double width;
-  final double height;
+  final double bottom;
 }
 
-class _BoardSlotTarget extends StatelessWidget {
-  const _BoardSlotTarget({
-    required this.isActive,
-    required this.onWillAccept,
-    required this.onLeave,
-    required this.onAccept,
-  });
-
-  final bool isActive;
-  final VoidCallback onWillAccept;
-  final VoidCallback onLeave;
-  final ValueChanged<String> onAccept;
+class _BoardGuides extends StatelessWidget {
+  const _BoardGuides({required this.zones});
+  final List<_Zone> zones;
 
   @override
   Widget build(BuildContext context) {
-    return DragTarget<String>(
-      onWillAcceptWithDetails: (details) {
-        onWillAccept();
-        return true;
-      },
-      onLeave: (_) => onLeave(),
-      onAcceptWithDetails: (details) => onAccept(details.data),
-      builder: (context, candidateData, rejectedData) {
-        final showOutline = isActive || candidateData.isNotEmpty;
-        return AnimatedContainer(
-          duration: DesignTokens.motionFast,
-          curve: DesignTokens.motionCurve,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: showOutline
-                ? Border.all(color: const Color(0xFFB28CFF).withValues(alpha: 0.72), width: 1.2)
-                : null,
-            color: showOutline ? const Color(0xFFB28CFF).withValues(alpha: 0.08) : Colors.transparent,
-          ),
-        );
-      },
-    );
+    final center = (zones.first.right + zones[2].left) / 2;
+    return Stack(children: [
+      Positioned(left: center - 1, top: 20, bottom: 20, child: Container(width: 2, color: Colors.white.withValues(alpha: 0.72))),
+      Positioned(left: 18, right: 18, top: 118, child: Container(height: 2, color: Colors.white.withValues(alpha: 0.22))),
+      Positioned(left: 18, top: 18, child: Text('Row 1', style: TextStyle(color: Colors.white.withValues(alpha: 0.48), fontSize: 12))),
+      Positioned(left: 18, top: 124, child: Text('Row 2', style: TextStyle(color: Colors.white.withValues(alpha: 0.48), fontSize: 12))),
+    ]);
   }
 }
+
 class _StatusbarSectionGrid extends StatelessWidget {
   const _StatusbarSectionGrid({
     required this.cards,
@@ -833,8 +434,8 @@ class _BoardModuleBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseWidth = module.id == 'network' ? 44.0 : module.id == 'prompt_icon' ? 40.0 : 42.0;
-    final width = (baseWidth + (module.offset.abs() * 0.25)).clamp(38.0, 48.0).toDouble();
+    final baseWidth = module.id.startsWith('network') ? 44.0 : module.id == 'prompt_icon' ? 40.0 : 42.0;
+    final width = (baseWidth + (module.offsetX.abs() * 0.25)).clamp(38.0, 48.0).toDouble();
     final opacity = module.visible ? 1.0 : 0.38;
 
     return GestureDetector(
