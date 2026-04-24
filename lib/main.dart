@@ -13,12 +13,13 @@ class DeadzonApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    final accent = ref.watch(globalAccentProvider);
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'Deadzon',
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
+      theme: AppTheme.light(accent),
+      darkTheme: AppTheme.dark(accent),
       themeMode: themeMode,
       routerConfig: appRouter,
     );

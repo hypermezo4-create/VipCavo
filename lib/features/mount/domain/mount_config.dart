@@ -7,6 +7,14 @@ class MountConfig {
     required this.monetEnabled,
     required this.selectedColor,
     required this.selectedColorName,
+    required this.selectedSeedColor,
+    required this.selectedColorHex,
+    required this.selectedPaletteId,
+    required this.recentColors,
+    required this.favoriteColors,
+    required this.generatedPalettes,
+    required this.wallpaperColors,
+    required this.componentColors,
     required this.glassOpacity,
     required this.blurStrength,
     required this.accentIntensity,
@@ -30,6 +38,7 @@ class MountConfig {
     required this.scopeLauncher,
     required this.scopeSelectedApps,
     required this.selectedPackageNames,
+    required this.scopeToggles,
     required this.controlAppToggles,
     required this.activeProfileId,
   });
@@ -37,6 +46,14 @@ class MountConfig {
   final bool monetEnabled;
   final Color selectedColor;
   final String selectedColorName;
+  final Color selectedSeedColor;
+  final String selectedColorHex;
+  final String selectedPaletteId;
+  final List<int> recentColors;
+  final List<int> favoriteColors;
+  final Map<String, Map<String, int>> generatedPalettes;
+  final Map<String, Map<String, int>> wallpaperColors;
+  final Map<String, int> componentColors;
   final double glassOpacity;
   final double blurStrength;
   final double accentIntensity;
@@ -60,6 +77,7 @@ class MountConfig {
   final bool scopeLauncher;
   final bool scopeSelectedApps;
   final List<String> selectedPackageNames;
+  final Map<String, bool> scopeToggles;
   final Map<String, bool> controlAppToggles;
   final String activeProfileId;
 
@@ -67,6 +85,14 @@ class MountConfig {
     bool? monetEnabled,
     Color? selectedColor,
     String? selectedColorName,
+    Color? selectedSeedColor,
+    String? selectedColorHex,
+    String? selectedPaletteId,
+    List<int>? recentColors,
+    List<int>? favoriteColors,
+    Map<String, Map<String, int>>? generatedPalettes,
+    Map<String, Map<String, int>>? wallpaperColors,
+    Map<String, int>? componentColors,
     double? glassOpacity,
     double? blurStrength,
     double? accentIntensity,
@@ -90,6 +116,7 @@ class MountConfig {
     bool? scopeLauncher,
     bool? scopeSelectedApps,
     List<String>? selectedPackageNames,
+    Map<String, bool>? scopeToggles,
     Map<String, bool>? controlAppToggles,
     String? activeProfileId,
   }) {
@@ -97,6 +124,14 @@ class MountConfig {
       monetEnabled: monetEnabled ?? this.monetEnabled,
       selectedColor: selectedColor ?? this.selectedColor,
       selectedColorName: selectedColorName ?? this.selectedColorName,
+      selectedSeedColor: selectedSeedColor ?? this.selectedSeedColor,
+      selectedColorHex: selectedColorHex ?? this.selectedColorHex,
+      selectedPaletteId: selectedPaletteId ?? this.selectedPaletteId,
+      recentColors: recentColors ?? this.recentColors,
+      favoriteColors: favoriteColors ?? this.favoriteColors,
+      generatedPalettes: generatedPalettes ?? this.generatedPalettes,
+      wallpaperColors: wallpaperColors ?? this.wallpaperColors,
+      componentColors: componentColors ?? this.componentColors,
       glassOpacity: glassOpacity ?? this.glassOpacity,
       blurStrength: blurStrength ?? this.blurStrength,
       accentIntensity: accentIntensity ?? this.accentIntensity,
@@ -120,53 +155,79 @@ class MountConfig {
       scopeLauncher: scopeLauncher ?? this.scopeLauncher,
       scopeSelectedApps: scopeSelectedApps ?? this.scopeSelectedApps,
       selectedPackageNames: selectedPackageNames ?? this.selectedPackageNames,
+      scopeToggles: scopeToggles ?? this.scopeToggles,
       controlAppToggles: controlAppToggles ?? this.controlAppToggles,
       activeProfileId: activeProfileId ?? this.activeProfileId,
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return <String, dynamic>{
-      'monetEnabled': monetEnabled,
-      'selectedColor': selectedColor.toARGB32(),
-      'selectedColorName': selectedColorName,
-      'glassOpacity': glassOpacity,
-      'blurStrength': blurStrength,
-      'accentIntensity': accentIntensity,
-      'glowAmount': glowAmount,
-      'cornerRadius': cornerRadius,
-      'shadowDepth': shadowDepth,
-      'borderVisibility': borderVisibility,
-      'seekbarColor': seekbarColor.toARGB32(),
-      'switchOnColor': switchOnColor.toARGB32(),
-      'switchOffColor': switchOffColor.toARGB32(),
-      'checkboxOnColor': checkboxOnColor.toARGB32(),
-      'checkboxOffColor': checkboxOffColor.toARGB32(),
-      'cardBackgroundTint': cardBackgroundTint.toARGB32(),
-      'iconAccentColor': iconAccentColor.toARGB32(),
-      'textAccentColor': textAccentColor.toARGB32(),
-      'scopeStatusbar': scopeStatusbar,
-      'scopeControlCenter': scopeControlCenter,
-      'scopeNotifications': scopeNotifications,
-      'scopeLockscreen': scopeLockscreen,
-      'scopeSettings': scopeSettings,
-      'scopeLauncher': scopeLauncher,
-      'scopeSelectedApps': scopeSelectedApps,
-      'selectedPackageNames': selectedPackageNames,
-      'controlAppToggles': controlAppToggles,
-      'activeProfileId': activeProfileId,
-    };
-  }
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'monetEnabled': monetEnabled,
+        'selectedColor': selectedColor.toARGB32(),
+        'selectedColorName': selectedColorName,
+        'selectedSeedColor': selectedSeedColor.toARGB32(),
+        'selectedColorHex': selectedColorHex,
+        'selectedPaletteId': selectedPaletteId,
+        'recentColors': recentColors,
+        'favoriteColors': favoriteColors,
+        'generatedPalettes': generatedPalettes,
+        'wallpaperColors': wallpaperColors,
+        'componentColors': componentColors,
+        'glassOpacity': glassOpacity,
+        'blurStrength': blurStrength,
+        'accentIntensity': accentIntensity,
+        'glowAmount': glowAmount,
+        'cornerRadius': cornerRadius,
+        'shadowDepth': shadowDepth,
+        'borderVisibility': borderVisibility,
+        'seekbarColor': seekbarColor.toARGB32(),
+        'switchOnColor': switchOnColor.toARGB32(),
+        'switchOffColor': switchOffColor.toARGB32(),
+        'checkboxOnColor': checkboxOnColor.toARGB32(),
+        'checkboxOffColor': checkboxOffColor.toARGB32(),
+        'cardBackgroundTint': cardBackgroundTint.toARGB32(),
+        'iconAccentColor': iconAccentColor.toARGB32(),
+        'textAccentColor': textAccentColor.toARGB32(),
+        'scopeStatusbar': scopeStatusbar,
+        'scopeControlCenter': scopeControlCenter,
+        'scopeNotifications': scopeNotifications,
+        'scopeLockscreen': scopeLockscreen,
+        'scopeSettings': scopeSettings,
+        'scopeLauncher': scopeLauncher,
+        'scopeSelectedApps': scopeSelectedApps,
+        'selectedPackageNames': selectedPackageNames,
+        'scopeToggles': scopeToggles,
+        'controlAppToggles': controlAppToggles,
+        'activeProfileId': activeProfileId,
+      };
 
   String encode() => jsonEncode(toJson());
 
   static MountConfig fromJson(Map<String, dynamic> map, MountConfig fallback) {
     Color c(String key, Color current) => Color((map[key] as int?) ?? current.toARGB32());
+    Map<String, Map<String, int>> nestedMap(String key, Map<String, Map<String, int>> current) {
+      final source = map[key];
+      if (source is! Map<String, dynamic>) return current;
+      return source.map((k, v) {
+        if (v is Map<String, dynamic>) {
+          return MapEntry(k, v.map((ik, iv) => MapEntry(ik, (iv as num).toInt())));
+        }
+        return MapEntry(k, <String, int>{});
+      });
+    }
 
     return fallback.copyWith(
       monetEnabled: map['monetEnabled'] as bool?,
       selectedColor: c('selectedColor', fallback.selectedColor),
       selectedColorName: map['selectedColorName'] as String?,
+      selectedSeedColor: c('selectedSeedColor', fallback.selectedSeedColor),
+      selectedColorHex: map['selectedColorHex'] as String?,
+      selectedPaletteId: map['selectedPaletteId'] as String?,
+      recentColors: (map['recentColors'] as List<dynamic>?)?.map((e) => (e as num).toInt()).toList(),
+      favoriteColors: (map['favoriteColors'] as List<dynamic>?)?.map((e) => (e as num).toInt()).toList(),
+      generatedPalettes: nestedMap('generatedPalettes', fallback.generatedPalettes),
+      wallpaperColors: nestedMap('wallpaperColors', fallback.wallpaperColors),
+      componentColors: (map['componentColors'] as Map<String, dynamic>?)?.map((k, v) => MapEntry(k, (v as num).toInt())),
       glassOpacity: (map['glassOpacity'] as num?)?.toDouble(),
       blurStrength: (map['blurStrength'] as num?)?.toDouble(),
       accentIntensity: (map['accentIntensity'] as num?)?.toDouble(),
@@ -190,6 +251,7 @@ class MountConfig {
       scopeLauncher: map['scopeLauncher'] as bool?,
       scopeSelectedApps: map['scopeSelectedApps'] as bool?,
       selectedPackageNames: (map['selectedPackageNames'] as List<dynamic>?)?.map((e) => '$e').toList(),
+      scopeToggles: (map['scopeToggles'] as Map<String, dynamic>?)?.map((key, value) => MapEntry(key, value == true)),
       controlAppToggles: (map['controlAppToggles'] as Map<String, dynamic>?)?.map((key, value) => MapEntry(key, value == true)),
       activeProfileId: map['activeProfileId'] as String?,
     );

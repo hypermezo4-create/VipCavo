@@ -1,6 +1,8 @@
 package com.mezo.deadzon
 
+import android.app.WallpaperManager
 import android.content.Intent
+import android.os.Build
 import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -63,10 +65,8 @@ class MainActivity : FlutterActivity() {
                     result.success(null)
                 }
 
-                "launchMonetPicker" -> {
-                    result.success(launchMonetPicker())
-                }
-
+                "launchMonetPicker" -> result.success(launchMonetPicker())
+                "getWallpaperColors" -> result.success(getWallpaperColors())
                 else -> result.notImplemented()
             }
         }
@@ -82,6 +82,42 @@ class MainActivity : FlutterActivity() {
             true
         } catch (_: Exception) {
             false
+        }
+    }
+
+    private fun getWallpaperColors(): Map<String, Any?> {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O_MR1) {
+            return mapOf(
+                "available" to false,
+                "message" to "Wallpaper colors are not available on this ROM."
+            )
+        }
+
+        return try {
+            val manager = WallpaperManager.getInstance(applicationContext)
+
+            fun asMap(which: Int): Map<String, Int>? {
+                val colors = manager.getWallpaperColors(which) ?: return null
+                return mapOf(
+                    "primary" to (colors.primaryColor?.toArgb() ?: return null),
+                    "secondary" to (colors.secondaryColor?.toArgb() ?: colors.primaryColor?.toArgb() ?: return null),
+                    "tertiary" to (colors.tertiaryColor?.toArgb() ?: colors.secondaryColor?.toArgb() ?: colors.primaryColor?.toArgb() ?: return null),
+                )
+            }
+
+            val system = asMap(WallpaperManager.FLAG_SYSTEM)
+            val lock = asMap(WallpaperManager.FLAG_LOCK)
+            if (system == null && lock == null) {
+                mapOf("available" to false, "message" to "Wallpaper colors are not available on this ROM.")
+            } else {
+                mapOf(
+                    "available" to true,
+                    "system" to (system ?: emptyMap<String, Int>()),
+                    "lock" to (lock ?: emptyMap<String, Int>()),
+                )
+            }
+        } catch (_: Exception) {
+            mapOf("available" to false, "message" to "Wallpaper colors are not available on this ROM.")
         }
     }
 
