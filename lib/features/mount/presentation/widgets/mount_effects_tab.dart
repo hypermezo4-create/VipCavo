@@ -14,13 +14,13 @@ class MountEffectsTab extends StatelessWidget {
       tint: config.selectedColor,
       child: Column(
         children: <Widget>[
-          _SliderTile(title: 'Glass opacity', value: config.glassOpacity, min: 0.2, max: 1, onChanged: (v) => onChanged('glassOpacity', v)),
-          _SliderTile(title: 'Blur strength', value: config.blurStrength, min: 0, max: 30, onChanged: (v) => onChanged('blurStrength', v)),
-          _SliderTile(title: 'Accent intensity', value: config.accentIntensity, min: 0, max: 1, onChanged: (v) => onChanged('accentIntensity', v)),
-          _SliderTile(title: 'Glow amount', value: config.glowAmount, min: 0, max: 1, onChanged: (v) => onChanged('glowAmount', v)),
-          _SliderTile(title: 'Corner radius', value: config.cornerRadius, min: 12, max: 36, onChanged: (v) => onChanged('cornerRadius', v)),
-          _SliderTile(title: 'Shadow depth', value: config.shadowDepth, min: 0, max: 1, onChanged: (v) => onChanged('shadowDepth', v)),
-          _SliderTile(title: 'Border visibility', value: config.borderVisibility, min: 0, max: 1, onChanged: (v) => onChanged('borderVisibility', v)),
+          _SliderTile(title: 'Glass opacity', value: config.glassOpacity, min: 0.2, max: 1, format: _SliderFormat.percent, onChanged: (v) => onChanged('glassOpacity', v)),
+          _SliderTile(title: 'Blur strength', value: config.blurStrength, min: 0, max: 30, format: _SliderFormat.pixels, onChanged: (v) => onChanged('blurStrength', v)),
+          _SliderTile(title: 'Accent intensity', value: config.accentIntensity, min: 0, max: 1, format: _SliderFormat.percent, onChanged: (v) => onChanged('accentIntensity', v)),
+          _SliderTile(title: 'Glow amount', value: config.glowAmount, min: 0, max: 1, format: _SliderFormat.percent, onChanged: (v) => onChanged('glowAmount', v)),
+          _SliderTile(title: 'Corner radius', value: config.cornerRadius, min: 12, max: 36, format: _SliderFormat.pixels, onChanged: (v) => onChanged('cornerRadius', v)),
+          _SliderTile(title: 'Shadow depth', value: config.shadowDepth, min: 0, max: 1, format: _SliderFormat.percent, onChanged: (v) => onChanged('shadowDepth', v)),
+          _SliderTile(title: 'Border visibility', value: config.borderVisibility, min: 0, max: 1, format: _SliderFormat.percent, onChanged: (v) => onChanged('borderVisibility', v)),
         ],
       ),
     );
@@ -28,12 +28,20 @@ class MountEffectsTab extends StatelessWidget {
 }
 
 class _SliderTile extends StatelessWidget {
-  const _SliderTile({required this.title, required this.value, required this.min, required this.max, required this.onChanged});
+  const _SliderTile({
+    required this.title,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.format,
+    required this.onChanged,
+  });
 
   final String title;
   final double value;
   final double min;
   final double max;
+  final _SliderFormat format;
   final ValueChanged<double> onChanged;
 
   @override
@@ -46,7 +54,7 @@ class _SliderTile extends StatelessWidget {
           Row(
             children: <Widget>[
               Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
-              Text(value.toStringAsFixed(2), style: TextStyle(color: Colors.white.withValues(alpha: 0.74))),
+              Text(_formatValue(value), style: TextStyle(color: Colors.white.withValues(alpha: 0.74))),
             ],
           ),
           Slider(value: value.clamp(min, max), min: min, max: max, onChanged: onChanged),
@@ -54,4 +62,15 @@ class _SliderTile extends StatelessWidget {
       ),
     );
   }
+
+  String _formatValue(double rawValue) {
+    switch (format) {
+      case _SliderFormat.percent:
+        return '${(rawValue * 100).round()}%';
+      case _SliderFormat.pixels:
+        return '${rawValue.round()} px';
+    }
+  }
 }
+
+enum _SliderFormat { percent, pixels }

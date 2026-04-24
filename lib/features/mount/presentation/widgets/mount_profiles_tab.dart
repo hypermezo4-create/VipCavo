@@ -7,14 +7,16 @@ class MountProfilesTab extends StatelessWidget {
     required this.profiles,
     required this.activeProfileId,
     required this.onProfileTap,
-    required this.onPlaceholder,
+    required this.onResetProfile,
+    required this.onEditProfile,
     super.key,
   });
 
   final List<MountProfile> profiles;
   final String activeProfileId;
   final ValueChanged<String> onProfileTap;
-  final VoidCallback onPlaceholder;
+  final VoidCallback onResetProfile;
+  final VoidCallback onEditProfile;
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +34,8 @@ class MountProfilesTab extends StatelessWidget {
           ),
           Row(
             children: <Widget>[
-              TextButton(onPressed: onPlaceholder, child: const Text('Reset profile')), 
-              TextButton(onPressed: onPlaceholder, child: const Text('Edit profile')),
+              TextButton(onPressed: onResetProfile, child: const Text('Reset profile')),
+              TextButton(onPressed: onEditProfile, child: const Text('Edit profile')),
             ],
           ),
         ],

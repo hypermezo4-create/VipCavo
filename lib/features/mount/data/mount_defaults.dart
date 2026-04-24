@@ -119,16 +119,14 @@ class MountDefaults {
   }
 
   static const List<MountSelectableApp> mockSelectableApps = <MountSelectableApp>[
+    MountSelectableApp(name: 'YouTube', packageName: 'com.google.android.youtube', installed: true),
+    MountSelectableApp(name: 'Telegram', packageName: 'org.telegram.messenger', installed: true),
+    MountSelectableApp(name: 'Chrome', packageName: 'com.android.chrome', installed: true),
+    MountSelectableApp(name: 'WhatsApp', packageName: 'com.whatsapp', installed: true),
+    MountSelectableApp(name: 'Instagram', packageName: 'com.instagram.android', installed: true),
+    MountSelectableApp(name: 'TikTok', packageName: 'com.zhiliaoapp.musically', installed: true),
     MountSelectableApp(name: 'Settings', packageName: 'com.android.settings', installed: true),
     MountSelectableApp(name: 'System UI', packageName: 'com.android.systemui', installed: true),
-    MountSelectableApp(name: 'Theme Manager', packageName: 'com.android.thememanager', installed: true),
-    MountSelectableApp(name: 'Gallery', packageName: 'com.miui.gallery', installed: true),
-    MountSelectableApp(name: 'Camera', packageName: 'com.android.camera', installed: true),
-    MountSelectableApp(name: 'Mi Home', packageName: 'com.miui.home', installed: true),
-    MountSelectableApp(name: 'Updater', packageName: 'com.android.updater', installed: true),
-    MountSelectableApp(name: 'Music', packageName: 'com.miui.player', installed: false),
-    MountSelectableApp(name: 'Weather', packageName: 'com.miui.weather2', installed: true),
-    MountSelectableApp(name: 'Contacts', packageName: 'com.android.contacts', installed: true),
   ];
 
   static const List<MountMonetApp> controlApps = <MountMonetApp>[

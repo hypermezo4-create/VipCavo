@@ -18,6 +18,10 @@ class MountService {
 
   Future<void> saveConfig(MountConfig config) => _storage.saveConfig(config);
 
+  Future<int> loadActiveTab() => _storage.loadActiveTab();
+
+  Future<void> saveActiveTab(int index) => _storage.saveActiveTab(index);
+
   Future<void> reset() => _storage.clearConfig();
 
   Future<bool> launchMonetPicker() => _monetPickerLauncher.launchMonetPicker();

@@ -6,6 +6,7 @@ class MountStorageService {
   MountStorageService({SharedPreferences? prefs}) : _prefs = prefs;
 
   static const String _configKey = 'mount_config_v1';
+  static const String _activeTabKey = 'mount_active_tab_v1';
   final SharedPreferences? _prefs;
 
   Future<SharedPreferences> _resolvePrefs() async {
@@ -29,5 +30,16 @@ class MountStorageService {
   Future<void> clearConfig() async {
     final prefs = await _resolvePrefs();
     await prefs.remove(_configKey);
+    await prefs.remove(_activeTabKey);
+  }
+
+  Future<int> loadActiveTab() async {
+    final prefs = await _resolvePrefs();
+    return prefs.getInt(_activeTabKey) ?? 0;
+  }
+
+  Future<void> saveActiveTab(int index) async {
+    final prefs = await _resolvePrefs();
+    await prefs.setInt(_activeTabKey, index);
   }
 }
