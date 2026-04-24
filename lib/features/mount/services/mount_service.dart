@@ -2,6 +2,7 @@ import 'package:deadzon/features/mount/data/mount_defaults.dart';
 import 'package:deadzon/features/mount/data/mount_storage_service.dart';
 import 'package:deadzon/features/mount/domain/mount_config.dart';
 import 'package:deadzon/features/mount/domain/mount_monet_app.dart';
+import 'package:deadzon/features/mount/domain/mount_palette.dart';
 import 'package:deadzon/features/mount/services/monet_picker_launcher.dart';
 
 class MountService {
@@ -26,9 +27,9 @@ class MountService {
 
   Future<bool> launchMonetPicker() => _monetPickerLauncher.launchMonetPicker();
 
-  Future<List<MountSelectableApp>> loadSelectableApps() async {
-    return MountDefaults.mockSelectableApps;
-  }
+  Future<List<WallpaperColorSet>> getWallpaperColors() => _monetPickerLauncher.getWallpaperColors();
+
+  Future<List<MountSelectableApp>> loadSelectableApps() async => MountDefaults.mockSelectableApps;
 
   Future<void> applyConfig(MountConfig config) async {
     await _storage.saveConfig(config);

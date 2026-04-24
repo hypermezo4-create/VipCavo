@@ -1,5 +1,6 @@
 import 'package:deadzon/features/mount/domain/mount_config.dart';
 import 'package:deadzon/features/mount/domain/mount_monet_app.dart';
+import 'package:deadzon/features/mount/domain/mount_palette.dart';
 import 'package:deadzon/features/mount/domain/mount_profile.dart';
 import 'package:flutter/material.dart';
 
@@ -13,20 +14,50 @@ class MountColorPreset {
 class MountDefaults {
   const MountDefaults._();
 
-  static const List<MountColorPreset> colorPresets = <MountColorPreset>[
-    MountColorPreset('Mint Glass', Color(0xFF8CEFD2)),
-    MountColorPreset('Aqua Frost', Color(0xFF7BDCF0)),
-    MountColorPreset('Soft Gold', Color(0xFFEBCB87)),
-    MountColorPreset('Purple Mist', Color(0xFFB8A1F8)),
-    MountColorPreset('Sunset Soft', Color(0xFFFFAE9A)),
-    MountColorPreset('Graphite', Color(0xFF8C95A8)),
+  static const List<MountPalette> paletteLibrary = <MountPalette>[
+    MountPalette(id: 'default', name: 'Default', primary: Color(0xFF8CEFD2), secondary: Color(0xFF7BDCF0), tertiary: Color(0xFFB8A1F8), backgroundTint: Color(0x1AFFFFFF), accent: Color(0xFF8CEFD2), previewGradient: <Color>[Color(0xFF8CEFD2), Color(0xFF7BDCF0)]),
+    MountPalette(id: 'mint_glass', name: 'Mint Glass', primary: Color(0xFF8CEFD2), secondary: Color(0xFF74D9C4), tertiary: Color(0xFFB3F3E3), backgroundTint: Color(0x2236AFA0), accent: Color(0xFF8CEFD2), previewGradient: <Color>[Color(0xFF8CEFD2), Color(0xFF74D9C4)]),
+    MountPalette(id: 'aqua_frost', name: 'Aqua Frost', primary: Color(0xFF7BDCF0), secondary: Color(0xFF96E8F7), tertiary: Color(0xFF6AC5E2), backgroundTint: Color(0x22328DB1), accent: Color(0xFF9DEEFF), previewGradient: <Color>[Color(0xFF7BDCF0), Color(0xFF96E8F7)]),
+    MountPalette(id: 'soft_green', name: 'Soft Green', primary: Color(0xFF8CCF9B), secondary: Color(0xFF63B77C), tertiary: Color(0xFFB7E3C0), backgroundTint: Color(0x223F8A57), accent: Color(0xFF9EDEAF), previewGradient: <Color>[Color(0xFF8CCF9B), Color(0xFF63B77C)]),
+    MountPalette(id: 'soft_gold', name: 'Soft Gold', primary: Color(0xFFEBCB87), secondary: Color(0xFFF3DBA9), tertiary: Color(0xFFD3A458), backgroundTint: Color(0x225F491F), accent: Color(0xFFF0CE7F), previewGradient: <Color>[Color(0xFFEBCB87), Color(0xFFF3DBA9)]),
+    MountPalette(id: 'purple_mist', name: 'Purple Mist', primary: Color(0xFFB8A1F8), secondary: Color(0xFFD4C7FF), tertiary: Color(0xFF8D7BE3), backgroundTint: Color(0x223E2F71), accent: Color(0xFFC8B5FF), previewGradient: <Color>[Color(0xFFB8A1F8), Color(0xFFD4C7FF)]),
+    MountPalette(id: 'sunset_soft', name: 'Sunset Soft', primary: Color(0xFFFFAE9A), secondary: Color(0xFFFFD0A6), tertiary: Color(0xFFFF8B91), backgroundTint: Color(0x226F362F), accent: Color(0xFFFFBEA8), previewGradient: <Color>[Color(0xFFFFAE9A), Color(0xFFFFD0A6)]),
+    MountPalette(id: 'graphite', name: 'Graphite', primary: Color(0xFF8C95A8), secondary: Color(0xFFB7C0D4), tertiary: Color(0xFF626D80), backgroundTint: Color(0x22242A35), accent: Color(0xFFAAB2C6), previewGradient: <Color>[Color(0xFF8C95A8), Color(0xFF626D80)]),
+    MountPalette(id: 'rose', name: 'Rose', primary: Color(0xFFE4A2B8), secondary: Color(0xFFF4C3D2), tertiary: Color(0xFFBE6B8B), backgroundTint: Color(0x224D2737), accent: Color(0xFFEBB2C7), previewGradient: <Color>[Color(0xFFE4A2B8), Color(0xFFF4C3D2)]),
+    MountPalette(id: 'sky', name: 'Sky', primary: Color(0xFF85C9FF), secondary: Color(0xFFB3DDFF), tertiary: Color(0xFF569EE0), backgroundTint: Color(0x22284562), accent: Color(0xFF94D2FF), previewGradient: <Color>[Color(0xFF85C9FF), Color(0xFFB3DDFF)]),
+    MountPalette(id: 'lime', name: 'Lime', primary: Color(0xFFA8D672), secondary: Color(0xFFC5E89D), tertiary: Color(0xFF78AF3D), backgroundTint: Color(0x223A4E20), accent: Color(0xFFB8E17F), previewGradient: <Color>[Color(0xFFA8D672), Color(0xFFC5E89D)]),
+    MountPalette(id: 'cyan', name: 'Cyan', primary: Color(0xFF63DBE6), secondary: Color(0xFF9AF0F7), tertiary: Color(0xFF2EABB9), backgroundTint: Color(0x22214A4F), accent: Color(0xFF7BE7F0), previewGradient: <Color>[Color(0xFF63DBE6), Color(0xFF9AF0F7)]),
+    MountPalette(id: 'orange', name: 'Orange', primary: Color(0xFFFFB169), secondary: Color(0xFFFFD0A0), tertiary: Color(0xFFDE7D2C), backgroundTint: Color(0x22583A1E), accent: Color(0xFFFFC17F), previewGradient: <Color>[Color(0xFFFFB169), Color(0xFFFFD0A0)]),
+    MountPalette(id: 'red', name: 'Red', primary: Color(0xFFE67D7D), secondary: Color(0xFFF1A8A8), tertiary: Color(0xFFC74E4E), backgroundTint: Color(0x22472424), accent: Color(0xFFEE8E8E), previewGradient: <Color>[Color(0xFFE67D7D), Color(0xFFF1A8A8)]),
+    MountPalette(id: 'blue', name: 'Blue', primary: Color(0xFF709BFF), secondary: Color(0xFFA5BEFF), tertiary: Color(0xFF456ECC), backgroundTint: Color(0x22273459), accent: Color(0xFF8EAEFF), previewGradient: <Color>[Color(0xFF709BFF), Color(0xFFA5BEFF)]),
+    MountPalette(id: 'deep_purple', name: 'Deep Purple', primary: Color(0xFF7F65D1), secondary: Color(0xFFA691E6), tertiary: Color(0xFF5A3DB6), backgroundTint: Color(0x222D2450), accent: Color(0xFF927DDB), previewGradient: <Color>[Color(0xFF7F65D1), Color(0xFFA691E6)]),
+    MountPalette(id: 'fruit_salad', name: 'Fruit Salad', primary: Color(0xFF8ED26A), secondary: Color(0xFFFFB36B), tertiary: Color(0xFF7DC9FF), backgroundTint: Color(0x22384A2F), accent: Color(0xFFFFD16D), previewGradient: <Color>[Color(0xFF8ED26A), Color(0xFFFFB36B), Color(0xFF7DC9FF)]),
+    MountPalette(id: 'monochromatic', name: 'Monochromatic', primary: Color(0xFF9BA2AF), secondary: Color(0xFFC5CCD8), tertiary: Color(0xFF707887), backgroundTint: Color(0x222D323A), accent: Color(0xFFAFB5C2), previewGradient: <Color>[Color(0xFF707887), Color(0xFFC5CCD8)]),
+    MountPalette(id: 'rainbow', name: 'Rainbow', primary: Color(0xFFFF8FA3), secondary: Color(0xFFFFD06F), tertiary: Color(0xFF73D1FF), backgroundTint: Color(0x223B3045), accent: Color(0xFF93F57A), previewGradient: <Color>[Color(0xFFFF8FA3), Color(0xFFFFD06F), Color(0xFF93F57A), Color(0xFF73D1FF)]),
+    MountPalette(id: 'bundle_1', name: 'Bundle 1', primary: Color(0xFF86E1D4), secondary: Color(0xFF7EA0FF), tertiary: Color(0xFFC9A3FF), backgroundTint: Color(0x22243644), accent: Color(0xFF8ED7FF), previewGradient: <Color>[Color(0xFF86E1D4), Color(0xFF7EA0FF)]),
+    MountPalette(id: 'bundle_2', name: 'Bundle 2', primary: Color(0xFFFFB8AA), secondary: Color(0xFFFFD39B), tertiary: Color(0xFFA4E8B3), backgroundTint: Color(0x224E382E), accent: Color(0xFFFFC28F), previewGradient: <Color>[Color(0xFFFFB8AA), Color(0xFFFFD39B)]),
+    MountPalette(id: 'bundle_3', name: 'Bundle 3', primary: Color(0xFF7AC5B3), secondary: Color(0xFF9CE2FF), tertiary: Color(0xFFE4A2B8), backgroundTint: Color(0x22284345), accent: Color(0xFF9ED8C6), previewGradient: <Color>[Color(0xFF7AC5B3), Color(0xFF9CE2FF), Color(0xFFE4A2B8)]),
   ];
 
+  static final List<MountColorPreset> colorPresets = paletteLibrary
+      .map((palette) => MountColorPreset(palette.name, palette.primary))
+      .toList(growable: false);
+
   static MountConfig baseConfig() {
+    final initialPalette = paletteLibrary.first;
+    final color = initialPalette.primary;
     return MountConfig(
-      monetEnabled: false,
-      selectedColor: colorPresets.first.color,
-      selectedColorName: colorPresets.first.name,
+      monetEnabled: true,
+      selectedColor: color,
+      selectedColorName: initialPalette.name,
+      selectedSeedColor: color,
+      selectedColorHex: '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
+      selectedPaletteId: initialPalette.id,
+      recentColors: <int>[color.toARGB32()],
+      favoriteColors: const <int>[],
+      generatedPalettes: const <String, Map<String, int>>{},
+      wallpaperColors: const <String, Map<String, int>>{},
+      componentColors: const <String, int>{},
       glassOpacity: 0.62,
       blurStrength: 18,
       accentIntensity: 0.68,
@@ -34,13 +65,13 @@ class MountDefaults {
       cornerRadius: 24,
       shadowDepth: 0.45,
       borderVisibility: 0.72,
-      seekbarColor: const Color(0xFF8CEFD2),
-      switchOnColor: const Color(0xFF80EBCF),
+      seekbarColor: color,
+      switchOnColor: color,
       switchOffColor: const Color(0xFF607182),
-      checkboxOnColor: const Color(0xFF8CEFD2),
+      checkboxOnColor: color,
       checkboxOffColor: const Color(0xFF5B6B7B),
-      cardBackgroundTint: const Color(0x1AFFFFFF),
-      iconAccentColor: const Color(0xFFC2F7EA),
+      cardBackgroundTint: initialPalette.backgroundTint,
+      iconAccentColor: initialPalette.accent,
       textAccentColor: const Color(0xFFE8FAFF),
       scopeStatusbar: true,
       scopeControlCenter: true,
@@ -50,9 +81,8 @@ class MountDefaults {
       scopeLauncher: false,
       scopeSelectedApps: false,
       selectedPackageNames: const <String>[],
-      controlAppToggles: Map<String, bool>.fromEntries(
-        controlApps.map((e) => MapEntry<String, bool>(e.key, true)),
-      ),
+      scopeToggles: const <String, bool>{},
+      controlAppToggles: Map<String, bool>.fromEntries(controlApps.map((e) => MapEntry<String, bool>(e.key, true))),
       activeProfileId: 'default',
     );
   }
@@ -61,60 +91,11 @@ class MountDefaults {
     final base = baseConfig();
     return <MountProfile>[
       MountProfile(id: 'default', name: 'Default', config: base),
-      MountProfile(
-        id: 'ios_frost',
-        name: 'iOS Frost',
-        config: base.copyWith(
-          selectedColor: const Color(0xFF9DE8FF),
-          selectedColorName: 'iOS Frost',
-          glassOpacity: 0.58,
-          blurStrength: 20,
-          accentIntensity: 0.72,
-          glowAmount: 0.22,
-        ),
-      ),
-      MountProfile(
-        id: 'deadzon_mint',
-        name: 'Deadzon Mint',
-        config: base.copyWith(
-          selectedColor: const Color(0xFF8CEFD2),
-          selectedColorName: 'Deadzon Mint',
-          accentIntensity: 0.8,
-          glowAmount: 0.34,
-        ),
-      ),
-      MountProfile(
-        id: 'dark_glass',
-        name: 'Dark Glass',
-        config: base.copyWith(
-          selectedColor: const Color(0xFF7FA6BA),
-          selectedColorName: 'Dark Glass',
-          glassOpacity: 0.7,
-          blurStrength: 14,
-          shadowDepth: 0.7,
-        ),
-      ),
-      MountProfile(
-        id: 'soft_gold',
-        name: 'Soft Gold',
-        config: base.copyWith(
-          selectedColor: const Color(0xFFEBCB87),
-          selectedColorName: 'Soft Gold',
-          accentIntensity: 0.64,
-          glowAmount: 0.28,
-        ),
-      ),
-      MountProfile(
-        id: 'gaming_clean',
-        name: 'Gaming Clean',
-        config: base.copyWith(
-          selectedColor: const Color(0xFF90D8FF),
-          selectedColorName: 'Gaming Clean',
-          accentIntensity: 0.78,
-          blurStrength: 16,
-          cornerRadius: 20,
-        ),
-      ),
+      MountProfile(id: 'ios_frost', name: 'iOS Frost', config: base.copyWith(selectedColor: const Color(0xFF9DE8FF), selectedColorName: 'iOS Frost', selectedSeedColor: const Color(0xFF9DE8FF), glassOpacity: 0.58, blurStrength: 20, accentIntensity: 0.72, glowAmount: 0.22)),
+      MountProfile(id: 'deadzon_mint', name: 'Deadzon Mint', config: base.copyWith(selectedColor: const Color(0xFF8CEFD2), selectedColorName: 'Deadzon Mint', selectedSeedColor: const Color(0xFF8CEFD2), accentIntensity: 0.8, glowAmount: 0.34)),
+      MountProfile(id: 'dark_glass', name: 'Dark Glass', config: base.copyWith(selectedColor: const Color(0xFF7FA6BA), selectedColorName: 'Dark Glass', selectedSeedColor: const Color(0xFF7FA6BA), glassOpacity: 0.7, blurStrength: 14, shadowDepth: 0.7)),
+      MountProfile(id: 'soft_gold', name: 'Soft Gold', config: base.copyWith(selectedColor: const Color(0xFFEBCB87), selectedColorName: 'Soft Gold', selectedSeedColor: const Color(0xFFEBCB87), accentIntensity: 0.64, glowAmount: 0.28)),
+      MountProfile(id: 'gaming_clean', name: 'Gaming Clean', config: base.copyWith(selectedColor: const Color(0xFF90D8FF), selectedColorName: 'Gaming Clean', selectedSeedColor: const Color(0xFF90D8FF), accentIntensity: 0.78, blurStrength: 16, cornerRadius: 20)),
     ];
   }
 

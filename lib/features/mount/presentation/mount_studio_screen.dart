@@ -1,6 +1,5 @@
 import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
-import 'package:deadzon/features/mount/data/mount_defaults.dart';
 import 'package:deadzon/features/mount/presentation/app_picker_screen.dart';
 import 'package:deadzon/features/mount/presentation/mount_studio_controller.dart';
 import 'package:deadzon/features/mount/presentation/widgets/mount_color_tab.dart';
@@ -80,18 +79,21 @@ class MountStudioScreen extends ConsumerWidget {
       case 1:
         return MountColorTab(
           config: controller.config,
-          onPresetTap: (preset) => controller.setMonetColor(preset.color, preset.name),
-          onLaunchMonetPicker: () async {
+          paletteLibrary: controller.paletteLibrary,
+          wallpaperSets: controller.wallpaperSets,
+          onSeedChanged: controller.setSeedColor,
+          onPaletteSelected: controller.selectPalette,
+          onPullWallpaperColors: controller.pullWallpaperColors,
+          onToggleFavorite: controller.toggleFavorite,
+          onResetColor: controller.resetSeedColor,
+          onRandomColor: controller.randomizeColor,
+          onOpenSystemWallpaperStyle: () async {
             final launched = await controller.launchMonetPicker();
             if (!context.mounted) return;
             if (!launched) {
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Monet picker is not available on this ROM.')));
             }
           },
-          onPickFromWallpaper: () {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pick from wallpaper is coming soon.')));
-          },
-          onManualColorPicker: () => _showManualColorPicker(context, controller),
         );
       case 2:
         return MountEffectsTab(
@@ -212,85 +214,71 @@ class MountStudioScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _showManualColorPicker(BuildContext context, MountStudioController controller) async {
-    final preset = await showModalBottomSheet<MountColorPreset>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: MountDefaults.colorPresets
-              .map(
-                (preset) => ListTile(
-                  leading: CircleAvatar(backgroundColor: preset.color),
-                  title: Text(preset.name),
-                  onTap: () => Navigator.of(context).pop(preset),
-                ),
-              )
-              .toList(),
-        ),
-      ),
-    );
-    if (preset != null) {
-      await controller.setMonetColor(preset.color, preset.name);
-    }
-  }
-
   Future<void> _showComponentColorPicker(
     BuildContext context,
     MountStudioController controller,
     String componentKey,
   ) async {
-    final preset = await showModalBottomSheet<MountColorPreset>(
+    final initial = switch (componentKey) {
+      'seekbarColor' => controller.config.seekbarColor,
+      'switchOnColor' => controller.config.switchOnColor,
+      'switchOffColor' => controller.config.switchOffColor,
+      'checkboxOnColor' => controller.config.checkboxOnColor,
+      'checkboxOffColor' => controller.config.checkboxOffColor,
+      'cardBackgroundTint' => controller.config.cardBackgroundTint,
+      'iconAccentColor' => controller.config.iconAccentColor,
+      _ => controller.config.textAccentColor,
+    };
+
+    final picked = await showDialog<Color>(
       context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          children: MountDefaults.colorPresets
-              .map(
-                (item) => ListTile(
-                  leading: CircleAvatar(backgroundColor: item.color),
-                  title: Text(item.name),
-                  onTap: () => Navigator.of(context).pop(item),
-                ),
-              )
-              .toList(),
+      builder: (context) => _InlineColorDialog(initial: initial),
+    );
+    if (picked != null) {
+      await controller.setComponentColor(componentKey, picked);
+    }
+  }
+}
+
+class _InlineColorDialog extends StatefulWidget {
+  const _InlineColorDialog({required this.initial});
+
+  final Color initial;
+
+  @override
+  State<_InlineColorDialog> createState() => _InlineColorDialogState();
+}
+
+class _InlineColorDialogState extends State<_InlineColorDialog> {
+  late Color color;
+
+  @override
+  void initState() {
+    super.initState();
+    color = widget.initial;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Pick component color'),
+      content: SizedBox(
+        width: 320,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(radius: 22, backgroundColor: color),
+            Slider(min: 0, max: 255, value: color.red.toDouble(), onChanged: (v) => setState(() => color = Color.fromARGB(255, v.round(), color.green, color.blue))),
+            Slider(min: 0, max: 255, value: color.green.toDouble(), onChanged: (v) => setState(() => color = Color.fromARGB(255, color.red, v.round(), color.blue))),
+            Slider(min: 0, max: 255, value: color.blue.toDouble(), onChanged: (v) => setState(() => color = Color.fromARGB(255, color.red, color.green, v.round()))),
+          ],
         ),
       ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        FilledButton(onPressed: () => Navigator.pop(context, color), child: const Text('Apply')),
+      ],
     );
-    if (preset == null) {
-      return;
-    }
-
-    switch (componentKey) {
-      case 'seekbarColor':
-        await controller.setComponentColor(seekbarColor: preset.color);
-        break;
-      case 'switchOnColor':
-        await controller.setComponentColor(switchOnColor: preset.color);
-        break;
-      case 'switchOffColor':
-        await controller.setComponentColor(switchOffColor: preset.color.withValues(alpha: 0.70));
-        break;
-      case 'checkboxOnColor':
-        await controller.setComponentColor(checkboxOnColor: preset.color);
-        break;
-      case 'checkboxOffColor':
-        await controller.setComponentColor(checkboxOffColor: preset.color.withValues(alpha: 0.70));
-        break;
-      case 'cardBackgroundTint':
-        await controller.setComponentColor(cardBackgroundTint: preset.color.withValues(alpha: 0.24));
-        break;
-      case 'iconAccentColor':
-        await controller.setComponentColor(iconAccentColor: preset.color);
-        break;
-      case 'textAccentColor':
-        await controller.setComponentColor(textAccentColor: preset.color);
-        break;
-      default:
-        return;
-    }
   }
 }
 
