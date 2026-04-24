@@ -39,7 +39,7 @@ class MountDefaults {
       switchOffColor: const Color(0xFF607182),
       checkboxOnColor: const Color(0xFF8CEFD2),
       checkboxOffColor: const Color(0xFF5B6B7B),
-      cardBackgroundTint: const Color(0xFF1AFFFFFF),
+      cardBackgroundTint: const Color(0x1AFFFFFF),
       iconAccentColor: const Color(0xFFC2F7EA),
       textAccentColor: const Color(0xFFE8FAFF),
       scopeStatusbar: true,
