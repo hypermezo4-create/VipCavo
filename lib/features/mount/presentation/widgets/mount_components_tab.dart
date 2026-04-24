@@ -1,0 +1,49 @@
+import 'package:deadzon/features/mount/domain/mount_config.dart';
+import 'package:deadzon/features/mount/presentation/widgets/mount_glass_card.dart';
+import 'package:flutter/material.dart';
+
+class MountComponentsTab extends StatelessWidget {
+  const MountComponentsTab({required this.config, required this.onTapItem, super.key});
+
+  final MountConfig config;
+  final ValueChanged<String> onTapItem;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = <({String key, String title, Color color})>[
+      (key: 'seekbarColor', title: 'Seekbar / Progressbar color', color: config.seekbarColor),
+      (key: 'switchOnColor', title: 'Switch ON color', color: config.switchOnColor),
+      (key: 'switchOffColor', title: 'Switch OFF color', color: config.switchOffColor),
+      (key: 'checkboxOnColor', title: 'Checkbox ON color', color: config.checkboxOnColor),
+      (key: 'checkboxOffColor', title: 'Checkbox OFF color', color: config.checkboxOffColor),
+      (key: 'cardBackgroundTint', title: 'Card background tint', color: config.cardBackgroundTint),
+      (key: 'iconAccentColor', title: 'Icon accent color', color: config.iconAccentColor),
+      (key: 'textAccentColor', title: 'Text accent color', color: config.textAccentColor),
+    ];
+
+    return MountGlassCard(
+      tint: config.selectedColor,
+      child: Column(
+        children: items
+            .map(
+              (item) => ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(item.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                leading: Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: item.color,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white60),
+                  ),
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white70),
+                onTap: () => onTapItem(item.key),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+}

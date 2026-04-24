@@ -63,8 +63,25 @@ class MainActivity : FlutterActivity() {
                     result.success(null)
                 }
 
+                "launchMonetPicker" -> {
+                    result.success(launchMonetPicker())
+                }
+
                 else -> result.notImplemented()
             }
+        }
+    }
+
+    private fun launchMonetPicker(): Boolean {
+        return try {
+            val intent = Intent().setClassName(
+                "com.android.wallpaper",
+                "com.android.wallpaper.picker.CustomizationPickerActivity"
+            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
+            true
+        } catch (_: Exception) {
+            false
         }
     }
 
