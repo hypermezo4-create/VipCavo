@@ -45,7 +45,26 @@ class MountService {
     return MountDefaults.mockSelectableApps;
   }
 
-  Future<void> saveBridgeConfig(MountConfig config, List<MountMonetApp> controlApps) async {
-    await _bridgeConfigService.saveBridgeConfig(config: config, controlApps: controlApps);
+  Map<String, dynamic> exportBridgePayload({
+    required MountConfig config,
+    required List<MountMonetApp> controlApps,
+    required bool appThemeApplied,
+    required bool romConfigSaved,
+  }) {
+    return _bridgeConfigService.buildBridgeMap(
+      config: config,
+      controlApps: controlApps,
+      appThemeApplied: appThemeApplied,
+      romConfigSaved: romConfigSaved,
+    );
+  }
+
+  Future<void> saveBridgeConfig(MountConfig config, List<MountMonetApp> controlApps, {required bool appThemeApplied, required bool romConfigSaved}) async {
+    await _bridgeConfigService.saveBridgeConfig(
+      config: config,
+      controlApps: controlApps,
+      appThemeApplied: appThemeApplied,
+      romConfigSaved: romConfigSaved,
+    );
   }
 }
