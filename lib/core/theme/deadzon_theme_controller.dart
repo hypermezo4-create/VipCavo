@@ -2,13 +2,13 @@ import 'package:deadzon/features/mount/data/mount_defaults.dart';
 import 'package:deadzon/features/mount/domain/mount_config.dart';
 import 'package:deadzon/features/mount/services/mount_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'package:provider/provider.dart';
 
-final deadzonThemeControllerProvider = ChangeNotifierProvider<DeadzonThemeController>((ref) {
+DeadzonThemeController createDeadzonThemeController() {
   final controller = DeadzonThemeController(service: MountService());
   controller.initialize();
   return controller;
-});
+}
 
 class DeadzonThemeController extends ChangeNotifier {
   DeadzonThemeController({required MountService service}) : _service = service;
@@ -87,7 +87,7 @@ class DeadzonThemeController extends ChangeNotifier {
 class DeadzonThemeTokens {
   const DeadzonThemeTokens._();
 
-  static DeadzonThemeController of(BuildContext context) => ProviderScope.containerOf(context, listen: false).read(deadzonThemeControllerProvider);
+  static DeadzonThemeController of(BuildContext context) => context.read<DeadzonThemeController>();
 
   static Color accent(BuildContext context) => of(context).accentColor;
 

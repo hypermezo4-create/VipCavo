@@ -10,16 +10,12 @@ import 'package:deadzon/features/mount/domain/mount_profile.dart';
 import 'package:deadzon/features/mount/services/mount_monet_engine.dart';
 import 'package:deadzon/features/mount/services/mount_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/legacy.dart';
 
-final mountStudioControllerProvider = ChangeNotifierProvider<MountStudioController>((ref) {
-  final controller = MountStudioController(
-    service: MountService(),
-    themeController: ref.read(deadzonThemeControllerProvider),
-  );
+MountStudioController createMountStudioController(DeadzonThemeController themeController) {
+  final controller = MountStudioController(service: MountService(), themeController: themeController);
   controller.initialize();
   return controller;
-});
+}
 
 class MountStudioController extends ChangeNotifier {
   MountStudioController({required MountService service, required DeadzonThemeController themeController})
@@ -27,7 +23,7 @@ class MountStudioController extends ChangeNotifier {
       _themeController = themeController;
 
   final MountService _service;
-  final DeadzonThemeController _themeController;
+  DeadzonThemeController _themeController;
   final MountMonetEngine _engine = MountMonetEngine();
   final List<MountProfile> profiles = MountDefaults.profiles();
   final List<MountPalette> paletteLibrary = MountDefaults.paletteLibrary;
@@ -45,6 +41,10 @@ class MountStudioController extends ChangeNotifier {
   Timer? _persistTimer;
 
   static const List<String> controlCategories = <String>['All', 'Core System', 'Xiaomi / HyperOS', 'Media', 'Phone & Messages', 'Tools', 'Security', 'Launcher & UI', 'Connectivity', 'Other'];
+
+  void updateThemeController(DeadzonThemeController controller) {
+    _themeController = controller;
+  }
 
   Future<void> initialize() async {
     loading = true;

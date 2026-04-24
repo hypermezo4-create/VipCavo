@@ -11,7 +11,7 @@ import 'package:deadzon/features/mount/presentation/widgets/mount_live_preview.d
 import 'package:deadzon/features/mount/presentation/widgets/mount_profiles_tab.dart';
 import 'package:deadzon/features/mount/presentation/widgets/mount_scope_tab.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:provider/provider.dart';
 
 
 int colorChannelTo255(double channel) {
@@ -19,7 +19,7 @@ int colorChannelTo255(double channel) {
 }
 
 
-class MountStudioScreen extends ConsumerWidget {
+class MountStudioScreen extends StatelessWidget {
   const MountStudioScreen({super.key});
 
   static const List<String> _tabs = <String>[
@@ -33,8 +33,8 @@ class MountStudioScreen extends ConsumerWidget {
   ];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final controller = ref.watch(mountStudioControllerProvider);
+  Widget build(BuildContext context) {
+    final controller = context.watch<MountStudioController>();
 
     return Container(
       decoration: const BoxDecoration(gradient: DesignTokens.baseGradient),
