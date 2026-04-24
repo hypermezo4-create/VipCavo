@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:deadzon/features/mount/data/mount_defaults.dart';
 import 'package:deadzon/features/mount/domain/mount_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +9,7 @@ class MountStorageService {
 
   static const String _configKey = 'mount_config_v1';
   static const String _activeTabKey = 'mount_active_tab_v1';
+  static const String _bridgeConfigKey = 'mount_bridge_config_v1';
   final SharedPreferences? _prefs;
 
   Future<SharedPreferences> _resolvePrefs() async {
@@ -41,5 +44,10 @@ class MountStorageService {
   Future<void> saveActiveTab(int index) async {
     final prefs = await _resolvePrefs();
     await prefs.setInt(_activeTabKey, index);
+  }
+
+  Future<void> saveBridgeConfig(Map<String, dynamic> config) async {
+    final prefs = await _resolvePrefs();
+    await prefs.setString(_bridgeConfigKey, jsonEncode(config));
   }
 }

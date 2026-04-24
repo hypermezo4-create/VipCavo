@@ -1,7 +1,6 @@
 import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
-import 'package:deadzon/features/mount/presentation/app_picker_screen.dart';
 import 'package:deadzon/features/mount/presentation/mount_studio_controller.dart';
 import 'package:deadzon/features/mount/presentation/widgets/mount_color_tab.dart';
 import 'package:deadzon/features/mount/presentation/widgets/mount_components_tab.dart';
@@ -9,7 +8,6 @@ import 'package:deadzon/features/mount/presentation/widgets/mount_control_apps_t
 import 'package:deadzon/features/mount/presentation/widgets/mount_effects_tab.dart';
 import 'package:deadzon/features/mount/presentation/widgets/mount_live_preview.dart';
 import 'package:deadzon/features/mount/presentation/widgets/mount_profiles_tab.dart';
-import 'package:deadzon/features/mount/presentation/widgets/mount_scope_tab.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -27,7 +25,6 @@ class MountStudioScreen extends StatelessWidget {
     'Colors',
     'Effects',
     'Components',
-    'Scope',
     'Control Apps',
     'Profiles',
   ];
@@ -42,7 +39,7 @@ class MountStudioScreen extends StatelessWidget {
         child: Stack(
           children: <Widget>[
             ListView(
-              padding: const EdgeInsets.fromLTRB(18, 14, 18, 170),
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 228),
               physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
               children: <Widget>[
                 const PremiumTopBar(title: 'Mount Studio', subtitle: 'Monet colors, effects & system accent'),
@@ -72,7 +69,7 @@ class MountStudioScreen extends StatelessWidget {
                 onApply: () async {
                   await controller.apply();
                   if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved for ROM bridge. Applied inside DeadZon.')));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mount saved. DeadZon applied. ROM bridge ready.')));
                 },
               ),
             ),
@@ -133,43 +130,8 @@ class MountStudioScreen extends StatelessWidget {
           onTapItem: (key) => _showComponentColorPicker(context, controller, key),
         );
       case 4:
-        return MountScopeTab(
-          config: controller.config,
-          onChanged: (key, value) {
-            switch (key) {
-              case 'scopeStatusbar':
-                return controller.setScope(statusbar: value);
-              case 'scopeControlCenter':
-                return controller.setScope(controlCenter: value);
-              case 'scopeNotifications':
-                return controller.setScope(notifications: value);
-              case 'scopeLockscreen':
-                return controller.setScope(lockscreen: value);
-              case 'scopeSettings':
-                return controller.setScope(settings: value);
-              case 'scopeLauncher':
-                return controller.setScope(launcher: value);
-              default:
-                return controller.setScope(selectedApps: value);
-            }
-          },
-          onChooseApps: () async {
-            final selected = await Navigator.of(context).push<List<String>>(
-              MaterialPageRoute<List<String>>(
-                builder: (_) => AppPickerScreen(
-                  apps: controller.selectableApps,
-                  initialSelection: controller.config.selectedPackageNames,
-                ),
-              ),
-            );
-            if (selected != null) {
-              await controller.setSelectedPackages(selected);
-            }
-          },
-        );
-      case 5:
         return MountControlAppsTab(controller: controller);
-      case 6:
+      case 5:
         return MountProfilesTab(
           profiles: controller.profiles,
           activeProfileId: controller.config.activeProfileId,
@@ -189,7 +151,7 @@ class MountStudioScreen extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Reset Mount Studio?'),
-        content: const Text('This will restore defaults for color, effects, components, scopes, and control apps.'),
+        content: const Text('This will restore defaults for color, effects, components, ROM targets, and control apps.'),
         actions: <Widget>[
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
           FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Reset')),
@@ -331,8 +293,10 @@ class _SegmentTabs extends StatelessWidget {
     return SizedBox(
       height: 38,
       child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
         itemCount: tabs.length,
         scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         itemBuilder: (context, index) {
           final active = current == index;
           return Padding(

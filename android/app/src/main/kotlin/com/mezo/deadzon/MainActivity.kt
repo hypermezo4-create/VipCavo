@@ -1,12 +1,15 @@
 package com.mezo.deadzon
 
 import android.app.WallpaperManager
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import org.json.JSONObject
 
 class MainActivity : FlutterActivity() {
     private val channelName = "deadzon/mezo_settings"
@@ -69,8 +72,80 @@ class MainActivity : FlutterActivity() {
 
                 "launchMonetPicker" -> result.success(launchMonetPicker())
                 "getWallpaperColors" -> result.success(getWallpaperColors())
+                "getInstalledPackages" -> result.success(getInstalledPackages())
+                "isPackageInstalled" -> {
+                    val packageName = args?.get("packageName") as? String
+                    result.success(isPackageInstalled(packageName))
+                }
+                "writeMountBridgeConfig" -> {
+                    val config = args?.get("config")
+                    result.success(writeMountBridgeConfig(config))
+                }
                 else -> result.notImplemented()
             }
+        }
+    }
+
+    private fun getInstalledPackages(): List<Map<String, Any>> {
+        return try {
+            val applications = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                packageManager.getInstalledApplications(
+                    PackageManager.ApplicationInfoFlags.of(0)
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager.getInstalledApplications(0)
+            }
+
+            applications.map { appInfo ->
+                mapOf(
+                    "name" to (packageManager.getApplicationLabel(appInfo)?.toString()
+                        ?: appInfo.packageName),
+                    "packageName" to appInfo.packageName,
+                    "installed" to true,
+                )
+            }.sortedBy { it["name"]?.toString()?.lowercase() ?: "" }
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun isPackageInstalled(packageName: String?): Boolean {
+        if (packageName.isNullOrBlank()) {
+            return false
+        }
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                packageManager.getPackageInfo(
+                    packageName,
+                    PackageManager.PackageInfoFlags.of(0)
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager.getPackageInfo(packageName, 0)
+            }
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun writeMountBridgeConfig(config: Any?): Boolean {
+        return try {
+            val raw = when (config) {
+                null -> "{}"
+                is String -> config
+                is Map<*, *> -> JSONObject(config).toString()
+                else -> JSONObject.wrap(config)?.toString() ?: "{}"
+            }
+            val prefs = applicationContext.getSharedPreferences(
+                "deadzon_bridge",
+                Context.MODE_PRIVATE
+            )
+            prefs.edit().putString("mount_bridge_config", raw).apply()
+            true
+        } catch (_: Exception) {
+            false
         }
     }
 
