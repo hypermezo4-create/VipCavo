@@ -32,8 +32,15 @@ class MountDefaults {
     MountPalette(id: 'blue', name: 'Blue', primary: Color(0xFF709BFF), secondary: Color(0xFFA5BEFF), tertiary: Color(0xFF456ECC), backgroundTint: Color(0x22273459), accent: Color(0xFF8EAEFF), previewGradient: <Color>[Color(0xFF709BFF), Color(0xFFA5BEFF)]),
     MountPalette(id: 'deep_purple', name: 'Deep Purple', primary: Color(0xFF7F65D1), secondary: Color(0xFFA691E6), tertiary: Color(0xFF5A3DB6), backgroundTint: Color(0x222D2450), accent: Color(0xFF927DDB), previewGradient: <Color>[Color(0xFF7F65D1), Color(0xFFA691E6)]),
     MountPalette(id: 'fruit_salad', name: 'Fruit Salad', primary: Color(0xFF8ED26A), secondary: Color(0xFFFFB36B), tertiary: Color(0xFF7DC9FF), backgroundTint: Color(0x22384A2F), accent: Color(0xFFFFD16D), previewGradient: <Color>[Color(0xFF8ED26A), Color(0xFFFFB36B), Color(0xFF7DC9FF)]),
-    MountPalette(id: 'monochromatic', name: 'Monochromatic', primary: Color(0xFF9BA2AF), secondary: Color(0xFFC5CCD8), tertiary: Color(0xFF707887), backgroundTint: Color(0x222D323A), accent: Color(0xFFAFB5C2), previewGradient: <Color>[Color(0xFF707887), Color(0xFFC5CCD8)]),
+    MountPalette(id: 'monochrome', name: 'Monochrome', primary: Color(0xFF9BA2AF), secondary: Color(0xFFC5CCD8), tertiary: Color(0xFF707887), backgroundTint: Color(0x222D323A), accent: Color(0xFFAFB5C2), previewGradient: <Color>[Color(0xFF707887), Color(0xFFC5CCD8)]),
     MountPalette(id: 'rainbow', name: 'Rainbow', primary: Color(0xFFFF8FA3), secondary: Color(0xFFFFD06F), tertiary: Color(0xFF73D1FF), backgroundTint: Color(0x223B3045), accent: Color(0xFF93F57A), previewGradient: <Color>[Color(0xFFFF8FA3), Color(0xFFFFD06F), Color(0xFF93F57A), Color(0xFF73D1FF)]),
+
+    MountPalette(id: 'tonal_spot', name: 'Tonal Spot', primary: Color(0xFF8CA6FF), secondary: Color(0xFFA8B8F8), tertiary: Color(0xFF86E1D4), backgroundTint: Color(0x2228354D), accent: Color(0xFFB7C6FF), previewGradient: <Color>[Color(0xFF8CA6FF), Color(0xFF86E1D4)]),
+    MountPalette(id: 'vibrant', name: 'Vibrant', primary: Color(0xFFFF7FA8), secondary: Color(0xFF88D8FF), tertiary: Color(0xFFB4FF8C), backgroundTint: Color(0x223A2A45), accent: Color(0xFFFFA6C2), previewGradient: <Color>[Color(0xFFFF7FA8), Color(0xFF88D8FF)]),
+    MountPalette(id: 'expressive', name: 'Expressive', primary: Color(0xFF8DB8FF), secondary: Color(0xFFFFC58A), tertiary: Color(0xFFB89DFF), backgroundTint: Color(0x2230394A), accent: Color(0xFFB2CEFF), previewGradient: <Color>[Color(0xFF8DB8FF), Color(0xFFFFC58A)]),
+    MountPalette(id: 'spritz', name: 'Spritz', primary: Color(0xFFA5D7C9), secondary: Color(0xFF9FD1FF), tertiary: Color(0xFFE6F6EF), backgroundTint: Color(0x22283A3A), accent: Color(0xFFC5F1E0), previewGradient: <Color>[Color(0xFFA5D7C9), Color(0xFF9FD1FF)]),
+    MountPalette(id: 'deadzon_frost', name: 'DeadZon Frost', primary: Color(0xFF8CEFD2), secondary: Color(0xFF7BDCF0), tertiary: Color(0xFFA7B8FF), backgroundTint: Color(0x221C3A46), accent: Color(0xFFA7F8E3), previewGradient: <Color>[Color(0xFF8CEFD2), Color(0xFF7BDCF0)]),
+    MountPalette(id: 'dark_glass', name: 'Dark Glass', primary: Color(0xFF7B93A8), secondary: Color(0xFF95AEC2), tertiary: Color(0xFF56687A), backgroundTint: Color(0x22212A34), accent: Color(0xFFA9C2D8), previewGradient: <Color>[Color(0xFF7B93A8), Color(0xFF56687A)]),
     MountPalette(id: 'bundle_1', name: 'Bundle 1', primary: Color(0xFF86E1D4), secondary: Color(0xFF7EA0FF), tertiary: Color(0xFFC9A3FF), backgroundTint: Color(0x22243644), accent: Color(0xFF8ED7FF), previewGradient: <Color>[Color(0xFF86E1D4), Color(0xFF7EA0FF)]),
     MountPalette(id: 'bundle_2', name: 'Bundle 2', primary: Color(0xFFFFB8AA), secondary: Color(0xFFFFD39B), tertiary: Color(0xFFA4E8B3), backgroundTint: Color(0x224E382E), accent: Color(0xFFFFC28F), previewGradient: <Color>[Color(0xFFFFB8AA), Color(0xFFFFD39B)]),
     MountPalette(id: 'bundle_3', name: 'Bundle 3', primary: Color(0xFF7AC5B3), secondary: Color(0xFF9CE2FF), tertiary: Color(0xFFE4A2B8), backgroundTint: Color(0x22284345), accent: Color(0xFF9ED8C6), previewGradient: <Color>[Color(0xFF7AC5B3), Color(0xFF9CE2FF), Color(0xFFE4A2B8)]),
@@ -53,6 +60,7 @@ class MountDefaults {
       selectedSeedColor: color,
       selectedColorHex: '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
       selectedPaletteId: initialPalette.id,
+      themeStyle: 'deadzon_frost',
       recentColors: <int>[color.toARGB32()],
       favoriteColors: const <int>[],
       generatedPalettes: const <String, Map<String, int>>{},
@@ -84,6 +92,7 @@ class MountDefaults {
       scopeToggles: const <String, bool>{},
       controlAppToggles: Map<String, bool>.fromEntries(controlApps.map((e) => MapEntry<String, bool>(e.key, true))),
       activeProfileId: 'default',
+      liveApplyEnabled: true,
     );
   }
 

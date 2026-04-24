@@ -1,5 +1,5 @@
 import 'package:deadzon/core/constants/app_identity.dart';
-import 'package:deadzon/core/theme/app_theme.dart';
+import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
 import 'package:deadzon/core/widgets/settings_row.dart';
@@ -11,7 +11,7 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(themeModeProvider);
+    final theme = ref.watch(deadzonThemeControllerProvider);
 
     return Container(
       decoration: const BoxDecoration(
@@ -33,11 +33,11 @@ class SettingsScreen extends ConsumerWidget {
                 children: <Widget>[
                   SettingsRow(
                     icon: Icons.dark_mode_rounded,
-                    iconColor: const Color(0xFF8CEFD2),
+                    iconColor: theme.iconAccentColor,
                     title: 'Theme mode',
                     subtitle: 'System, light, or dark',
                     trailing: DropdownButton<ThemeMode>(
-                      value: themeMode,
+                      value: theme.themeMode,
                       dropdownColor: const Color(0xFF12242B),
                       items: const <DropdownMenuItem<ThemeMode>>[
                         DropdownMenuItem(value: ThemeMode.system, child: Text('System')),
@@ -46,17 +46,17 @@ class SettingsScreen extends ConsumerWidget {
                       ],
                       onChanged: (mode) {
                         if (mode == null) return;
-                        ref.read(themeModeProvider.notifier).setMode(mode);
+                        ref.read(deadzonThemeControllerProvider).setThemeMode(mode);
                       },
                     ),
                   ),
                   const Divider(height: 22),
-                  const SettingsRow(
+                  SettingsRow(
                     icon: Icons.palette_rounded,
-                    iconColor: Color(0xFFA992FF),
+                    iconColor: theme.accentColor,
                     title: 'UI palette',
-                    subtitle: 'Blue/green premium glass language',
-                    trailing: Icon(Icons.color_lens_outlined, color: Colors.white70),
+                    subtitle: 'Global accent from Mount Studio',
+                    trailing: const Icon(Icons.color_lens_outlined, color: Colors.white70),
                   ),
                 ],
               ),

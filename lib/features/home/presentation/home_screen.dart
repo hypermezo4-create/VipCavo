@@ -1,4 +1,5 @@
 import 'package:deadzon/core/constants/app_identity.dart';
+import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
@@ -90,8 +91,8 @@ class _EntryCard extends StatelessWidget {
         contentPadding: EdgeInsets.zero,
         leading: CircleAvatar(
           radius: 22,
-          backgroundColor: const Color(0xFF83EED5).withValues(alpha: 0.18),
-          child: Icon(entry.icon, color: const Color(0xFF92F3DE)),
+          backgroundColor: DeadzonThemeTokens.accent(context).withValues(alpha: 0.18),
+          child: Icon(entry.icon, color: DeadzonThemeTokens.iconAccent(context)),
         ),
         title: Text(entry.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
         subtitle: Text(entry.subtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.72))),

@@ -64,6 +64,7 @@ class _MountColorTabState extends State<MountColorTab> {
     final g = ((color.g * 255.0).round()).clamp(0, 255);
     final b = ((color.b * 255.0).round()).clamp(0, 255);
     final hsv = HSVColor.fromColor(color);
+    final hsl = HSLColor.fromColor(color);
     final favorite = widget.config.favoriteColors.contains(color.toARGB32());
 
     return Column(
@@ -96,6 +97,7 @@ class _MountColorTabState extends State<MountColorTab> {
             _hsvSlider('H', hsv.hue, 360, (v) => widget.onSeedChanged(hsv.withHue(v).toColor())),
             _hsvSlider('S', hsv.saturation, 1, (v) => widget.onSeedChanged(hsv.withSaturation(v).toColor())),
             _hsvSlider('V', hsv.value, 1, (v) => widget.onSeedChanged(hsv.withValue(v).toColor())),
+            _hsvSlider('L', hsl.lightness, 1, (v) => widget.onSeedChanged(hsl.withLightness(v).toColor())),
             const SizedBox(height: 8),
             Row(children: <Widget>[
               Expanded(child: OutlinedButton(onPressed: widget.onResetColor, child: const Text('Reset color'))),
@@ -216,14 +218,17 @@ class _MountColorTabState extends State<MountColorTab> {
     );
   }
 
-  Widget _dot(Color? color) => Container(
-        width: 18,
-        height: 18,
-        margin: const EdgeInsets.only(right: 8),
-        decoration: BoxDecoration(
-          color: color ?? Colors.transparent,
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white54),
+  Widget _dot(Color? color) => GestureDetector(
+        onTap: color == null ? null : () => widget.onSeedChanged(color),
+        child: Container(
+          width: 18,
+          height: 18,
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            color: color ?? Colors.transparent,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white54),
+          ),
         ),
       );
 

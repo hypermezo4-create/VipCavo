@@ -1,7 +1,10 @@
+import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
+import 'package:deadzon/shared/widgets/deadzon_floating_tab_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-class DeadzonShell extends StatelessWidget {
+class DeadzonShell extends ConsumerWidget {
   const DeadzonShell({
     required this.navigationShell,
     super.key,
@@ -9,60 +12,29 @@ class DeadzonShell extends StatelessWidget {
 
   final StatefulNavigationShell navigationShell;
 
-  static const List<_NavItem> _items = <_NavItem>[
-    _NavItem('Home', Icons.home_rounded),
-    _NavItem('Statusbar', Icons.signal_cellular_alt_rounded),
-    _NavItem('Mount', Icons.palette_rounded),
-    _NavItem('Settings', Icons.settings_rounded),
+  static const List<DeadzonFloatingTabItem> _items = <DeadzonFloatingTabItem>[
+    DeadzonFloatingTabItem(label: 'Home', icon: Icons.home_rounded),
+    DeadzonFloatingTabItem(label: 'Statusbar', icon: Icons.signal_cellular_alt_rounded),
+    DeadzonFloatingTabItem(label: 'Mount', icon: Icons.palette_rounded),
+    DeadzonFloatingTabItem(label: 'Settings', icon: Icons.settings_rounded),
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = ref.watch(deadzonThemeControllerProvider);
+
     return Scaffold(
       extendBody: true,
       body: navigationShell,
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: const Color(0xFF13242B).withValues(alpha: 0.9),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-            boxShadow: <BoxShadow>[
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.22),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: NavigationBar(
-            selectedIndex: navigationShell.currentIndex,
-            onDestinationSelected: (index) {
-              navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex);
-            },
-            backgroundColor: Colors.transparent,
-            indicatorColor: const Color(0xFF79E3CB).withValues(alpha: 0.24),
-            height: 72,
-            destinations: _items
-                .map(
-                  (item) => NavigationDestination(
-                    icon: Icon(item.icon, color: Colors.white70),
-                    selectedIcon: Icon(item.icon, color: const Color(0xFF8AF0D8)),
-                    label: item.label,
-                  ),
-                )
-                .toList(),
-          ),
-        ),
+      bottomNavigationBar: DeadzonFloatingTabBar(
+        currentIndex: navigationShell.currentIndex,
+        items: _items,
+        accentColor: theme.accentColor,
+        backgroundTint: DeadzonThemeTokens.navBackground(context),
+        onTap: (index) {
+          navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex);
+        },
       ),
     );
   }
-}
-
-class _NavItem {
-  const _NavItem(this.label, this.icon);
-
-  final String label;
-  final IconData icon;
 }
