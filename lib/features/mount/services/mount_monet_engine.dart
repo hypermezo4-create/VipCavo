@@ -1,26 +1,40 @@
 import 'package:deadzon/features/mount/domain/mount_palette.dart';
-import 'package:material_color_utilities/material_color_utilities.dart';
 import 'package:flutter/material.dart';
 
 class MountMonetEngine {
   static const List<int> tones = <int>[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99, 100];
 
   Map<String, Map<String, int>> generate(Color seed) {
-    final argb = seed.toARGB32();
-    final palettes = CorePalettes.of(argb);
-    Map<String, int> from(TonalPalette palette) => {
-          for (final tone in tones) '$tone': palette.get(tone),
-        };
+    final hsl = HSLColor.fromColor(seed);
+    final secondary = hsl.withSaturation((hsl.saturation * 0.55).clamp(0.0, 1.0)).toColor();
+    final tertiary = hsl.withHue((hsl.hue + 60.0) % 360.0).toColor();
+    final neutral = hsl.withSaturation(0.08).toColor();
+    final neutralVariant = hsl.withSaturation(0.16).toColor();
+    const error = Color(0xFFBA1A1A);
+
+    Map<String, int> from(Color paletteSeed) {
+      final generated = _tones(paletteSeed);
+      return <String, int>{
+        for (var i = 0; i < tones.length; i++) '${tones[i]}': generated[i].toARGB32(),
+      };
+    }
 
     return <String, Map<String, int>>{
-      'primary': from(palettes.primary),
-      'secondary': from(palettes.secondary),
-      'tertiary': from(palettes.tertiary),
-      'neutral': from(palettes.neutral),
-      'neutralVariant': from(palettes.neutralVariant),
-      'error': from(palettes.error),
+      'primary': from(seed),
+      'secondary': from(secondary),
+      'tertiary': from(tertiary),
+      'neutral': from(neutral),
+      'neutralVariant': from(neutralVariant),
+      'error': from(error),
     };
   }
+
+  Color _tone(Color seed, double lightness) {
+    final toneLightness = lightness.clamp(0.03, 0.98);
+    return HSLColor.fromColor(seed).withLightness(toneLightness).toColor().withAlpha(0xFF);
+  }
+
+  List<Color> _tones(Color seed) => tones.map((tone) => _tone(seed, tone / 100.0)).toList(growable: false);
 
   MountPalette derivePaletteFromSeed({required String id, required String name, required Color seed}) {
     final tonal = generate(seed);
