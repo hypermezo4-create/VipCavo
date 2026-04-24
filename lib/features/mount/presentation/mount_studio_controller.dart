@@ -38,6 +38,7 @@ class MountStudioController extends ChangeNotifier {
   bool loading = true;
   String controlAppsSearch = '';
   String selectedControlCategory = 'All';
+  String applyStatusMessage = 'Applied inside DeadZon. ROM bridge config saved.';
   Timer? _persistTimer;
 
   static const List<String> controlCategories = <String>['All', 'Core System', 'Xiaomi / HyperOS', 'Media', 'Phone & Messages', 'Tools', 'Security', 'Launcher & UI', 'Connectivity', 'Other'];
@@ -51,13 +52,16 @@ class MountStudioController extends ChangeNotifier {
     notifyListeners();
 
     config = await _service.loadConfig();
-    currentTab = await _service.loadActiveTab();
+    final persistedTab = await _service.loadActiveTab();
+    currentTab = persistedTab.clamp(0, 5).toInt();
     selectableApps = await _service.loadSelectableApps();
     wallpaperSets = await _service.getWallpaperColors();
     _hydrateGeneratedPalettes();
+    final installedPackages = selectableApps.where((app) => app.installed).map((app) => app.packageName).toSet();
     controlApps = MountDefaults.controlApps.map((app) {
       final enabled = config.controlAppToggles[app.key] ?? app.defaultEnabled;
-      return app.copyWith(enabled: enabled);
+      final detectedInstalled = app.packageNameCandidates.any(installedPackages.contains);
+      return app.copyWith(enabled: enabled, isInstalled: detectedInstalled || app.isInstalled);
     }).toList();
 
     await _themeController.applyMountConfig(config, persist: false);
@@ -242,6 +246,23 @@ class MountStudioController extends ChangeNotifier {
     await _persist();
   }
 
+  int get selectedAppsCount => config.selectedPackageNames.length;
+
+  int get installedTargetsCount => controlApps.where((app) => app.isInstalled).length;
+
+  int get enabledRomTargetsCount {
+    final targets = <bool>[
+      config.scopeStatusbar,
+      config.scopeControlCenter,
+      config.scopeNotifications,
+      config.scopeLockscreen,
+      config.scopeSettings,
+      config.scopeLauncher,
+      config.scopeSelectedApps,
+    ];
+    return targets.where((value) => value).length;
+  }
+
   Future<void> toggleControlApp(String key, bool enabled) async {
     controlApps = controlApps.map((app) => app.key == key ? app.copyWith(enabled: enabled) : app).toList();
     notifyListeners();
@@ -295,8 +316,23 @@ class MountStudioController extends ChangeNotifier {
   Future<bool> launchMonetPicker() => _service.launchMonetPicker();
 
   Future<void> apply() async {
-    await _themeController.applyMountConfig(config, persist: false);
-    await _service.applyConfig(config);
+    final configToPersist = config.copyWith(
+      controlAppToggles: Map<String, bool>.fromEntries(controlApps.map((e) => MapEntry(e.key, e.enabled))),
+      scopeToggles: <String, bool>{
+        'statusbar': config.scopeStatusbar,
+        'controlCenter': config.scopeControlCenter,
+        'notifications': config.scopeNotifications,
+        'lockscreen': config.scopeLockscreen,
+        'settings': config.scopeSettings,
+        'launcher': config.scopeLauncher,
+        'selectedApps': config.scopeSelectedApps,
+      },
+    );
+    config = configToPersist;
+    await _themeController.applyMountConfig(configToPersist, persist: false);
+    await _service.applyConfig(configToPersist, controlApps);
+    applyStatusMessage = 'Applied inside DeadZon. ROM bridge config saved.';
+    notifyListeners();
   }
 
   Future<void> resetCurrentProfileToDefault() async {
