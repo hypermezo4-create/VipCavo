@@ -66,6 +66,7 @@ class _MountColorTabState extends State<MountColorTab> {
     final hsv = HSVColor.fromColor(color);
     final hsl = HSLColor.fromColor(color);
     final favorite = widget.config.favoriteColors.contains(color.toARGB32());
+    final wallpaperExtractionAvailable = widget.wallpaperSets.any((set) => set.available);
 
     return Column(
       children: <Widget>[
@@ -195,20 +196,28 @@ class _MountColorTabState extends State<MountColorTab> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
             const Text('Wallpaper extraction', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
-            ...widget.wallpaperSets.map((set) {
-              if (!set.available) {
-                return Text(set.message ?? 'Wallpaper colors are not available on this ROM.', style: const TextStyle(color: Colors.white70));
-              }
-              return Row(children: [
-                SizedBox(width: 52, child: Text(set.source.toUpperCase(), style: const TextStyle(color: Colors.white70, fontSize: 12))),
-                _dot(set.primary),
-                _dot(set.secondary),
-                _dot(set.tertiary),
-              ]);
-            }),
+            if (!wallpaperExtractionAvailable)
+              const Text(
+                'Wallpaper extraction unavailable on this ROM.',
+                style: TextStyle(color: Colors.white70),
+              )
+            else
+              ...widget.wallpaperSets.where((set) => set.available).map((set) {
+                return Row(children: [
+                  SizedBox(width: 52, child: Text(set.source.toUpperCase(), style: const TextStyle(color: Colors.white70, fontSize: 12))),
+                  _dot(set.primary),
+                  _dot(set.secondary),
+                  _dot(set.tertiary),
+                ]);
+              }),
             const SizedBox(height: 8),
             Row(children: [
-              Expanded(child: OutlinedButton(onPressed: widget.onPullWallpaperColors, child: const Text('Refresh wallpaper colors'))),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: wallpaperExtractionAvailable ? widget.onPullWallpaperColors : null,
+                  child: const Text('Refresh wallpaper colors'),
+                ),
+              ),
               const SizedBox(width: 8),
               Expanded(child: FilledButton(onPressed: widget.onOpenSystemWallpaperStyle, child: const Text('Open system Wallpaper & Style'))),
             ]),

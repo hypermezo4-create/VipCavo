@@ -182,16 +182,39 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun launchMonetPicker(): Boolean {
-        return try {
-            val intent = Intent().setClassName(
+        val intents = listOf(
+            Intent("android.settings.WALLPAPER_SETTINGS"),
+            Intent("android.settings.DISPLAY_SETTINGS"),
+            Intent().setClassName(
                 "com.android.wallpaper",
                 "com.android.wallpaper.picker.CustomizationPickerActivity"
-            ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            startActivity(intent)
-            true
-        } catch (_: Exception) {
-            false
+            ),
+            Intent().setClassName(
+                "com.miui.home",
+                "com.miui.home.launcher.settings.MiuiHomeSettings"
+            ),
+            Intent().setClassName(
+                "com.miui.thememanager",
+                "com.miui.thememanager.activity.ThemeTabActivity"
+            ),
+            Intent().setClassName(
+                "com.miui.personalassistant",
+                "com.miui.personalassistant.settings.WallpaperSettingsActivity"
+            ),
+        )
+
+        for (intent in intents) {
+            try {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                if (intent.resolveActivity(packageManager) != null) {
+                    startActivity(intent)
+                    return true
+                }
+            } catch (_: Exception) {
+                // Try next intent.
+            }
         }
+        return false
     }
 
     private fun getWallpaperColors(): Map<String, Any?> {

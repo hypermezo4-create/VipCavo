@@ -101,6 +101,11 @@ class _RomTargetsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         const Text('ROM Targets', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+        const SizedBox(height: 6),
+        Text(
+          'Targets are saved for DeadZon ROM Bridge. They will affect system apps when the bridge is installed as a privileged ROM component.',
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.74), fontSize: 12),
+        ),
         const SizedBox(height: 8),
         _toggle(
           label: 'Statusbar',
@@ -201,7 +206,9 @@ class _StatusCard extends StatelessWidget {
             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 4),
-          const Text('ROM Bridge: Ready', style: TextStyle(color: Colors.white)),
+          Text('App Theme: ${controller.appThemeApplied ? 'Applied' : 'Not applied'}', style: const TextStyle(color: Colors.white)),
+          Text('ROM Config: ${controller.romConfigSaved ? 'Saved' : 'Not saved'}', style: const TextStyle(color: Colors.white)),
+          const Text('Real ROM Bridge: Not installed', style: TextStyle(color: Colors.white)),
           Text('Apps selected: ${controller.selectedAppsCount}', style: const TextStyle(color: Colors.white)),
           Text('Installed targets: ${controller.installedTargetsCount}', style: const TextStyle(color: Colors.white)),
           const SizedBox(height: 4),

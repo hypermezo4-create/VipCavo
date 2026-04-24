@@ -45,8 +45,7 @@ class MountService {
     return MountDefaults.mockSelectableApps;
   }
 
-  Future<void> applyConfig(MountConfig config, List<MountMonetApp> controlApps) async {
-    await _storage.saveConfig(config);
+  Future<void> saveBridgeConfig(MountConfig config, List<MountMonetApp> controlApps) async {
     await _bridgeConfigService.saveBridgeConfig(config: config, controlApps: controlApps);
   }
 }
