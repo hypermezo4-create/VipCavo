@@ -6,19 +6,19 @@ class MountMonetEngine {
   static const List<int> tones = <int>[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99, 100];
 
   Map<String, Map<String, int>> generate(Color seed) {
-    final source = Hct.fromInt(seed.toARGB32());
-    final palette = CorePalette.of(sourceColorHct: source);
+    final argb = seed.toARGB32();
+    final palettes = CorePalettes.of(argb);
     Map<String, int> from(TonalPalette palette) => {
           for (final tone in tones) '$tone': palette.get(tone),
         };
 
     return <String, Map<String, int>>{
-      'primary': from(palette.primary),
-      'secondary': from(palette.secondary),
-      'tertiary': from(palette.tertiary),
-      'neutral': from(palette.neutral),
-      'neutralVariant': from(palette.neutralVariant),
-      'error': from(palette.error),
+      'primary': from(palettes.primary),
+      'secondary': from(palettes.secondary),
+      'tertiary': from(palettes.tertiary),
+      'neutral': from(palettes.neutral),
+      'neutralVariant': from(palettes.neutralVariant),
+      'error': from(palettes.error),
     };
   }
 

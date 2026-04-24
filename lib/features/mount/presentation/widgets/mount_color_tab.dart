@@ -60,9 +60,9 @@ class _MountColorTabState extends State<MountColorTab> {
   @override
   Widget build(BuildContext context) {
     final color = widget.config.selectedSeedColor;
-    final r = ((color.r * 255.0).round()).clamp(0, 255) as int;
-    final g = ((color.g * 255.0).round()).clamp(0, 255) as int;
-    final b = ((color.b * 255.0).round()).clamp(0, 255) as int;
+    final r = ((color.r * 255.0).round()).clamp(0, 255);
+    final g = ((color.g * 255.0).round()).clamp(0, 255);
+    final b = ((color.b * 255.0).round()).clamp(0, 255);
     final hsv = HSVColor.fromColor(color);
     final favorite = widget.config.favoriteColors.contains(color.toARGB32());
 

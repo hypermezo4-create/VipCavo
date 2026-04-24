@@ -12,6 +12,12 @@ import 'package:deadzon/features/mount/presentation/widgets/mount_scope_tab.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+
+int colorChannelTo255(double channel) {
+  return (channel * 255.0).round().clamp(0, 255).toInt();
+}
+
+
 class MountStudioScreen extends ConsumerWidget {
   const MountStudioScreen({super.key});
 
@@ -268,9 +274,36 @@ class _InlineColorDialogState extends State<_InlineColorDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             CircleAvatar(radius: 22, backgroundColor: color),
-            Slider(min: 0, max: 255, value: color.red.toDouble(), onChanged: (v) => setState(() => color = Color.fromARGB(255, v.round(), color.green, color.blue))),
-            Slider(min: 0, max: 255, value: color.green.toDouble(), onChanged: (v) => setState(() => color = Color.fromARGB(255, color.red, v.round(), color.blue))),
-            Slider(min: 0, max: 255, value: color.blue.toDouble(), onChanged: (v) => setState(() => color = Color.fromARGB(255, color.red, color.green, v.round()))),
+            Slider(
+              min: 0,
+              max: 255,
+              value: colorChannelTo255(color.r).toDouble(),
+              onChanged: (v) => setState(() {
+                final g = colorChannelTo255(color.g);
+                final b = colorChannelTo255(color.b);
+                color = Color.fromARGB(255, v.round(), g, b);
+              }),
+            ),
+            Slider(
+              min: 0,
+              max: 255,
+              value: colorChannelTo255(color.g).toDouble(),
+              onChanged: (v) => setState(() {
+                final r = colorChannelTo255(color.r);
+                final b = colorChannelTo255(color.b);
+                color = Color.fromARGB(255, r, v.round(), b);
+              }),
+            ),
+            Slider(
+              min: 0,
+              max: 255,
+              value: colorChannelTo255(color.b).toDouble(),
+              onChanged: (v) => setState(() {
+                final r = colorChannelTo255(color.r);
+                final g = colorChannelTo255(color.g);
+                color = Color.fromARGB(255, r, g, v.round());
+              }),
+            ),
           ],
         ),
       ),
