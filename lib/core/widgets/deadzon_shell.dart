@@ -1,10 +1,10 @@
 import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/shared/widgets/deadzon_floating_tab_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
-class DeadzonShell extends ConsumerWidget {
+class DeadzonShell extends StatelessWidget {
   const DeadzonShell({
     required this.navigationShell,
     super.key,
@@ -20,8 +20,8 @@ class DeadzonShell extends ConsumerWidget {
   ];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = ref.watch(deadzonThemeControllerProvider);
+  Widget build(BuildContext context) {
+    final theme = context.watch<DeadzonThemeController>();
 
     return Scaffold(
       extendBody: true,

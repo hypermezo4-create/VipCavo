@@ -4,14 +4,14 @@ import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
 import 'package:deadzon/core/widgets/settings_row.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:provider/provider.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = ref.watch(deadzonThemeControllerProvider);
+  Widget build(BuildContext context) {
+    final theme = context.watch<DeadzonThemeController>();
 
     return Container(
       decoration: const BoxDecoration(
@@ -46,7 +46,7 @@ class SettingsScreen extends ConsumerWidget {
                       ],
                       onChanged: (mode) {
                         if (mode == null) return;
-                        ref.read(deadzonThemeControllerProvider).setThemeMode(mode);
+                        context.read<DeadzonThemeController>().setThemeMode(mode);
                       },
                     ),
                   ),
