@@ -32,6 +32,7 @@ class MountStudioScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<MountStudioController>();
+    final contentBottomPadding = (controller.currentTab == 4 ? 300.0 : 236.0) + MediaQuery.paddingOf(context).bottom;
 
     return Container(
       decoration: const BoxDecoration(gradient: DesignTokens.baseGradient),
@@ -39,7 +40,7 @@ class MountStudioScreen extends StatelessWidget {
         child: Stack(
           children: <Widget>[
             ListView(
-              padding: EdgeInsets.fromLTRB(18, 14, 18, 236 + MediaQuery.paddingOf(context).bottom),
+              padding: EdgeInsets.fromLTRB(18, 14, 18, contentBottomPadding),
               physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
               children: <Widget>[
                 const PremiumTopBar(title: 'Mount Studio', subtitle: 'Monet colors, app effects & bridge targets'),

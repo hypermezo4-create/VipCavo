@@ -281,7 +281,7 @@ class MountStudioController extends ChangeNotifier {
     await _persist();
   }
 
-  int get selectedAppsCount => selectableApps.where((app) => app.selected).length;
+  int get selectedAppsCount => selectableApps.where((app) => app.selected && app.installed).length;
 
   int get installedTargetsCount => selectableApps.where((app) => app.installed).length;
 
@@ -341,12 +341,12 @@ class MountStudioController extends ChangeNotifier {
       final query = controlAppsSearch.toLowerCase();
       final matchesSearch = app.name.toLowerCase().contains(query) || app.packageName.toLowerCase().contains(query);
       final matchesCategory = switch (selectedControlCategory) {
-        'All' => true,
-        'Core System' => app.category == 'Core System',
-        'Xiaomi / HyperOS' => app.category == 'Xiaomi / HyperOS',
-        'User Selected' => app.selected,
+        'All' => app.installed,
+        'Core System' => app.installed && app.category == 'Core System',
+        'Xiaomi / HyperOS' => app.installed && app.category == 'Xiaomi / HyperOS',
+        'User Selected' => app.installed && app.selected,
         'Missing' => !app.installed,
-        _ => true,
+        _ => app.installed,
       };
       return matchesSearch && matchesCategory;
     }).toList();
