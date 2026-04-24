@@ -103,33 +103,40 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Future<void> _showThemePicker(BuildContext context, DeadzonThemeController controller) async {
+    final accent = controller.accentColor;
+    final textColor = Theme.of(context).colorScheme.onSurface;
     final selected = await showModalBottomSheet<ThemeMode>(
       context: context,
       showDragHandle: true,
       builder: (context) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          child: ListView(
+            shrinkWrap: true,
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
             children: <Widget>[
-              RadioListTile<ThemeMode>(
-                value: ThemeMode.system,
-                groupValue: controller.themeMode,
-                title: const Text('System'),
-                onChanged: (value) => Navigator.pop(context, value),
+              _ThemeModeOptionRow(
+                label: 'System',
+                isSelected: controller.themeMode == ThemeMode.system,
+                accent: accent,
+                textColor: textColor,
+                onTap: () => Navigator.pop(context, ThemeMode.system),
               ),
-              RadioListTile<ThemeMode>(
-                value: ThemeMode.light,
-                groupValue: controller.themeMode,
-                title: const Text('Light'),
-                onChanged: (value) => Navigator.pop(context, value),
+              const SizedBox(height: 10),
+              _ThemeModeOptionRow(
+                label: 'Light',
+                isSelected: controller.themeMode == ThemeMode.light,
+                accent: accent,
+                textColor: textColor,
+                onTap: () => Navigator.pop(context, ThemeMode.light),
               ),
-              RadioListTile<ThemeMode>(
-                value: ThemeMode.dark,
-                groupValue: controller.themeMode,
-                title: const Text('Dark'),
-                onChanged: (value) => Navigator.pop(context, value),
+              const SizedBox(height: 10),
+              _ThemeModeOptionRow(
+                label: 'Dark',
+                isSelected: controller.themeMode == ThemeMode.dark,
+                accent: accent,
+                textColor: textColor,
+                onTap: () => Navigator.pop(context, ThemeMode.dark),
               ),
-              const SizedBox(height: 8),
             ],
           ),
         );
@@ -164,6 +171,62 @@ class SettingsScreen extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _ThemeModeOptionRow extends StatelessWidget {
+  const _ThemeModeOptionRow({
+    required this.label,
+    required this.isSelected,
+    required this.accent,
+    required this.textColor,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final Color accent;
+  final Color textColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isSelected ? accent.withValues(alpha: 0.78) : Colors.white.withValues(alpha: 0.12),
+            width: isSelected ? 1.6 : 1,
+          ),
+          color: isSelected ? accent.withValues(alpha: 0.18) : Colors.white.withValues(alpha: 0.05),
+        ),
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                ),
+              ),
+            ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 160),
+              child: isSelected
+                  ? Icon(Icons.check_circle_rounded, key: ValueKey<String>('selected-$label'), color: accent)
+                  : Icon(Icons.circle_outlined, key: ValueKey<String>('unselected-$label'), color: textColor.withValues(alpha: 0.45)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

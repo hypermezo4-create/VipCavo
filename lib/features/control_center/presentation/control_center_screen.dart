@@ -184,24 +184,30 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
 
   Future<void> _showStylePicker() async {
     final current = _config.controlCenterStyle;
+    final accent = context.read<DeadzonThemeController>().accentColor;
+    final textColor = Theme.of(context).colorScheme.onSurface;
     final selected = await showModalBottomSheet<int>(
       context: context,
       showDragHandle: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       builder: (BuildContext context) {
         return SafeArea(
-          child: ListView(
+          child: ListView.separated(
             shrinkWrap: true,
-            children: _styles
-                .map(
-                  (style) => RadioListTile<int>(
-                    value: style.value,
-                    groupValue: current,
-                    title: Text(style.label),
-                    onChanged: (value) => Navigator.pop(context, value),
-                  ),
-                )
-                .toList(),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+            itemCount: _styles.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 10),
+            itemBuilder: (BuildContext context, int index) {
+              final style = _styles[index];
+              final isSelected = style.value == current;
+              return _buildStylePickerRow(
+                style: style,
+                isSelected: isSelected,
+                accent: accent,
+                textColor: textColor,
+                onTap: () => Navigator.pop(context, style.value),
+              );
+            },
           ),
         );
       },
@@ -210,6 +216,51 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
     if (selected == null) return;
     setState(() => _config = _config.copyWith(controlCenterStyle: selected, lastUpdatedAt: DateTime.now()));
     await _persistAndBroadcastStatusbar();
+  }
+
+  Widget _buildStylePickerRow({
+    required _StyleOption style,
+    required bool isSelected,
+    required Color accent,
+    required Color textColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isSelected ? accent.withValues(alpha: 0.78) : Colors.white.withValues(alpha: 0.12),
+            width: isSelected ? 1.6 : 1.0,
+          ),
+          color: isSelected ? accent.withValues(alpha: 0.18) : Colors.white.withValues(alpha: 0.05),
+        ),
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                style.label,
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                ),
+              ),
+            ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 160),
+              child: isSelected
+                  ? Icon(Icons.check_circle_rounded, key: ValueKey<int>(style.value), color: accent)
+                  : Icon(Icons.circle_outlined, key: ValueKey<String>('unselected-${style.value}'), color: textColor.withValues(alpha: 0.45)),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _onTileToggle(String id) {
