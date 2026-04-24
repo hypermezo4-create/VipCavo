@@ -23,7 +23,8 @@ class MountNativeBridgeService {
         if (name.isEmpty || packageName.isEmpty) {
           continue;
         }
-        final installed = item['installed'] == true;
+        final installedValue = item['installed'];
+        final installed = installedValue is bool ? installedValue : true;
         apps.add(
           MountSelectableApp(
             name: name,

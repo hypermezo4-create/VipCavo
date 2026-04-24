@@ -20,7 +20,10 @@ class MountControlAppsTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          _StatusCard(controller: controller),
+          _StatusCard(
+            controller: controller,
+            onDebugViewBridgeConfig: () => _showBridgeConfig(context),
+          ),
           const SizedBox(height: 12),
           const Text('Enable Mount Plugin', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
           SwitchListTile(
@@ -64,11 +67,6 @@ class MountControlAppsTab extends StatelessWidget {
             children: <Widget>[
               TextButton(onPressed: pluginEnabled ? () => controller.selectAllControlApps(true) : null, child: const Text('Select All')),
               TextButton(onPressed: pluginEnabled ? () => controller.selectAllControlApps(false) : null, child: const Text('Deselect All')),
-              OutlinedButton.icon(
-                onPressed: () => _showBridgeConfig(context),
-                icon: const Icon(Icons.data_object_rounded),
-                label: const Text('View Bridge Config'),
-              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -80,19 +78,45 @@ class MountControlAppsTab extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               itemBuilder: (context, index) {
                 final app = apps[index];
-                return SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: app.selected,
-                  onChanged: (pluginEnabled && app.installed) ? (v) => controller.toggleSelectableApp(app.packageName, v) : null,
-                  title: Text(app.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                  subtitle: Text(
-                    '${app.packageName} • ${app.installed ? 'Installed' : 'Missing'} • ${app.category}',
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 12),
-                  ),
-                  secondary: Icon(
-                    app.installed ? Icons.check_circle_rounded : Icons.error_outline_rounded,
-                    color: app.installed ? Colors.greenAccent : Colors.orangeAccent,
-                    size: 18,
+                final interactive = pluginEnabled && app.installed;
+                return Opacity(
+                  opacity: app.installed ? 1 : 0.58,
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.03),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                    ),
+                    child: Row(
+                      children: <Widget>[
+                        Icon(
+                          app.installed ? Icons.check_circle_rounded : Icons.error_outline_rounded,
+                          color: app.installed ? Colors.greenAccent : Colors.orangeAccent,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(app.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${app.packageName} • ${app.category}',
+                                style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Switch.adaptive(
+                          value: app.selected,
+                          onChanged: interactive ? (v) => controller.toggleSelectableApp(app.packageName, v) : null,
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -215,33 +239,37 @@ class _RomTargetsSection extends StatelessWidget {
 }
 
 class _StatusCard extends StatelessWidget {
-  const _StatusCard({required this.controller});
+  const _StatusCard({required this.controller, required this.onDebugViewBridgeConfig});
 
   final MountStudioController controller;
+  final VoidCallback onDebugViewBridgeConfig;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text('Mount Plugin: ${controller.config.monetEnabled ? 'Enabled' : 'Disabled'}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 4),
-          Text('App Theme: ${controller.appThemeApplied ? 'Applied' : 'Not applied'}', style: const TextStyle(color: Colors.white)),
-          Text('ROM Config: ${controller.romConfigSaved ? 'Saved' : 'Not saved'}', style: const TextStyle(color: Colors.white)),
-          const Text('Real ROM Bridge: Not installed', style: TextStyle(color: Colors.white)),
-          Text('Apps selected: ${controller.selectedAppsCount}', style: const TextStyle(color: Colors.white)),
-          Text('Installed targets: ${controller.installedTargetsCount}', style: const TextStyle(color: Colors.white)),
-          const SizedBox(height: 4),
-          Text(controller.applyStatusMessage, style: TextStyle(color: Colors.white.withValues(alpha: 0.74), fontSize: 12)),
-        ],
+    return GestureDetector(
+      onLongPress: onDebugViewBridgeConfig,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text('Mount Plugin: ${controller.config.monetEnabled ? 'Enabled' : 'Disabled'}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 4),
+            Text('App Theme: ${controller.appThemeApplied ? 'Applied' : 'Not applied'}', style: const TextStyle(color: Colors.white)),
+            Text('ROM Config: ${controller.romConfigSaved ? 'Saved' : 'Not saved'}', style: const TextStyle(color: Colors.white)),
+            const Text('Real ROM Bridge: Not installed', style: TextStyle(color: Colors.white)),
+            Text('Apps selected: ${controller.selectedAppsCount}', style: const TextStyle(color: Colors.white)),
+            Text('Installed targets: ${controller.installedTargetsCount}', style: const TextStyle(color: Colors.white)),
+            const SizedBox(height: 4),
+            Text(controller.applyStatusMessage, style: TextStyle(color: Colors.white.withValues(alpha: 0.74), fontSize: 12)),
+          ],
+        ),
       ),
     );
   }
