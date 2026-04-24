@@ -167,7 +167,7 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
                   child: Stack(
                     children: <Widget>[
                       Positioned.fill(child: _BoardGuides(zones: zones)),
-                      ...widget.boardState.modules.map((module) => _moduleWidget(module, zones)).toList(),
+                      ...widget.boardState.modules.map((module) => _moduleWidget(module, zones)),
                     ],
                   ),
                 ),
@@ -462,35 +462,6 @@ class _BoardModuleBadge extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _ModuleControlRow extends StatelessWidget {
-  const _ModuleControlRow({
-    required this.label,
-    required this.child,
-  });
-
-  final String label;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Flexible(child: child),
-      ],
     );
   }
 }
