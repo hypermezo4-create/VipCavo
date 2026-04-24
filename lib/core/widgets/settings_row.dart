@@ -20,12 +20,14 @@ class SettingsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textColor = Theme.of(context).colorScheme.onSurface;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
+        padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             CircleAvatar(
               radius: 20,
@@ -39,19 +41,24 @@ class SettingsRow extends StatelessWidget {
                 children: <Widget>[
                   Text(
                     title,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                    style: TextStyle(color: textColor, fontWeight: FontWeight.w700),
                   ),
                   if (subtitle != null) ...<Widget>[
                     const SizedBox(height: 2),
                     Text(
                       subtitle!,
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.7), height: 1.25),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: textColor.withValues(alpha: 0.72), height: 1.25),
                     ),
                   ],
                 ],
               ),
             ),
-            trailing ?? const SizedBox.shrink(),
+            if (trailing != null) ...<Widget>[
+              const SizedBox(width: 8),
+              Flexible(child: trailing!),
+            ],
           ],
         ),
       ),

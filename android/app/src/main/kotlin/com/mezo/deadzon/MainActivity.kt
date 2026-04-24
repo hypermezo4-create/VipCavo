@@ -59,16 +59,50 @@ class MainActivity : FlutterActivity() {
 
                 "sendBroadcast" -> {
                     val action = args?.get("action") as? String
-                    if (!action.isNullOrBlank()) {
-                        sendBroadcast(Intent(action))
-                    }
-                    result.success(null)
+                    result.success(sendSafeBroadcast(action))
+                }
+
+                "openExternalApp" -> {
+                    val packageName = args?.get("packageName") as? String
+                    result.success(openExternalApp(packageName))
                 }
 
                 "launchMonetPicker" -> result.success(launchMonetPicker())
                 "getWallpaperColors" -> result.success(getWallpaperColors())
                 else -> result.notImplemented()
             }
+        }
+    }
+
+    private fun sendSafeBroadcast(action: String?): Boolean {
+        return try {
+            if (action.isNullOrBlank()) {
+                false
+            } else {
+                sendBroadcast(Intent(action))
+                true
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun openExternalApp(packageName: String?): Boolean {
+        if (packageName.isNullOrBlank()) {
+            return false
+        }
+
+        return try {
+            val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+            if (launchIntent == null) {
+                false
+            } else {
+                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(launchIntent)
+                true
+            }
+        } catch (_: Exception) {
+            false
         }
     }
 

@@ -27,6 +27,10 @@ class DeadzonFloatingTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final idleColor = isLight ? const Color(0xFF4A5A63) : Colors.white70;
+    final borderColor = isLight ? Colors.black.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.2);
+
     return SafeArea(
       minimum: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       child: ClipRRect(
@@ -36,11 +40,11 @@ class DeadzonFloatingTabBar extends StatelessWidget {
           child: Container(
             height: 74,
             decoration: BoxDecoration(
-              color: backgroundTint.withValues(alpha: 0.84),
+              color: backgroundTint.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(36),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+              border: Border.all(color: borderColor),
               boxShadow: <BoxShadow>[
-                BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 8)),
+                BoxShadow(color: Colors.black.withValues(alpha: isLight ? 0.08 : 0.2), blurRadius: 20, offset: const Offset(0, 8)),
               ],
             ),
             child: LayoutBuilder(
@@ -75,14 +79,14 @@ class DeadzonFloatingTabBar extends StatelessWidget {
                               duration: const Duration(milliseconds: 280),
                               curve: Curves.easeOutCubic,
                               style: TextStyle(
-                                color: selected ? accentColor : Colors.white70,
+                                color: selected ? accentColor : idleColor,
                                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                                 fontSize: 11,
                               ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: <Widget>[
-                                  Icon(item.icon, color: selected ? accentColor : Colors.white70, size: selected ? 22 : 20),
+                                  Icon(item.icon, color: selected ? accentColor : idleColor, size: selected ? 22 : 20),
                                   const SizedBox(height: 4),
                                   Text(item.label),
                                 ],

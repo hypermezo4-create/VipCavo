@@ -137,3 +137,66 @@ Reference checked for architecture direction only:
 - https://github.com/Mods-Center/Monet-Picker/releases
 
 No direct APK/source/assets were copied into this implementation.
+
+## Control Center module (CN 3.0.303 phase)
+A dedicated Flutter Control Center module now exists with a live glass preview and persistent config.
+
+Preserved ROM bridge keys:
+- `square_mezo_tiles`
+- `swap_tiles_1`
+- `extra_two_mezo_tiles`
+- `cc_blur_ratio`
+
+Storage contract:
+- `ControlCenterConfig` is stored as structured JSON in SharedPreferences key `control_center_config_v1`.
+- Fields: `squareMezoTiles`, `controlCenterStyle`, `extraTwoMezoTiles`, `ccBlurRatio`, `lastUpdatedAt`.
+- Values are restored on app restart.
+
+Current local behavior:
+- Live preview updates instantly for tile shape, style, extra tile selection, blur ratio, and global Mount accent.
+- Extra tile picker enforces exactly two preferred extra tiles.
+- Apply + reset actions are implemented with confirmations and snackbar feedback.
+
+Future ROM bridge wiring (not forced yet):
+- Persisted config already maps directly to ROM key names.
+- Broadcast actions are best-effort placeholders until full ROM-side handlers are integrated.
+
+## Android intent/broadcast behavior
+Safe bridge methods are now exposed for:
+- `sendDeadzonBroadcast(String action)`
+- `openExternalApp(String packageName)`
+
+Control Center uses:
+- `my.intent.action.REFRESH_SYSTEMUI`
+- `my.intent.action.REFRESH_STATUSBAR`
+
+Behavior guarantees:
+- best-effort only
+- catches failures and returns `false` without crashing UI
+- no root commands
+- no system file edits
+- no direct SystemUI force-stop/kill
+
+## Spoof Device external launcher
+Spoof Device now launches external Kaorios Toolbox only:
+- package: `com.kousei.kaorios`
+- Android launch path: `PackageManager.getLaunchIntentForPackage`
+- App visibility query added in AndroidManifest `<queries>`.
+
+User-facing behavior:
+- opens Kaorios if installed
+- shows snackbar: `Kaorios Toolbox is not installed.` when unavailable
+- no embedded Kaorios resources/code copied into Deadzon
+
+## Settings + Light Mode polish
+Settings updates in this phase:
+- replaced rough dropdown with an iOS-style bottom sheet theme selector (System/Light/Dark)
+- theme mode applies immediately and persists after restart through `DeadzonThemeController`
+- subtitle/layout spacing fixed: `Appearance, palette, build details`
+- UI palette row now displays current Mount accent chip
+- reset dialog now safely resets visual/theme mode only (does not reset MountConfig)
+
+Light mode polish:
+- soft frosted light background gradient
+- readable text and subtle card/border contrast
+- floating bottom nav now adapts to light mode while keeping accent-selected bubble

@@ -1,57 +1,6 @@
 import 'package:deadzon/features/hub/presentation/hub_tool_screen.dart';
 import 'package:flutter/material.dart';
 
-class SpoofDeviceScreen extends StatelessWidget {
-  const SpoofDeviceScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const HubToolScreen(
-      title: 'Spoof device',
-      subtitle: 'Profile simulation controls and compatibility presets',
-      modules: <HubModuleDefinition>[
-        HubModuleDefinition(
-          title: 'Identity profile',
-          subtitle: 'Tune model identity and spoof safety.',
-          toggles: <HubToggleDefinition>[
-            HubToggleDefinition(id: 'spoof_enabled', title: 'Enable spoof profile', subtitle: 'Apply selected profile to target modules.'),
-            HubToggleDefinition(id: 'spoof_secure', title: 'Safety guard', subtitle: 'Block risky combinations automatically.'),
-          ],
-          sliders: <HubSliderDefinition>[
-            HubSliderDefinition(id: 'spoof_level', title: 'Compatibility level', min: 0, max: 100, defaultValue: 72),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class ControlCenterScreen extends StatelessWidget {
-  const ControlCenterScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const HubToolScreen(
-      title: 'Control center',
-      subtitle: 'Quick toggles board and grouped utility actions',
-      modules: <HubModuleDefinition>[
-        HubModuleDefinition(
-          title: 'Tile behavior',
-          subtitle: 'Configure spacing, motion, and blur response.',
-          toggles: <HubToggleDefinition>[
-            HubToggleDefinition(id: 'cc_grouping', title: 'Smart grouping', subtitle: 'Group tiles by usage patterns.'),
-            HubToggleDefinition(id: 'cc_labels', title: 'Show labels', subtitle: 'Display compact labels under tiles.'),
-          ],
-          sliders: <HubSliderDefinition>[
-            HubSliderDefinition(id: 'cc_radius', title: 'Tile roundness', min: 8, max: 32, defaultValue: 22),
-            HubSliderDefinition(id: 'cc_blur', title: 'Backdrop blur', min: 0, max: 40, defaultValue: 18),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
 
