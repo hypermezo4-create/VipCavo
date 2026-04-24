@@ -2,6 +2,7 @@ package com.mezo.deadzon
 
 import android.content.Intent
 import android.provider.Settings
+import android.util.Log
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -63,6 +64,16 @@ class MainActivity : FlutterActivity() {
                     result.success(null)
                 }
 
+                "launchExternalApp" -> {
+                    val packageName = args?.get("packageName") as? String
+                    if (packageName.isNullOrBlank()) {
+                        result.error("invalid_args", "Missing packageName", null)
+                        return@setMethodCallHandler
+                    }
+
+                    result.success(launchExternalApp(packageName))
+                }
+
                 else -> result.notImplemented()
             }
         }
@@ -83,6 +94,18 @@ class MainActivity : FlutterActivity() {
             2 -> Settings.Global.putInt(resolver, key, value)
             1 -> Settings.Secure.putInt(resolver, key, value)
             else -> Settings.System.putInt(resolver, key, value)
+        }
+    }
+
+    private fun launchExternalApp(packageName: String): Boolean {
+        return try {
+            val launchIntent = packageManager.getLaunchIntentForPackage(packageName) ?: return false
+            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(launchIntent)
+            true
+        } catch (error: Exception) {
+            Log.e("MainActivity", "Failed to launch package: $packageName", error)
+            false
         }
     }
 }
