@@ -72,55 +72,63 @@ class MountControlAppsTab extends StatelessWidget {
           const SizedBox(height: 6),
           Opacity(
             opacity: pluginEnabled ? 1 : 0.45,
-            child: ListView.builder(
-              itemCount: apps.length,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemBuilder: (context, index) {
-                final app = apps[index];
-                final interactive = pluginEnabled && app.installed;
-                return Opacity(
-                  opacity: app.installed ? 1 : 0.58,
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.03),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+            child: apps.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      'No targets in this filter.',
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.72), fontSize: 12.5),
                     ),
-                    child: Row(
-                      children: <Widget>[
-                        Icon(
-                          app.installed ? Icons.check_circle_rounded : Icons.error_outline_rounded,
-                          color: app.installed ? Colors.greenAccent : Colors.orangeAccent,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                  )
+                : ListView.builder(
+                    itemCount: apps.length,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemBuilder: (context, index) {
+                      final app = apps[index];
+                      final interactive = pluginEnabled && app.installed;
+                      return Opacity(
+                        opacity: app.installed ? 1 : 0.58,
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.03),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                          ),
+                          child: Row(
                             children: <Widget>[
-                              Text(app.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                              const SizedBox(height: 2),
-                              Text(
-                                '${app.packageName} • ${app.category}',
-                                style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 12),
+                              Icon(
+                                app.installed ? Icons.check_circle_rounded : Icons.error_outline_rounded,
+                                color: app.installed ? Colors.greenAccent : Colors.orangeAccent,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Text(app.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${app.packageName} • ${app.category}',
+                                      style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Switch.adaptive(
+                                value: app.selected,
+                                onChanged: interactive ? (v) => controller.toggleSelectableApp(app.packageName, v) : null,
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        Switch.adaptive(
-                          value: app.selected,
-                          onChanged: interactive ? (v) => controller.toggleSelectableApp(app.packageName, v) : null,
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         ],
       ),

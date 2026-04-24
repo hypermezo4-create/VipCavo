@@ -73,6 +73,13 @@ class MainActivity : FlutterActivity() {
                 "launchMonetPicker" -> result.success(launchMonetPicker())
                 "getWallpaperColors" -> result.success(getWallpaperColors())
                 "getInstalledPackages" -> result.success(getInstalledPackages())
+                "getKnownPackageInstallStates" -> {
+                    val packageNames = (args?.get("packageNames") as? List<*>)
+                        ?.mapNotNull { it?.toString() }
+                        ?: emptyList()
+                    result.success(getKnownPackageInstallStates(packageNames))
+                }
+                "getCurrentPackageName" -> result.success(applicationContext.packageName)
                 "isPackageInstalled" -> {
                     val packageName = args?.get("packageName") as? String
                     result.success(isPackageInstalled(packageName))
@@ -128,6 +135,16 @@ class MainActivity : FlutterActivity() {
         } catch (_: Exception) {
             false
         }
+    }
+
+    private fun getKnownPackageInstallStates(packageNames: List<String>): Map<String, Boolean> {
+        if (packageNames.isEmpty()) {
+            return emptyMap()
+        }
+
+        return packageNames
+            .distinct()
+            .associateWith { packageName -> isPackageInstalled(packageName) }
     }
 
     private fun writeMountBridgeConfig(config: Any?): Boolean {
