@@ -1,8 +1,10 @@
 import 'package:deadzon/core/widgets/deadzon_shell.dart';
+import 'package:deadzon/features/control_center/presentation/control_center_screen.dart';
 import 'package:deadzon/features/home/presentation/home_screen.dart';
 import 'package:deadzon/features/hub/presentation/additional_pages.dart';
 import 'package:deadzon/features/mount/presentation/mount_screen.dart';
 import 'package:deadzon/features/settings/presentation/settings_screen.dart';
+import 'package:deadzon/features/spoof_device/presentation/spoof_device_screen.dart';
 import 'package:deadzon/features/statusbar/presentation/statusbar_screen.dart';
 import 'package:go_router/go_router.dart';
 

@@ -3,6 +3,7 @@ import 'package:deadzon/features/mount/domain/mount_config.dart';
 import 'package:deadzon/features/mount/services/mount_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 DeadzonThemeController createDeadzonThemeController() {
   final controller = DeadzonThemeController(service: MountService());
@@ -14,6 +15,8 @@ class DeadzonThemeController extends ChangeNotifier {
   DeadzonThemeController({required MountService service}) : _service = service;
 
   final MountService _service;
+
+  static const String _themeModeKey = 'deadzon_theme_mode_v1';
 
   Color accentColor = MountDefaults.baseConfig().selectedColor;
   Color secondaryAccentColor = MountDefaults.baseConfig().selectedSeedColor;
@@ -36,6 +39,13 @@ class DeadzonThemeController extends ChangeNotifier {
   Future<void> initialize() async {
     final loaded = await _service.loadConfig();
     _setFromConfig(loaded, notify: false);
+    final prefs = await SharedPreferences.getInstance();
+    final storedMode = prefs.getString(_themeModeKey);
+    themeMode = switch (storedMode) {
+      'light' => ThemeMode.light,
+      'dark' => ThemeMode.dark,
+      _ => ThemeMode.system,
+    };
     notifyListeners();
   }
 
@@ -59,9 +69,16 @@ class DeadzonThemeController extends ChangeNotifier {
     await _service.saveConfig(defaults);
   }
 
-  void setThemeMode(ThemeMode mode) {
+  Future<void> setThemeMode(ThemeMode mode) async {
     themeMode = mode;
     notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    final value = switch (mode) {
+      ThemeMode.light => 'light',
+      ThemeMode.dark => 'dark',
+      ThemeMode.system => 'system',
+    };
+    await prefs.setString(_themeModeKey, value);
   }
 
   void _setFromConfig(MountConfig config, {bool notify = true}) {
@@ -99,6 +116,11 @@ class DeadzonThemeTokens {
 
   static Color iconAccent(BuildContext context) => of(context).iconAccentColor;
 
-  static Color navBackground(BuildContext context) =>
-      Color.lerp(const Color(0xFF0D1B2B), of(context).backgroundTint, 0.45)?.withValues(alpha: 0.88) ?? const Color(0xDD0D1B2B);
+  static Color navBackground(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    if (isLight) {
+      return Color.lerp(const Color(0xFFF3F8FA), of(context).accentColor, 0.08)?.withValues(alpha: 0.92) ?? const Color(0xEBF3F8FA);
+    }
+    return Color.lerp(const Color(0xFF0D1B2B), of(context).backgroundTint, 0.45)?.withValues(alpha: 0.88) ?? const Color(0xDD0D1B2B);
+  }
 }

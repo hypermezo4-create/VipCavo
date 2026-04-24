@@ -14,7 +14,7 @@ class HomeScreen extends StatelessWidget {
   static const List<_QuickAccess> _entries = <_QuickAccess>[
     _QuickAccess('Statusbar Adjustment', 'Resize, battery, clock, icons and backgrounds', Icons.signal_cellular_alt_rounded, '/statusbar'),
     _QuickAccess('Mount', 'Monet colors, effect tuning, live component previews', Icons.palette_rounded, '/mount'),
-    _QuickAccess('Spoof device', 'Profile simulation controls and compatibility presets', Icons.smartphone_rounded, '/spoof-device'),
+    _QuickAccess('Spoof device', 'Open Kaorios Toolbox for profiles and presets', Icons.smartphone_rounded, '/spoof-device'),
     _QuickAccess('Settings', 'Appearance, build info, reset preferences', Icons.settings_rounded, '/settings'),
     _QuickAccess('Control center', 'Quick toggles board and grouped utility actions', Icons.tune_rounded, '/control-center'),
     _QuickAccess('Notifications', 'Heads-up, compact icons, and stack behavior', Icons.notifications_active_rounded, '/notifications'),
