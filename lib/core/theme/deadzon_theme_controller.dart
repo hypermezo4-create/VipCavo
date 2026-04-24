@@ -2,7 +2,7 @@ import 'package:deadzon/features/mount/data/mount_defaults.dart';
 import 'package:deadzon/features/mount/domain/mount_config.dart';
 import 'package:deadzon/features/mount/services/mount_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 final deadzonThemeControllerProvider = ChangeNotifierProvider<DeadzonThemeController>((ref) {
   final controller = DeadzonThemeController(service: MountService());
