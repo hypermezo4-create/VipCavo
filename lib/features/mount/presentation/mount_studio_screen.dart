@@ -23,7 +23,7 @@ class MountStudioScreen extends StatelessWidget {
   static const List<String> _tabs = <String>[
     'Preview',
     'Colors',
-    'Effects',
+    'App Effects',
     'Components',
     'Control Apps',
     'Profiles',
@@ -39,10 +39,10 @@ class MountStudioScreen extends StatelessWidget {
         child: Stack(
           children: <Widget>[
             ListView(
-              padding: const EdgeInsets.fromLTRB(18, 14, 18, 228),
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 236),
               physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
               children: <Widget>[
-                const PremiumTopBar(title: 'Mount Studio', subtitle: 'Monet colors, effects & system accent'),
+                const PremiumTopBar(title: 'Mount Studio', subtitle: 'Monet colors, app effects & bridge targets'),
                 const SizedBox(height: 14),
                 _SegmentTabs(
                   tabs: _tabs,
@@ -69,7 +69,9 @@ class MountStudioScreen extends StatelessWidget {
                 onApply: () async {
                   await controller.apply();
                   if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mount saved. DeadZon applied. ROM bridge ready.')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Mount saved. App theme applied. ROM bridge config saved.')),
+                  );
                 },
               ),
             ),
@@ -98,7 +100,9 @@ class MountStudioScreen extends StatelessWidget {
             final launched = await controller.launchMonetPicker();
             if (!context.mounted) return;
             if (!launched) {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Monet picker is not available on this ROM.')));
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Wallpaper & Style app not found on this ROM.')));
             }
           },
         );

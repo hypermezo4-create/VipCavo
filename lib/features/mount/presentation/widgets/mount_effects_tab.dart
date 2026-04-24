@@ -13,7 +13,13 @@ class MountEffectsTab extends StatelessWidget {
     return MountGlassCard(
       tint: config.selectedColor,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
+          const Text(
+            'Controls DeadZon app glass, blur, glow and accent only.',
+            style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 10),
           _SliderTile(title: 'Glass opacity', value: config.glassOpacity, min: 0.2, max: 1, format: _SliderFormat.percent, onChanged: (v) => onChanged('glassOpacity', v)),
           _SliderTile(title: 'Blur strength', value: config.blurStrength, min: 0, max: 30, format: _SliderFormat.pixels, onChanged: (v) => onChanged('blurStrength', v)),
           _SliderTile(title: 'Accent intensity', value: config.accentIntensity, min: 0, max: 1, format: _SliderFormat.percent, onChanged: (v) => onChanged('accentIntensity', v)),

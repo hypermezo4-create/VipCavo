@@ -38,7 +38,9 @@ class MountStudioController extends ChangeNotifier {
   bool loading = true;
   String controlAppsSearch = '';
   String selectedControlCategory = 'All';
-  String applyStatusMessage = 'Applied inside DeadZon. ROM bridge config saved.';
+  String applyStatusMessage = 'Awaiting apply. DeadZon app theme and ROM bridge config are local only.';
+  bool appThemeApplied = false;
+  bool romConfigSaved = false;
   Timer? _persistTimer;
 
   static const List<String> controlCategories = <String>['All', 'Core System', 'Xiaomi / HyperOS', 'Media', 'Phone & Messages', 'Tools', 'Security', 'Launcher & UI', 'Connectivity', 'Other'];
@@ -329,9 +331,12 @@ class MountStudioController extends ChangeNotifier {
       },
     );
     config = configToPersist;
+    await _service.saveConfig(configToPersist);
     await _themeController.applyMountConfig(configToPersist, persist: false);
-    await _service.applyConfig(configToPersist, controlApps);
-    applyStatusMessage = 'Applied inside DeadZon. ROM bridge config saved.';
+    await _service.saveBridgeConfig(configToPersist, controlApps);
+    appThemeApplied = true;
+    romConfigSaved = true;
+    applyStatusMessage = 'Mount saved. App theme applied. ROM bridge config saved.';
     notifyListeners();
   }
 
@@ -356,6 +361,8 @@ class MountStudioController extends ChangeNotifier {
     await _service.reset();
     config = MountDefaults.baseConfig();
     controlApps = MountDefaults.controlApps;
+    appThemeApplied = false;
+    romConfigSaved = false;
     await _themeController.resetToDefaults();
     notifyListeners();
     await _persist();
