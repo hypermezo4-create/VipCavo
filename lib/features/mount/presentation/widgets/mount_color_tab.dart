@@ -60,6 +60,9 @@ class _MountColorTabState extends State<MountColorTab> {
   @override
   Widget build(BuildContext context) {
     final color = widget.config.selectedSeedColor;
+    final r = ((color.r * 255.0).round()).clamp(0, 255) as int;
+    final g = ((color.g * 255.0).round()).clamp(0, 255) as int;
+    final b = ((color.b * 255.0).round()).clamp(0, 255) as int;
     final hsv = HSVColor.fromColor(color);
     final favorite = widget.config.favoriteColors.contains(color.toARGB32());
 
@@ -87,9 +90,9 @@ class _MountColorTabState extends State<MountColorTab> {
               IconButton(onPressed: () => Clipboard.setData(ClipboardData(text: widget.config.selectedColorHex)), icon: const Icon(Icons.copy_rounded, color: Colors.white)),
               IconButton(onPressed: () => widget.onToggleFavorite(color), icon: Icon(favorite ? Icons.favorite_rounded : Icons.favorite_outline_rounded, color: Colors.white)),
             ]),
-            _rgbSlider('R', color.red.toDouble(), (v) => widget.onSeedChanged(Color.fromARGB(255, v.round(), color.green, color.blue))),
-            _rgbSlider('G', color.green.toDouble(), (v) => widget.onSeedChanged(Color.fromARGB(255, color.red, v.round(), color.blue))),
-            _rgbSlider('B', color.blue.toDouble(), (v) => widget.onSeedChanged(Color.fromARGB(255, color.red, color.green, v.round()))),
+            _rgbSlider('R', r.toDouble(), (v) => widget.onSeedChanged(Color.fromARGB(255, v.round(), g, b))),
+            _rgbSlider('G', g.toDouble(), (v) => widget.onSeedChanged(Color.fromARGB(255, r, v.round(), b))),
+            _rgbSlider('B', b.toDouble(), (v) => widget.onSeedChanged(Color.fromARGB(255, r, g, v.round()))),
             _hsvSlider('H', hsv.hue, 360, (v) => widget.onSeedChanged(hsv.withHue(v).toColor())),
             _hsvSlider('S', hsv.saturation, 1, (v) => widget.onSeedChanged(hsv.withSaturation(v).toColor())),
             _hsvSlider('V', hsv.value, 1, (v) => widget.onSeedChanged(hsv.withValue(v).toColor())),
