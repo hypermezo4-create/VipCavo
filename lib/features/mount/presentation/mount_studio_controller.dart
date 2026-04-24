@@ -10,7 +10,7 @@ import 'package:deadzon/features/mount/domain/mount_profile.dart';
 import 'package:deadzon/features/mount/services/mount_monet_engine.dart';
 import 'package:deadzon/features/mount/services/mount_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 final mountStudioControllerProvider = ChangeNotifierProvider<MountStudioController>((ref) {
   final controller = MountStudioController(
