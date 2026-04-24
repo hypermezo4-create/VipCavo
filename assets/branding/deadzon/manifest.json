@@ -1,0 +1,20 @@
+{
+  "pack": "DeadZon Branding Pack V1",
+  "files": [
+    "CODEX_INSTALL_TASK.txt",
+    "README_AR.txt",
+    "deadzon_adaptive_icon_background_1024.png",
+    "deadzon_adaptive_icon_foreground_1024.png",
+    "deadzon_app_icon_1024.png",
+    "deadzon_brand_full_3072.png",
+    "deadzon_brand_lockup_2048x1400.png",
+    "deadzon_header_banner_3000x1200.png",
+    "deadzon_logo_mark_2048.png",
+    "deadzon_splash_logo_2048.png",
+    "webp_for_app/deadzon_app_icon_1024.webp",
+    "webp_for_app/deadzon_brand_lockup_2048x1400.webp",
+    "webp_for_app/deadzon_header_banner_3000x1200.webp",
+    "webp_for_app/deadzon_logo_mark_2048.webp",
+    "webp_for_app/deadzon_splash_logo_2048.webp"
+  ]
+}

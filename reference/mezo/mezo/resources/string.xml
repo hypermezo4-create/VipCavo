@@ -1,0 +1,434 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<resources offset16="true">
+    <string name="QS_background_border_color_title" public="false">Toggles corner color</string>
+    <string name="QS_background_border_radius_title" public="false">Outline corner radius</string>
+    <string name="QS_background_border_width_title" public="false">Toggles corner width</string>
+    <string name="QS_bg_color_disabled_title" public="false">Background color for disabled/off toggles</string>
+    <string name="QS_bg_color_enabled_title" public="false">Background color for enabled/on toggles</string>
+    <string name="QS_bg_color_title" public="false">Background color for toggles</string>
+    <string name="QS_fg_color_disabled_title" public="false">Foreground color for disabled/off toggles</string>
+    <string name="QS_fg_color_enabled_title" public="false">Foreground color for enabled/on toggles</string>
+    <string name="account_on_top_tit" public="false">Mi Account menu on top</string>
+    <string name="battery_eliteset_0" public="false">Battery</string>
+    <string name="battery_eliteset_1" public="false">Customize battery view icon, size, color etc</string>
+    <string name="battery_eliteset_10" public="false">Color and shadows</string>
+    <string name="battery_eliteset_11" public="false">Font percent charge</string>
+    <string name="battery_eliteset_12" public="false">Show percent icon</string>
+    <string name="battery_eliteset_13" public="false">Color of percent inside battery</string>
+    <string name="battery_eliteset_14" public="false">Charging indicator</string>
+    <string name="battery_eliteset_15" public="false">Fonts</string>
+    <string name="battery_eliteset_16" public="false">Battery icon style</string>
+    <string name="battery_eliteset_2" public="false">Icon appearance and style</string>
+    <string name="battery_eliteset_21" public="false">Show battery icon</string>
+    <string name="battery_eliteset_22" public="false">Size</string>
+    <string name="battery_eliteset_23" public="false">Scale</string>
+    <string name="battery_eliteset_24" public="false">Division</string>
+    <string name="battery_eliteset_25" public="false">Custom percent icon settings</string>
+    <string name="battery_eliteset_26" public="false">Battery percentage font</string>
+    <string name="battery_eliteset_27" public="false">Show battery percent icon</string>
+    <string name="battery_eliteset_28" public="false">Some additional settings</string>
+    <string name="battery_eliteset_29" public="false">Percent icon color</string>
+    <string name="battery_eliteset_3" public="false">Battery customizations</string>
+    <string name="battery_eliteset_30" public="false">Battery icon style</string>
+    <string name="battery_eliteset_31" public="false">Select Oval battery icon style first</string>
+    <string name="battery_eliteset_4" public="false">Battery style</string>
+    <string name="battery_eliteset_5" public="false">Icon and percent dimensions</string>
+    <string name="battery_eliteset_6" public="false">Icon measurements</string>
+    <string name="battery_eliteset_7" public="false">Percent measurements</string>
+    <string name="battery_eliteset_8" public="false">Charge indicator measurements</string>
+    <string name="battery_eliteset_9" public="false">Percentage size inside icon</string>
+    <string name="cc13_summ" public="false">CC tiles/toggles customizations</string>
+    <string name="cc_blur_title" public="false">Blur ratio on control center</string>
+    <string name="center_tit1" public="false">Center</string>
+    <string name="charge_animation_style_lollipop" public="false">Flow</string>
+    <string name="charge_animation_style_none" public="false">Off</string>
+    <string name="charge_animation_style_title" public="false">Charging animation</string>
+    <string name="charge_animation_style_video" public="false">Glow</string>
+    <string name="charge_animation_style_wave" public="false">Wave</string>
+    <string name="charge_elite_styles_tit" public="false">Charging animation style</string>
+    <string name="charging_sounds_full_title" public="false">Sound when fully charged</string>
+    <string name="check_off1" public="false">Disabled</string>
+    <string name="check_off2" public="false">Disabled</string>
+    <string name="check_on1" public="false">Enabled</string>
+    <string name="check_on2" public="false">Enabled</string>
+    <string name="clock_cust" public="false">Clock customizations</string>
+    <string name="clock_elite_set_0" public="false">Show clock</string>
+    <string name="clock_elite_set_1" public="false">Clock color</string>
+    <string name="clock_elite_set_10" public="false">Clock size in status bar</string>
+    <string name="clock_elite_set_11" public="false">Clock division</string>
+    <string name="clock_elite_set_2" public="false">Clock font</string>
+    <string name="clock_elite_set_3" public="false">Blinking dots</string>
+    <string name="clock_elite_set_4" public="false">On</string>
+    <string name="clock_elite_set_5" public="false">Off</string>
+    <string name="clock_elite_set_6" public="false">Digits change animation</string>
+    <string name="clock_elite_set_7" public="false">Show seconds</string>
+    <string name="clock_elite_set_8" public="false">Show AM/PM</string>
+    <string name="clock_elite_set_8_summ" public="false">Show AM/PM only if seconds are off</string>
+    <string name="clock_elite_set_9" public="false">Show 24h clock</string>
+    <string name="clock_notif_hdr_1" public="false">Notification center clock</string>
+    <string name="clock_notif_hdr_10" public="false">Weather</string>
+    <string name="clock_notif_hdr_11" public="false">Font</string>
+    <string name="clock_notif_hdr_12" public="false">Date style</string>
+    <string name="clock_notif_hdr_13" public="false">Date Format</string>
+    <string name="clock_notif_hdr_14" public="false">Settings icon</string>
+    <string name="clock_notif_hdr_15" public="false">Scale</string>
+    <string name="clock_notif_hdr_16" public="false">Statusbar clock</string>
+    <string name="clock_notif_hdr_2" public="false">Size</string>
+    <string name="clock_notif_hdr_3" public="false">Division</string>
+    <string name="clock_notif_hdr_4" public="false">Color</string>
+    <string name="clock_notif_hdr_5" public="false">Blinking dots</string>
+    <string name="clock_notif_hdr_6" public="false">Enabled</string>
+    <string name="clock_notif_hdr_7" public="false">Disabled</string>
+    <string name="clock_notif_hdr_8" public="false">Digits change animation</string>
+    <string name="clock_notif_hdr_9" public="false">Show seconds</string>
+    <string name="colored_calls_cat" public="false">Color for calls</string>
+    <string name="contact_elite_color_title" public="false">New contact color</string>
+    <string name="contributors_title" public="false">Contributors</string>
+    <string name="control_center13_new_1" public="false">No. of big tiles</string>
+    <string name="control_center13_summ" public="false">CC big tiles customizations</string>
+    <string name="control_center13_tit" public="false">Control center</string>
+    <string name="control_panel_switch_side" public="false">Switch Control center side</string>
+    <string name="date_elite_st_0" public="false">Date</string>
+    <string name="date_elite_st_1" public="false">Date color, size, offset etc</string>
+    <string name="date_elite_st_2" public="false">Date customizations</string>
+    <string name="date_elite_st_3" public="false">Show date</string>
+    <string name="date_elite_st_4" public="false">Configure</string>
+    <string name="date_elite_st_5" public="false">Date format</string>
+    <string name="date_elite_st_6" public="false">Color</string>
+    <string name="date_elite_st_7" public="false">Font</string>
+    <string name="date_elite_st_8" public="false">Date size</string>
+    <string name="date_elite_st_9" public="false">Date division</string>
+    <string name="display_notification_icon_5" public="false">%d icons</string>
+    <string name="display_notification_icon_7" public="false">%d icons</string>
+    <string name="dsb_title" public="false">Dual status bar</string>
+    <string name="dsb_title_summ" public="false">Get two layers of statusbar</string>
+    <string name="edge_mode_enabled_title" public="false">Edge shadow effects</string>
+    <string name="elite_apps_spoof_summ" public="false">Unlimited photos, max fps for games and more</string>
+    <string name="elite_apps_spoof_tit" public="false">Apps/Games Spoofing</string>
+    <string name="elite_blog_summary" public="false">Always updated with latest news</string>
+    <string name="elite_blog_title" public="false">MEZO Development Web</string>
+    <string name="elite_cc_style_tit" public="false">CC Style choice (UI restart required)</string>
+    <string name="elite_dev_title" public="false">MEZO Development Project</string>
+    <string name="elite_dev_title_summ" public="false">Web, info, social, Plus/Paid version details</string>
+    <string name="elite_games_spoof_summ" public="false">Spoof the device as different model for some games to unlock higher FPS</string>
+    <string name="elite_games_spoof_tit" public="false">Unlock high FPS in many games</string>
+    <string name="elite_notif_anim_1" public="false">Notifications customizations</string>
+    <string name="elite_notif_anim_10" public="false">Background, center color</string>
+    <string name="elite_notif_anim_11" public="false">Background, end color</string>
+    <string name="elite_notif_anim_12" public="false">Border color</string>
+    <string name="elite_notif_anim_13" public="false">Border width</string>
+    <string name="elite_notif_anim_14" public="false">Corner radius</string>
+    <string name="elite_notif_anim_15" public="false">For single and multiple notifications</string>
+    <string name="elite_notif_anim_16" public="false">Blur level</string>
+    <string name="elite_notif_anim_17" public="false">Image background</string>
+    <string name="elite_notif_anim_18" public="false">Image selection</string>
+    <string name="elite_notif_anim_19" public="false">Notification animations settings</string>
+    <string name="elite_notif_anim_2" public="false">Enable animation</string>
+    <string name="elite_notif_anim_20" public="false">Notification content animation</string>
+    <string name="elite_notif_anim_21" public="false">Repeat animation</string>
+    <string name="elite_notif_anim_3" public="false">Animation style</string>
+    <string name="elite_notif_anim_4" public="false">Animation interpolator</string>
+    <string name="elite_notif_anim_5" public="false">Animation duration</string>
+    <string name="elite_notif_anim_6" public="false">Notifications background customizations</string>
+    <string name="elite_notif_anim_7" public="false">Turn it off for stock like view</string>
+    <string name="elite_notif_anim_8" public="false">Notification background</string>
+    <string name="elite_notif_anim_9" public="false">Background, start color</string>
+    <string name="elite_notif_anim_summ" public="false">Customize notif appearing style</string>
+    <string name="elite_photos_spoof_summ" public="false">Spoof the Google Photos app as Pixel XL</string>
+    <string name="elite_photos_spoof_tit" public="false">Unlimited Google Photos storage</string>
+    <string name="elite_plus_details" public="false">Install chrome to view details about it</string>
+    <string name="elite_plus_title" public="false">Unlock DeadzonRomPlus full Customizations</string>
+    <string name="elite_settings_title" public="false">DeadZon Customizations</string>
+    <string name="elite_upd_channel" public="false">Updates Channel</string>
+    <string name="elite_upd_channel_summary" public="false">DeadZonRoms updates, news on TG</string>
+    <string name="expand_top_notification" public="false">Expand top notification</string>
+    <string name="extended_power_menu" public="false">Extended power menu</string>
+    <string name="extended_power_menu_summ" public="false">Show 6-way power menu</string>
+    <string name="fod_elite_styles_tit" public="false">Fod icon</string>
+    <string name="full_call_window_tit" public="false">Fullscreen incoming call window</string>
+    <string name="full_call_window_tit_summ" public="false">Always disable popup alert for incoming calls</string>
+    <string name="gms_cert_chain_title" public="false">Attestation method</string>
+    <string name="hidden_settings_elite" public="false">Some Hidden settings</string>
+    <string name="hyperos_oos_style_elite" public="false">About info page changes</string>
+    <string name="hyperos_oos_style_elite_0" public="false">Use OOS About page</string>
+    <string name="hyperos_oos_style_elite_1" public="false">Using OOS style</string>
+    <string name="hyperos_oos_style_elite_2" public="false">Using HyperOS style</string>
+    <string name="iback_elite_st_0" public="false">Background of statubar icons</string>
+    <string name="iback_elite_st_1" public="false">Configure background of statusbar icons</string>
+    <string name="iback_elite_st_10" public="false">Bottom margin</string>
+    <string name="iback_elite_st_11" public="false">Top margin</string>
+    <string name="iback_elite_st_12" public="false">Border width</string>
+    <string name="iback_elite_st_13" public="false">Start color</string>
+    <string name="iback_elite_st_14" public="false">End color</string>
+    <string name="iback_elite_st_15" public="false">Border color</string>
+    <string name="iback_elite_st_16" public="false">Round top left corner</string>
+    <string name="iback_elite_st_17" public="false">Round top right corner</string>
+    <string name="iback_elite_st_18" public="false">Round bottom left corner</string>
+    <string name="iback_elite_st_19" public="false">Round bottom right corner</string>
+    <string name="iback_elite_st_2" public="false">Statusbar icons background customizations</string>
+    <string name="iback_elite_st_20" public="false">Battery</string>
+    <string name="iback_elite_st_21" public="false">SIM 1</string>
+    <string name="iback_elite_st_22" public="false">SIM 2</string>
+    <string name="iback_elite_st_23" public="false">Wifi</string>
+    <string name="iback_elite_st_24" public="false">Network Speed</string>
+    <string name="iback_elite_st_25" public="false">Notification icon</string>
+    <string name="iback_elite_st_26" public="false">Status icon</string>
+    <string name="iback_elite_st_27" public="false">Weather</string>
+    <string name="iback_elite_st_28" public="false">Date</string>
+    <string name="iback_elite_st_29" public="false">Prompt icon</string>
+    <string name="iback_elite_st_3" public="false">Clock</string>
+    <string name="iback_elite_st_4" public="false">Configure background as you like</string>
+    <string name="iback_elite_st_5" public="false">Background and margin config</string>
+    <string name="iback_elite_st_6" public="false">Left margin</string>
+    <string name="iback_elite_st_7" public="false">Right margin</string>
+    <string name="iback_elite_st_8" public="false">Left padding and frame offset</string>
+    <string name="iback_elite_st_9" public="false">Right padding and frame offset</string>
+    <string name="icon_elite_app_color_title" public="false">Colored notification icons</string>
+    <string name="incall_settings_summary" public="false">Various features for call screen</string>
+    <string name="incall_settings_title" public="false">Contacts/Calls</string>
+    <string name="incoming_elite_color_title" public="false">Incoming call color</string>
+    <string name="launcher_cust_summaary" public="false">Many options, tweaks for HyperOS launcher</string>
+    <string name="launcher_cust_title" public="false">HyperOS Launcher</string>
+    <string name="launcher_elite_2" public="false">Endless scrolling desktop</string>
+    <string name="launcher_elite_21" public="false">Color of icons and folder labels</string>
+    <string name="launcher_elite_3" public="false">Close folders automatically</string>
+    <string name="launcher_elite_4" public="false">Max icons in dock</string>
+    <string name="launcher_elite_5" public="false">App opening speed</string>
+    <string name="launcher_elite_6" public="false">Default behavior</string>
+    <string name="launcher_elite_7" public="false">Always show animation</string>
+    <string name="launcher_elite_8" public="false">Never show animation</string>
+    <string name="launcher_elite_9" public="false">Pinned apps / Lock to app</string>
+    <string name="launcher_elite_nounlockanim_title" public="false">Unlocking animation style</string>
+    <string name="left_side_title" public="false">Left side</string>
+    <string name="lock_elite_battery_0" public="false">Show battery information on lockscreen</string>
+    <string name="lock_elite_battery_1" public="false">Charging details</string>
+    <string name="lock_elite_battery_10" public="false">In volts (V)</string>
+    <string name="lock_elite_battery_11" public="false">Show power</string>
+    <string name="lock_elite_battery_12" public="false">In watts (W)</string>
+    <string name="lock_elite_battery_13" public="false">Update interval</string>
+    <string name="lock_elite_battery_14" public="false">Restart SystemUI to apply changes</string>
+    <string name="lock_elite_battery_15" public="false">Text size</string>
+    <string name="lock_elite_battery_2" public="false">Shows temperature, current, voltage and power on lockscreen</string>
+    <string name="lock_elite_battery_3" public="false">Show temperature</string>
+    <string name="lock_elite_battery_4" public="false">In celsius degree</string>
+    <string name="lock_elite_battery_5" public="false">Show original charging text</string>
+    <string name="lock_elite_battery_6" public="false">Charging %</string>
+    <string name="lock_elite_battery_7" public="false">Show current ampere</string>
+    <string name="lock_elite_battery_8" public="false">In ampere (A)</string>
+    <string name="lock_elite_battery_9" public="false">Show voltage</string>
+    <string name="lock_elite_settings_summ" public="false">Lockscreen options and customizations</string>
+    <string name="lock_elite_settings_title" public="false">Lockscreen</string>
+    <string name="lock_max_fps_elite_j_title" public="false">Force 120hz in games</string>
+    <string name="lock_max_fps_elite_j_title2" public="false">Disable joyose cloud control</string>
+    <string name="lock_max_fps_elite_title" public="false">Lock refresh rate</string>
+    <string name="lock_max_fps_elite_title2" public="false">Keep same refresh rate across all apps</string>
+    <string name="lockscreen_sidepanel_shortcuts_summary" public="false">Customize the apps displayed on the lock screen side panel</string>
+    <string name="lockscreen_sidepanel_shortcuts_title" public="false">Side panel shortcuts</string>
+    <string name="low_battery_dialog_title" public="false">Low battery dialog</string>
+    <string name="low_sound_title" public="false">Low battery alert sound</string>
+    <string name="menu_clr_elite_0" public="false">Seekbar/Progress bar</string>
+    <string name="menu_clr_elite_1" public="false">Checkbox On</string>
+    <string name="menu_clr_elite_2" public="false">Checkbox Off</string>
+    <string name="menu_clr_elite_3" public="false">Checkbox background On</string>
+    <string name="menu_clr_elite_4" public="false">Checkbox background Off</string>
+    <string name="menu_clr_elite_99" public="false">Colors for seekbars and checkboxes</string>
+    <string name="menu_elite_st_0" public="false">Settings menu style</string>
+    <string name="menu_elite_st_1" public="false">Change menu's look as you like</string>
+    <string name="menu_elite_st_2" public="false">Tiling views in DeadZon settings</string>
+    <string name="menu_elite_st_3" public="false">Main menu's style</string>
+    <string name="menu_elite_st_4" public="false">Statusbar settings style</string>
+    <string name="menu_elite_st_5" public="false">Menu's frame width</string>
+    <string name="menu_elite_st_6" public="false">Menu's frame color light mode</string>
+    <string name="menu_elite_st_7" public="false">Menu's frame color dark mode</string>
+    <string name="missed_elite_color_title" public="false">Missed call color</string>
+    <string name="mock_locations_title" public="false">Mock locations</string>
+    <string name="mock_locations_title_summ" public="false">Treat mock locations as genuine</string>
+    <string name="my_clock_settings_summary" public="false">Customize clock color, size, font etc</string>
+    <string name="my_clock_settings_title" public="false">Clock</string>
+    <string name="nav_elite_styles_tit" public="false">Navbar buttons style</string>
+    <string name="net_elite_st_0" public="false">Network</string>
+    <string name="net_elite_st_1" public="false">Customize network icons to your choice</string>
+    <string name="net_elite_st_10" public="false">VoLTE</string>
+    <string name="net_elite_st_11" public="false">VoWifi</string>
+    <string name="net_elite_st_12" public="false">Roaming</string>
+    <string name="net_elite_st_13" public="false">Icons size</string>
+    <string name="net_elite_st_14" public="false">Network icons</string>
+    <string name="net_elite_st_15" public="false">WiFi Icon</string>
+    <string name="net_elite_st_16" public="false">Fonts</string>
+    <string name="net_elite_st_17" public="false">Icons rotation</string>
+    <string name="net_elite_st_18" public="false">Horizontal network type</string>
+    <string name="net_elite_st_2" public="false">Network customizations</string>
+    <string name="net_elite_st_20" public="false">Show SIM icons</string>
+    <string name="net_elite_st_21" public="false">Show Wifi icon</string>
+    <string name="net_elite_st_22" public="false">Show VoLTE icon</string>
+    <string name="net_elite_st_23" public="false">Show VoWifi icon</string>
+    <string name="net_elite_st_24" public="false">Show roaming icon</string>
+    <string name="net_elite_st_25" public="false">Show/Hide network icons</string>
+    <string name="net_elite_st_26" public="false">SIM icons</string>
+    <string name="net_elite_st_27" public="false">Size</string>
+    <string name="net_elite_st_28" public="false">Scale</string>
+    <string name="net_elite_st_29" public="false">Division</string>
+    <string name="net_elite_st_3" public="false">Network colors</string>
+    <string name="net_elite_st_30" public="false">Margin in sim and data icon</string>
+    <string name="net_elite_st_31" public="false">Icons style</string>
+    <string name="net_elite_st_32" public="false">Wifi icon style</string>
+    <string name="net_elite_st_33" public="false">Signals icon style</string>
+    <string name="net_elite_st_34" public="false">VoWifi icon style</string>
+    <string name="net_elite_st_35" public="false">VoLTE icon style</string>
+    <string name="net_elite_st_4" public="false">SIM 1</string>
+    <string name="net_elite_st_5" public="false">SIM 2</string>
+    <string name="net_elite_st_6" public="false">WiFi</string>
+    <string name="net_elite_st_7" public="false">WiFi arrows</string>
+    <string name="net_elite_st_8" public="false">Network type</string>
+    <string name="net_elite_st_9" public="false">Network type arrow</string>
+    <string name="netspeed_elite_st_0" public="false">Netspeed</string>
+    <string name="netspeed_elite_st_1" public="false">Netspeed color, size, offset etc</string>
+    <string name="netspeed_elite_st_10" public="false">Netspeed referesh interval</string>
+    <string name="netspeed_elite_st_11" public="false">Show netspeed on CC/lockscreen</string>
+    <string name="netspeed_elite_st_2" public="false">Netspeed customizations</string>
+    <string name="netspeed_elite_st_3" public="false">Configure</string>
+    <string name="netspeed_elite_st_4" public="false">Color</string>
+    <string name="netspeed_elite_st_5" public="false">Font</string>
+    <string name="netspeed_elite_st_6" public="false">Netspeed style</string>
+    <string name="netspeed_elite_st_7" public="false">Size</string>
+    <string name="netspeed_elite_st_8" public="false">Division</string>
+    <string name="netspeed_elite_st_9" public="false">Vertical height</string>
+    <string name="new_batterybar_elite_tit_1" public="false">Battery bar settings</string>
+    <string name="new_batterybar_elite_tit_10" public="false">Color from middle</string>
+    <string name="new_batterybar_elite_tit_11" public="false">Primary color around edges</string>
+    <string name="new_batterybar_elite_tit_12" public="false">Choose color</string>
+    <string name="new_batterybar_elite_tit_13" public="false">On</string>
+    <string name="new_batterybar_elite_tit_14" public="false">Off</string>
+    <string name="new_batterybar_elite_tit_15" public="false">Shade color around edges</string>
+    <string name="new_batterybar_elite_tit_2" public="false">Show battery bar on statusbar</string>
+    <string name="new_batterybar_elite_tit_3" public="false">Animate while charging</string>
+    <string name="new_batterybar_elite_tit_4" public="false">Bar tyle</string>
+    <string name="new_batterybar_elite_tit_5" public="false">Bar thickness</string>
+    <string name="new_batterybar_elite_tit_6" public="false">Bar color</string>
+    <string name="new_batterybar_elite_tit_7" public="false">Bar charging color</string>
+    <string name="new_batterybar_elite_tit_8" public="false">Bar low charge warning color</string>
+    <string name="new_batterybar_elite_tit_9" public="false">Gradient color</string>
+    <string name="new_notif_background_alpha_title" public="false">Transparency for backdrop image</string>
+    <string name="new_notif_background_color_force_title" public="false">Force to use above color</string>
+    <string name="new_notif_user_colors_default" public="false">Default colors</string>
+    <string name="new_notif_user_colors_use" public="false">User colors</string>
+    <string name="notif_elite_st_0" public="false">Notification icons</string>
+    <string name="notif_elite_st_1" public="false">Notification icon color, size, offset etc</string>
+    <string name="notif_elite_st_10" public="false">Sort notification icons in reverse order</string>
+    <string name="notif_elite_st_2" public="false">Notification icon customizations</string>
+    <string name="notif_elite_st_3" public="false">Configure</string>
+    <string name="notif_elite_st_4" public="false">Number of notification icons</string>
+    <string name="notif_elite_st_5" public="false">Icon color</string>
+    <string name="notif_elite_st_6" public="false">Set black and clear to zero to set as default</string>
+    <string name="notif_elite_st_7" public="false">Icons size</string>
+    <string name="notif_elite_st_8" public="false">Icons scale</string>
+    <string name="notif_elite_st_9" public="false">Icons division</string>
+    <string name="notif_sound_title" public="false">Play notif sound when screen is on</string>
+    <string name="old_qs_toggles_customizations_title" public="false">Toggles Colors Customizations</string>
+    <string name="old_toggles_cust_title" public="false">Old Shade Toggles Color Customizations</string>
+    <string name="old_toggles_cust_title2" public="false">Number of rows and columns for toggles</string>
+    <string name="other_settings_summ" public="false">Other systemwide options to tune</string>
+    <string name="other_settings_title" public="false">Other options</string>
+    <string name="outgoing_elite_color_title" public="false">Outgoing call color</string>
+    <string name="plus_details" public="false">DeadZonROM details</string>
+    <string name="plus_details_summary" public="false">All info about paid versions</string>
+    <string name="power_menu_under_keyguard_summary" public="false">Allow access to the power menu while the device is locked</string>
+    <string name="power_menu_under_keyguard_title" public="false">Power menu access</string>
+    <string name="privacy_elite_dot_summ" public="false">Show or hide privacy icons while accessing camera, mic etc</string>
+    <string name="privacy_elite_dot_title" public="false">Privacy dots and icons</string>
+    <string name="prompt_elite_st_0" public="false">Prompt icon</string>
+    <string name="prompt_elite_st_1" public="false">Icon appear while calling etc</string>
+    <string name="prompt_elite_st_2" public="false">Icon scale</string>
+    <string name="prompt_elite_st_3" public="false">Icon division</string>
+    <string name="qs_toggles_customizations_summary" public="false">Change toggles color, outline, width and radius</string>
+    <string name="qs_toggles_customizations_title" public="false">QS toggles Miui11</string>
+    <string name="qs_toggles_customizations_title_summary" public="false">Miui11 shade panel customizations</string>
+    <string name="rejected_elite_color_title" public="false">Rejected call color</string>
+    <string name="resize_elite_st_0" public="false">Resize statusbar</string>
+    <string name="resize_elite_st_1" public="false">Notch/cutout/corners size etc</string>
+    <string name="resize_elite_st_10" public="false">Position of camera</string>
+    <string name="resize_elite_st_11" public="false">Position of first element</string>
+    <string name="resize_elite_st_12" public="false">Maximum width of left camera</string>
+    <string name="resize_elite_st_13" public="false">Notch Settings</string>
+    <string name="resize_elite_st_14" public="false">Left camera notch settings</string>
+    <string name="resize_elite_st_15" public="false">Maximum width of left camera</string>
+    <string name="resize_elite_st_16" public="false">Remove camera</string>
+    <string name="resize_elite_st_17" public="false">Show center element when island is open</string>
+    <string name="resize_elite_st_2" public="false">Statusbar resizing customizations</string>
+    <string name="resize_elite_st_3" public="false">Statusbar height (90)</string>
+    <string name="resize_elite_st_4" public="false">Reboot device after adjustment</string>
+    <string name="resize_elite_st_5" public="false">Camera width (80)</string>
+    <string name="resize_elite_st_6" public="false">Margin from corners, top line (40)</string>
+    <string name="resize_elite_st_7" public="false">Margin from left/right (35)</string>
+    <string name="resize_elite_st_8" public="false">Margin from top (3 for DSB)(30 for single)</string>
+    <string name="resize_elite_st_9" public="false">Camera location on screen</string>
+    <string name="restart_sisui_tit2" public="false">Restart UI after changing anything here</string>
+    <string name="restart_sisui_tit_2" public="false">Restart UI</string>
+    <string name="restart_sisui_tit_summ2" public="false">Click it to apply some effects</string>
+    <string name="restart_sisui_tit_summ_2" public="false">Click it to apply some changes</string>
+    <string name="right_side_title" public="false">Right side</string>
+    <string name="screenshot_any_app_summary" public="false">Allow taking screenshot in any app</string>
+    <string name="screenshot_any_app_title" public="false">Screenshot in any app</string>
+    <string name="setting_nfc_title" public="false">NFC</string>
+    <string name="show_notif_on_lock_elite_summ" public="false">Keep notifs on lock until checked</string>
+    <string name="show_notif_on_lock_elite_titt" public="false">Always show notifications on lock</string>
+    <string name="show_weather" public="false">Show weather info</string>
+    <string name="show_weather_anim_tit" public="false">Show weather animation in statusbar</string>
+    <string name="sizzling_title" public="false">Vibrate on unlocking</string>
+    <string name="spoof_cust_title" public="false">Spoof device</string>
+    <string name="spoof_cust_title_summ" public="false">Change device model for different apps/games</string>
+    <string name="spoof_ed_1" public="false">PIF menu by DeadZonTeam</string>
+    <string name="spoof_ed_1_summ" public="false">Set your own or default pif profile</string>
+    <string name="spoof_ed_2" public="false">Keybox menu by DeadZonTeam</string>
+    <string name="spoof_ed_2_summ" public="false">Set your own or default keybox</string>
+    <string name="spoofing_system_wide_category" public="false">System-wide spoofing</string>
+    <string name="spoofing_vending_summary" public="false">Spoof Play Store to latest Pixel device</string>
+    <string name="spoofing_vending_title" public="false">Spoof play store</string>
+    <string name="square_tiles_off" public="false">Disabled</string>
+    <string name="square_tiles_on" public="false">Enabled</string>
+    <string name="square_tiles_title" public="false">Square shaped toggles</string>
+    <string name="status_bar_adjustm_summ" public="false">Statusbar settings for all icons</string>
+    <string name="status_bar_adjustm_title" public="false">Statusbar adjustment</string>
+    <string name="status_elite_st_0" public="false">Status icons</string>
+    <string name="status_elite_st_1" public="false">Status icon color, size, offset etc</string>
+    <string name="status_elite_st_11" public="false">Icon size</string>
+    <string name="status_elite_st_12" public="false">Icon scale</string>
+    <string name="status_elite_st_13" public="false">Icon division</string>
+    <string name="status_elite_st_2" public="false">Status icons customizations</string>
+    <string name="status_elite_st_3" public="false">Show status icons</string>
+    <string name="status_elite_st_4" public="false">Configure</string>
+    <string name="status_elite_st_5" public="false">Icon color</string>
+    <string name="status_elite_st_6" public="false">Set black and clear to zero to set as default</string>
+    <string name="support_donate_summary" public="false">Support project with donations</string>
+    <string name="support_donate_title" public="false">Support the project</string>
+    <string name="support_group" public="false">Support Group</string>
+    <string name="support_group_summary" public="false">Discuss DeadZonRoms in telegram group</string>
+    <string name="text_bat_color_0_title" public="false">Color less than 20%</string>
+    <string name="text_bat_color_1_title" public="false">Color less than 40%</string>
+    <string name="text_bat_color_2_title" public="false">Color less than 60%</string>
+    <string name="text_bat_color_3_title" public="false">Color less than 80%</string>
+    <string name="text_bat_color_4_title" public="false">Color less than 100%</string>
+    <string name="themes_server_elite_title" public="false">Themes server</string>
+    <string name="toggle_count_title" public="false">Toggles count in Miui11 panel</string>
+    <string name="toggles_count_rows_title" public="false">Rows count in expanded Miui11 panel</string>
+    <string name="toggles_count_title" public="false">Toggles count in expanded Miui11 panel</string>
+    <string name="user_colors_contacts" public="false">User colors</string>
+    <string name="user_colors_contacts_default" public="false">Default colors</string>
+    <string name="var_font_switch_dialog_summary" public="false">You need to reboot your device to change this setting.</string>
+    <string name="var_font_switch_dialog_title" public="false">Reboot device?</string>
+    <string name="var_font_switch_title" public="false">Variable MiSans fonts</string>
+    <string name="voicemail_elite_color_title" public="false">Voicemail color</string>
+    <string name="weather_elite_st_0" public="false">Weather</string>
+    <string name="weather_elite_st_1" public="false">Weather icon color, size etc</string>
+    <string name="weather_elite_st_2" public="false">Weather customizations</string>
+    <string name="weather_elite_st_3" public="false">Show weather icon</string>
+    <string name="weather_elite_st_5" public="false">Weather color</string>
+    <string name="weather_elite_st_6" public="false">Weather font</string>
+    <string name="weather_elite_st_7" public="false">Weather animation in statusbar</string>
+    <string name="weather_elite_st_8" public="false">Weather division</string>
+    <string name="weather_elite_st_9" public="false">Weather size</string>
+    <string name="wifi_region_summary" public="false">Requires Wi-Fi to be restarted to take effect</string>
+    <string name="wifi_region_title" public="false">Wi-Fi region</string>
+    <string name="xda_profile" public="false">Follow us on XDA</string>
+    <string name="xda_profile_summary" public="false">XDA profile web page</string>
+</resources>

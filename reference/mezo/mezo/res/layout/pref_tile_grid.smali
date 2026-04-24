@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><GridLayout xmlns:android="http://schemas.android.com/apk/res/android"    android:layout_gravity="center_horizontal"    android:tag="tile_container"    android:layout_width="wrap_content"    android:layout_height="wrap_content"    android:columnCount="2"    android:useDefaultMargins="true"    android:alignmentMode="alignMargins" />

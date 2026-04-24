@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<resources offset16="true">
+    <id name="black_panel" public="false" />
+    <id name="blue_panel" public="false" />
+    <id name="card_info" public="false" />
+    <id name="card_spring" public="false" />
+    <id name="color_picker_view" public="false" />
+    <id name="elem_bat" public="false" />
+    <id name="elem_clock" public="false" />
+    <id name="elem_date" public="false" />
+    <id name="elem_net1" public="false" />
+    <id name="elem_net2" public="false" />
+    <id name="elem_notif" public="false" />
+    <id name="elem_prompt" public="false" />
+    <id name="elem_speed" public="false" />
+    <id name="elem_status" public="false" />
+    <id name="elem_weather" public="false" />
+    <id name="elem_wifi" public="false" />
+    <id name="elite_settings_preference" public="false" />
+    <id name="enter" public="false" />
+    <id name="green_panel" public="false" />
+    <id name="hex" public="false" />
+    <id name="hex_text" public="false" />
+    <id name="image4" public="false" />
+    <id name="new_color_panel" public="false" />
+    <id name="old_color_panel" public="false" />
+    <id name="option_label" public="false" />
+    <id name="red_panel" public="false" />
+    <id name="shape" public="false" />
+    <id name="text_hex_wrapper" public="false" />
+    <id name="white_panel" public="false" />
+    <id name="yellow_panel" public="false" />
+</resources>

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<resources offset16="true">
+    <path name="battery_indicator_off" public="false">res/drawable-night/battery_indicator_off.xml</path>
+    <path name="battery_indicator_percent_only" public="false">res/drawable-night/battery_indicator_percent_only.xml</path>
+    <path name="battery_indicator_percent_out_left" public="false">res/drawable-night/battery_indicator_percent_out_left.xml</path>
+    <path name="battery_indicator_percent_out_right" public="false">res/drawable-night/battery_indicator_percent_out_right.xml</path>
+</resources>
