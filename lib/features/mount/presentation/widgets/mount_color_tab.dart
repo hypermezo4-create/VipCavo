@@ -8,14 +8,16 @@ class MountColorTab extends StatelessWidget {
     required this.config,
     required this.onPresetTap,
     required this.onLaunchMonetPicker,
-    required this.onPlaceholderTap,
+    required this.onPickFromWallpaper,
+    required this.onManualColorPicker,
     super.key,
   });
 
   final MountConfig config;
   final ValueChanged<MountColorPreset> onPresetTap;
   final VoidCallback onLaunchMonetPicker;
-  final VoidCallback onPlaceholderTap;
+  final VoidCallback onPickFromWallpaper;
+  final VoidCallback onManualColorPicker;
 
   @override
   Widget build(BuildContext context) {
@@ -68,9 +70,9 @@ class MountColorTab extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             children: <Widget>[
-              Expanded(child: _PlaceholderButton(label: 'Pick from wallpaper', onTap: onPlaceholderTap)),
+              Expanded(child: _PlaceholderButton(label: 'Pick from wallpaper', onTap: onPickFromWallpaper)),
               const SizedBox(width: 10),
-              Expanded(child: _PlaceholderButton(label: 'Manual color picker', onTap: onPlaceholderTap)),
+              Expanded(child: _PlaceholderButton(label: 'Manual color picker', onTap: onManualColorPicker)),
             ],
           ),
           const SizedBox(height: 12),

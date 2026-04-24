@@ -7,7 +7,13 @@ class MonetPickerLauncher {
 
   Future<bool> launchMonetPicker() async {
     try {
-      final launched = await _channel.invokeMethod<bool>('launchMonetPicker');
+      final launched = await _channel.invokeMethod<bool>(
+        'launchMonetPicker',
+        const <String, String>{
+          'package': 'com.android.wallpaper',
+          'class': 'com.android.wallpaper.picker.CustomizationPickerActivity',
+        },
+      );
       return launched == true;
     } catch (_) {
       return false;

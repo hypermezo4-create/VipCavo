@@ -88,9 +88,10 @@ class MountStudioScreen extends ConsumerWidget {
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Monet picker is not available on this ROM.')));
             }
           },
-          onPlaceholderTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Picker placeholder for upcoming update.')));
+          onPickFromWallpaper: () {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pick from wallpaper is coming soon.')));
           },
+          onManualColorPicker: () => _showManualColorPicker(context, controller),
         );
       case 2:
         return MountEffectsTab(
@@ -117,36 +118,7 @@ class MountStudioScreen extends ConsumerWidget {
       case 3:
         return MountComponentsTab(
           config: controller.config,
-          onTapItem: (key) {
-            final presets = MountDefaults.colorPresets;
-            final target = presets[(key.hashCode.abs()) % presets.length];
-            switch (key) {
-              case 'seekbarColor':
-                controller.setComponentColor(seekbarColor: target.color);
-                break;
-              case 'switchOnColor':
-                controller.setComponentColor(switchOnColor: target.color);
-                break;
-              case 'switchOffColor':
-                controller.setComponentColor(switchOffColor: target.color.withValues(alpha: 0.6));
-                break;
-              case 'checkboxOnColor':
-                controller.setComponentColor(checkboxOnColor: target.color);
-                break;
-              case 'checkboxOffColor':
-                controller.setComponentColor(checkboxOffColor: target.color.withValues(alpha: 0.6));
-                break;
-              case 'cardBackgroundTint':
-                controller.setComponentColor(cardBackgroundTint: target.color.withValues(alpha: 0.2));
-                break;
-              case 'iconAccentColor':
-                controller.setComponentColor(iconAccentColor: target.color);
-                break;
-              default:
-                controller.setComponentColor(textAccentColor: target.color.withValues(alpha: 0.95));
-            }
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Color picker placeholder: quick color applied.')));
-          },
+          onTapItem: (key) => _showComponentColorPicker(context, controller, key),
         );
       case 4:
         return MountScopeTab(
@@ -190,7 +162,8 @@ class MountStudioScreen extends ConsumerWidget {
           profiles: controller.profiles,
           activeProfileId: controller.config.activeProfileId,
           onProfileTap: controller.applyProfile,
-          onPlaceholder: () {
+          onResetProfile: () => _showResetProfileDialog(context, controller),
+          onEditProfile: () {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile editing will be added in the next iteration.')));
           },
         );
@@ -216,6 +189,107 @@ class MountStudioScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mount Studio reset to defaults.')));
       }
+    }
+  }
+
+  Future<void> _showResetProfileDialog(BuildContext context, MountStudioController controller) async {
+    final shouldReset = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset active profile?'),
+        content: const Text('This will restore the active profile values to their defaults.'),
+        actions: <Widget>[
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Reset')),
+        ],
+      ),
+    );
+    if (shouldReset == true) {
+      await controller.resetCurrentProfileToDefault();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile reset complete.')));
+      }
+    }
+  }
+
+  Future<void> _showManualColorPicker(BuildContext context, MountStudioController controller) async {
+    final preset = await showModalBottomSheet<MountColorPreset>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: MountDefaults.colorPresets
+              .map(
+                (preset) => ListTile(
+                  leading: CircleAvatar(backgroundColor: preset.color),
+                  title: Text(preset.name),
+                  onTap: () => Navigator.of(context).pop(preset),
+                ),
+              )
+              .toList(),
+        ),
+      ),
+    );
+    if (preset != null) {
+      await controller.setMonetColor(preset.color, preset.name);
+    }
+  }
+
+  Future<void> _showComponentColorPicker(
+    BuildContext context,
+    MountStudioController controller,
+    String componentKey,
+  ) async {
+    final preset = await showModalBottomSheet<MountColorPreset>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: MountDefaults.colorPresets
+              .map(
+                (item) => ListTile(
+                  leading: CircleAvatar(backgroundColor: item.color),
+                  title: Text(item.name),
+                  onTap: () => Navigator.of(context).pop(item),
+                ),
+              )
+              .toList(),
+        ),
+      ),
+    );
+    if (preset == null) {
+      return;
+    }
+
+    switch (componentKey) {
+      case 'seekbarColor':
+        await controller.setComponentColor(seekbarColor: preset.color);
+        break;
+      case 'switchOnColor':
+        await controller.setComponentColor(switchOnColor: preset.color);
+        break;
+      case 'switchOffColor':
+        await controller.setComponentColor(switchOffColor: preset.color.withValues(alpha: 0.70));
+        break;
+      case 'checkboxOnColor':
+        await controller.setComponentColor(checkboxOnColor: preset.color);
+        break;
+      case 'checkboxOffColor':
+        await controller.setComponentColor(checkboxOffColor: preset.color.withValues(alpha: 0.70));
+        break;
+      case 'cardBackgroundTint':
+        await controller.setComponentColor(cardBackgroundTint: preset.color.withValues(alpha: 0.24));
+        break;
+      case 'iconAccentColor':
+        await controller.setComponentColor(iconAccentColor: preset.color);
+        break;
+      case 'textAccentColor':
+        await controller.setComponentColor(textAccentColor: preset.color);
+        break;
+      default:
+        return;
     }
   }
 }

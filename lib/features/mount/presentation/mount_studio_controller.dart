@@ -45,8 +45,10 @@ class MountStudioController extends ChangeNotifier {
     notifyListeners();
 
     final loaded = await _service.loadConfig();
+    final savedTab = await _service.loadActiveTab();
     final apps = await _service.loadSelectableApps();
     config = loaded;
+    currentTab = savedTab;
     selectableApps = apps;
     controlApps = MountDefaults.controlApps.map((app) {
       final enabled = loaded.controlAppToggles[app.key] ?? app.defaultEnabled;
@@ -68,10 +70,20 @@ class MountStudioController extends ChangeNotifier {
   Future<void> setTab(int index) async {
     currentTab = index;
     notifyListeners();
+    await _service.saveActiveTab(index);
   }
 
   Future<void> setMonetColor(Color color, String name) async {
-    config = config.copyWith(selectedColor: color, selectedColorName: name, activeProfileId: 'custom');
+    config = config.copyWith(
+      selectedColor: color,
+      selectedColorName: name,
+      seekbarColor: color,
+      switchOnColor: color,
+      checkboxOnColor: color,
+      iconAccentColor: color.withValues(alpha: 0.96),
+      textAccentColor: color.withValues(alpha: 0.94),
+      activeProfileId: 'custom',
+    );
     notifyListeners();
     await _persist();
   }
@@ -166,7 +178,10 @@ class MountStudioController extends ChangeNotifier {
   }
 
   Future<void> selectAllControlApps(bool enabled) async {
-    controlApps = controlApps.map((app) => app.copyWith(enabled: enabled)).toList();
+    final visibleKeys = filteredControlApps.map((app) => app.key).toSet();
+    controlApps = controlApps
+        .map((app) => visibleKeys.contains(app.key) ? app.copyWith(enabled: enabled) : app)
+        .toList();
     notifyListeners();
     await _persist();
   }
@@ -211,6 +226,29 @@ class MountStudioController extends ChangeNotifier {
   Future<bool> launchMonetPicker() => _service.launchMonetPicker();
 
   Future<void> apply() => _service.applyConfig(config);
+
+  Future<void> resetCurrentProfileToDefault() async {
+    final profileId = config.activeProfileId;
+    MountConfig fallback = MountDefaults.baseConfig();
+    if (profileId != 'custom') {
+      for (final profile in profiles) {
+        if (profile.id == profileId) {
+          fallback = profile.config.copyWith(activeProfileId: profile.id);
+          break;
+        }
+      }
+    } else {
+      fallback = fallback.copyWith(activeProfileId: 'custom');
+    }
+
+    config = fallback.copyWith(
+      selectedPackageNames: config.selectedPackageNames,
+      controlAppToggles: config.controlAppToggles,
+      monetEnabled: config.monetEnabled,
+    );
+    notifyListeners();
+    await _persist();
+  }
 
   Future<void> reset() async {
     await _service.reset();
