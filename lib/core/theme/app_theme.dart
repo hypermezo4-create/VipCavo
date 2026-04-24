@@ -1,64 +1,51 @@
+import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-final themeModeProvider = NotifierProvider<ThemeModeNotifier, ThemeMode>(ThemeModeNotifier.new);
-final globalAccentProvider = NotifierProvider<GlobalAccentNotifier, Color>(GlobalAccentNotifier.new);
-
-class ThemeModeNotifier extends Notifier<ThemeMode> {
-  @override
-  ThemeMode build() => ThemeMode.dark;
-
-  void setMode(ThemeMode mode) => state = mode;
-}
-
-class GlobalAccentNotifier extends Notifier<Color> {
-  @override
-  Color build() => AppTheme.defaultSeed;
-
-  void setAccent(Color color) => state = color;
-}
-
 class AppTheme {
-  static const Color defaultSeed = Color(0xFF79E3CB);
-  static const Color darkBg = Color(0xFF0B1418);
-  static const Color darkSurface = Color(0xFF12242C);
-  static const Color darkCard = Color(0xFF1A313A);
-
-  static ThemeData light([Color seed = defaultSeed]) {
-    final base = ThemeData(useMaterial3: true, colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.light));
+  static ThemeData light(DeadzonThemeController theme) {
+    final base = ThemeData(useMaterial3: true, colorScheme: ColorScheme.fromSeed(seedColor: theme.accentColor, brightness: Brightness.light));
 
     return base.copyWith(
       scaffoldBackgroundColor: const Color(0xFFF2F7F8),
       pageTransitionsTheme: const PageTransitionsTheme(builders: <TargetPlatform, PageTransitionsBuilder>{TargetPlatform.android: CupertinoPageTransitionsBuilder(), TargetPlatform.iOS: CupertinoPageTransitionsBuilder()}),
       textTheme: GoogleFonts.interTextTheme(base.textTheme),
-      appBarTheme: const AppBarTheme(backgroundColor: Colors.transparent, elevation: 0, foregroundColor: Color(0xFF102227)),
+      appBarTheme: AppBarTheme(backgroundColor: Colors.transparent, elevation: 0, foregroundColor: theme.textAccentColor),
       cardTheme: CardThemeData(
-        color: Colors.white.withValues(alpha: 0.65),
+        color: theme.cardTint.withValues(alpha: 0.35),
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28), side: BorderSide(color: Colors.white.withValues(alpha: 0.75))),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28), side: BorderSide(color: theme.borderColor)),
       ),
       dividerColor: Colors.black.withValues(alpha: 0.08),
+      sliderTheme: base.sliderTheme.copyWith(activeTrackColor: theme.sliderColor, thumbColor: theme.sliderColor),
+      switchTheme: SwitchThemeData(thumbColor: WidgetStatePropertyAll(theme.switchOnColor)),
+      checkboxTheme: CheckboxThemeData(fillColor: WidgetStatePropertyAll(theme.checkboxColor)),
     );
   }
 
-  static ThemeData dark([Color seed = defaultSeed]) {
-    final base = ThemeData(useMaterial3: true, colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark));
+  static ThemeData dark(DeadzonThemeController theme) {
+    final base = ThemeData(useMaterial3: true, colorScheme: ColorScheme.fromSeed(seedColor: theme.accentColor, brightness: Brightness.dark));
 
     return base.copyWith(
-      scaffoldBackgroundColor: darkBg,
+      scaffoldBackgroundColor: const Color(0xFF0B1418),
       splashFactory: InkSparkle.splashFactory,
       pageTransitionsTheme: const PageTransitionsTheme(builders: <TargetPlatform, PageTransitionsBuilder>{TargetPlatform.android: CupertinoPageTransitionsBuilder(), TargetPlatform.iOS: CupertinoPageTransitionsBuilder()}),
       textTheme: GoogleFonts.interTextTheme(base.textTheme).apply(bodyColor: Colors.white, displayColor: Colors.white),
       appBarTheme: const AppBarTheme(backgroundColor: Colors.transparent, elevation: 0, foregroundColor: Colors.white),
       cardTheme: CardThemeData(
-        color: darkCard.withValues(alpha: 0.58),
-        shadowColor: DesignTokens.glassHighlight.withValues(alpha: 0.28),
+        color: theme.cardTint.withValues(alpha: 0.4),
+        shadowColor: DesignTokens.glassHighlight.withValues(alpha: 0.2),
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28), side: BorderSide(color: Colors.white.withValues(alpha: 0.14))),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28), side: BorderSide(color: theme.borderColor)),
       ),
       dividerColor: Colors.white.withValues(alpha: 0.08),
+      sliderTheme: base.sliderTheme.copyWith(activeTrackColor: theme.sliderColor, thumbColor: theme.sliderColor),
+      switchTheme: SwitchThemeData(thumbColor: WidgetStatePropertyAll(theme.switchOnColor)),
+      checkboxTheme: CheckboxThemeData(fillColor: WidgetStatePropertyAll(theme.checkboxColor)),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(backgroundColor: theme.accentColor, foregroundColor: Colors.black87),
+      ),
     );
   }
 }

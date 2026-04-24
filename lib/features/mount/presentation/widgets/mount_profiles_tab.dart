@@ -28,7 +28,7 @@ class MountProfilesTab extends StatelessWidget {
               contentPadding: EdgeInsets.zero,
               title: Text(p.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
               subtitle: Text(p.id, style: TextStyle(color: Colors.white.withValues(alpha: 0.68))),
-              trailing: p.id == activeProfileId ? const Icon(Icons.check_circle, color: Color(0xFF8CEFD2)) : null,
+              trailing: p.id == activeProfileId ? Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary) : null,
               onTap: () => onProfileTap(p.id),
             ),
           ),

@@ -1,6 +1,7 @@
+import 'dart:async';
 import 'dart:math';
 
-import 'package:deadzon/core/theme/app_theme.dart';
+import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/features/mount/data/mount_defaults.dart';
 import 'package:deadzon/features/mount/domain/mount_config.dart';
 import 'package:deadzon/features/mount/domain/mount_monet_app.dart';
@@ -9,22 +10,24 @@ import 'package:deadzon/features/mount/domain/mount_profile.dart';
 import 'package:deadzon/features/mount/services/mount_monet_engine.dart';
 import 'package:deadzon/features/mount/services/mount_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final mountStudioControllerProvider = ChangeNotifierProvider<MountStudioController>((ref) {
   final controller = MountStudioController(
     service: MountService(),
-    onGlobalAccentChanged: (color) => ref.read(globalAccentProvider.notifier).setAccent(color),
+    themeController: ref.read(deadzonThemeControllerProvider),
   );
   controller.initialize();
   return controller;
 });
 
 class MountStudioController extends ChangeNotifier {
-  MountStudioController({required MountService service, required this.onGlobalAccentChanged}) : _service = service;
+  MountStudioController({required MountService service, required DeadzonThemeController themeController})
+    : _service = service,
+      _themeController = themeController;
 
   final MountService _service;
-  final void Function(Color) onGlobalAccentChanged;
+  final DeadzonThemeController _themeController;
   final MountMonetEngine _engine = MountMonetEngine();
   final List<MountProfile> profiles = MountDefaults.profiles();
   final List<MountPalette> paletteLibrary = MountDefaults.paletteLibrary;
@@ -39,6 +42,7 @@ class MountStudioController extends ChangeNotifier {
   bool loading = true;
   String controlAppsSearch = '';
   String selectedControlCategory = 'All';
+  Timer? _persistTimer;
 
   static const List<String> controlCategories = <String>['All', 'Core System', 'Xiaomi / HyperOS', 'Media', 'Phone & Messages', 'Tools', 'Security', 'Launcher & UI', 'Connectivity', 'Other'];
 
@@ -56,7 +60,7 @@ class MountStudioController extends ChangeNotifier {
       return app.copyWith(enabled: enabled);
     }).toList();
 
-    onGlobalAccentChanged(config.selectedColor);
+    await _themeController.applyMountConfig(config, persist: false);
     loading = false;
     notifyListeners();
   }
@@ -82,6 +86,17 @@ class MountStudioController extends ChangeNotifier {
         },
       ),
     );
+  }
+
+  void _persistDebounced() {
+    _persistTimer?.cancel();
+    _persistTimer = Timer(const Duration(milliseconds: 220), _persist);
+  }
+
+  Future<void> _applyToGlobalIfLive() async {
+    if (config.liveApplyEnabled) {
+      await _themeController.applyMountConfig(config, persist: false);
+    }
   }
 
   Future<void> setTab(int index) async {
@@ -115,9 +130,9 @@ class MountStudioController extends ChangeNotifier {
         'checkboxOnColor': color.toARGB32(),
       },
     );
-    onGlobalAccentChanged(color);
+    await _applyToGlobalIfLive();
     notifyListeners();
-    await _persist();
+    _persistDebounced();
   }
 
   Future<void> selectPalette(MountPalette palette) async {
@@ -126,6 +141,7 @@ class MountStudioController extends ChangeNotifier {
       cardBackgroundTint: palette.backgroundTint,
       iconAccentColor: palette.accent,
       textAccentColor: palette.secondary.withValues(alpha: 0.95),
+      themeStyle: palette.id,
       componentColors: <String, int>{
         ...config.componentColors,
         'cardBackgroundTint': palette.backgroundTint.toARGB32(),
@@ -133,6 +149,16 @@ class MountStudioController extends ChangeNotifier {
         'textAccentColor': palette.secondary.toARGB32(),
       },
     );
+    await _applyToGlobalIfLive();
+    notifyListeners();
+    _persistDebounced();
+  }
+
+  Future<void> setLiveApplyEnabled(bool enabled) async {
+    config = config.copyWith(liveApplyEnabled: enabled);
+    if (enabled) {
+      await _themeController.applyMountConfig(config, persist: false);
+    }
     notifyListeners();
     await _persist();
   }
@@ -160,8 +186,9 @@ class MountStudioController extends ChangeNotifier {
 
   Future<void> setSlider({double? glassOpacity, double? blurStrength, double? accentIntensity, double? glowAmount, double? cornerRadius, double? shadowDepth, double? borderVisibility}) async {
     config = config.copyWith(glassOpacity: glassOpacity, blurStrength: blurStrength, accentIntensity: accentIntensity, glowAmount: glowAmount, cornerRadius: cornerRadius, shadowDepth: shadowDepth, borderVisibility: borderVisibility, activeProfileId: 'custom');
+    await _applyToGlobalIfLive();
     notifyListeners();
-    await _persist();
+    _persistDebounced();
   }
 
   Future<void> setComponentColor(String key, Color color) async {
@@ -177,6 +204,7 @@ class MountStudioController extends ChangeNotifier {
       componentColors: <String, int>{...config.componentColors, key: color.toARGB32()},
       activeProfileId: 'custom',
     );
+    await _applyToGlobalIfLive();
     notifyListeners();
     await _persist();
   }
@@ -238,10 +266,10 @@ class MountStudioController extends ChangeNotifier {
   }
 
   List<MountMonetApp> get filteredControlApps => controlApps.where((app) {
-        final matchesSearch = app.title.toLowerCase().contains(controlAppsSearch.toLowerCase()) || app.key.toLowerCase().contains(controlAppsSearch.toLowerCase());
-        final matchesCategory = selectedControlCategory == 'All' || app.category == selectedControlCategory;
-        return matchesSearch && matchesCategory;
-      }).toList();
+    final matchesSearch = app.title.toLowerCase().contains(controlAppsSearch.toLowerCase()) || app.key.toLowerCase().contains(controlAppsSearch.toLowerCase());
+    final matchesCategory = selectedControlCategory == 'All' || app.category == selectedControlCategory;
+    return matchesSearch && matchesCategory;
+  }).toList();
 
   Future<void> applyProfile(String id) async {
     MountProfile? profile;
@@ -252,15 +280,24 @@ class MountStudioController extends ChangeNotifier {
       }
     }
     if (profile == null) return;
-    config = profile.config.copyWith(activeProfileId: profile.id, selectedPackageNames: config.selectedPackageNames, controlAppToggles: config.controlAppToggles, monetEnabled: config.monetEnabled);
-    onGlobalAccentChanged(config.selectedColor);
+    config = profile.config.copyWith(
+      activeProfileId: profile.id,
+      selectedPackageNames: config.selectedPackageNames,
+      controlAppToggles: config.controlAppToggles,
+      monetEnabled: config.monetEnabled,
+      liveApplyEnabled: config.liveApplyEnabled,
+    );
+    await _applyToGlobalIfLive();
     notifyListeners();
     await _persist();
   }
 
   Future<bool> launchMonetPicker() => _service.launchMonetPicker();
 
-  Future<void> apply() => _service.applyConfig(config);
+  Future<void> apply() async {
+    await _themeController.applyMountConfig(config, persist: false);
+    await _service.applyConfig(config);
+  }
 
   Future<void> resetCurrentProfileToDefault() async {
     final profileId = config.activeProfileId;
@@ -271,13 +308,10 @@ class MountStudioController extends ChangeNotifier {
         break;
       }
     }
-    final fallback =
-        (profile?.config ?? MountDefaults.baseConfig()).copyWith(
-          activeProfileId: profile?.id ?? 'custom',
-        );
+    final fallback = (profile?.config ?? MountDefaults.baseConfig()).copyWith(activeProfileId: profile?.id ?? 'custom');
 
-    config = fallback.copyWith(selectedPackageNames: config.selectedPackageNames, controlAppToggles: config.controlAppToggles, monetEnabled: config.monetEnabled);
-    onGlobalAccentChanged(config.selectedColor);
+    config = fallback.copyWith(selectedPackageNames: config.selectedPackageNames, controlAppToggles: config.controlAppToggles, monetEnabled: config.monetEnabled, liveApplyEnabled: config.liveApplyEnabled);
+    await _applyToGlobalIfLive();
     notifyListeners();
     await _persist();
   }
@@ -286,7 +320,7 @@ class MountStudioController extends ChangeNotifier {
     await _service.reset();
     config = MountDefaults.baseConfig();
     controlApps = MountDefaults.controlApps;
-    onGlobalAccentChanged(config.selectedColor);
+    await _themeController.resetToDefaults();
     notifyListeners();
     await _persist();
   }

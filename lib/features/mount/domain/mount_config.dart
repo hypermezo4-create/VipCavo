@@ -10,6 +10,7 @@ class MountConfig {
     required this.selectedSeedColor,
     required this.selectedColorHex,
     required this.selectedPaletteId,
+    required this.themeStyle,
     required this.recentColors,
     required this.favoriteColors,
     required this.generatedPalettes,
@@ -41,6 +42,7 @@ class MountConfig {
     required this.scopeToggles,
     required this.controlAppToggles,
     required this.activeProfileId,
+    required this.liveApplyEnabled,
   });
 
   final bool monetEnabled;
@@ -49,6 +51,7 @@ class MountConfig {
   final Color selectedSeedColor;
   final String selectedColorHex;
   final String selectedPaletteId;
+  final String themeStyle;
   final List<int> recentColors;
   final List<int> favoriteColors;
   final Map<String, Map<String, int>> generatedPalettes;
@@ -80,6 +83,7 @@ class MountConfig {
   final Map<String, bool> scopeToggles;
   final Map<String, bool> controlAppToggles;
   final String activeProfileId;
+  final bool liveApplyEnabled;
 
   MountConfig copyWith({
     bool? monetEnabled,
@@ -88,6 +92,7 @@ class MountConfig {
     Color? selectedSeedColor,
     String? selectedColorHex,
     String? selectedPaletteId,
+    String? themeStyle,
     List<int>? recentColors,
     List<int>? favoriteColors,
     Map<String, Map<String, int>>? generatedPalettes,
@@ -119,6 +124,7 @@ class MountConfig {
     Map<String, bool>? scopeToggles,
     Map<String, bool>? controlAppToggles,
     String? activeProfileId,
+    bool? liveApplyEnabled,
   }) {
     return MountConfig(
       monetEnabled: monetEnabled ?? this.monetEnabled,
@@ -127,6 +133,7 @@ class MountConfig {
       selectedSeedColor: selectedSeedColor ?? this.selectedSeedColor,
       selectedColorHex: selectedColorHex ?? this.selectedColorHex,
       selectedPaletteId: selectedPaletteId ?? this.selectedPaletteId,
+      themeStyle: themeStyle ?? this.themeStyle,
       recentColors: recentColors ?? this.recentColors,
       favoriteColors: favoriteColors ?? this.favoriteColors,
       generatedPalettes: generatedPalettes ?? this.generatedPalettes,
@@ -158,6 +165,7 @@ class MountConfig {
       scopeToggles: scopeToggles ?? this.scopeToggles,
       controlAppToggles: controlAppToggles ?? this.controlAppToggles,
       activeProfileId: activeProfileId ?? this.activeProfileId,
+      liveApplyEnabled: liveApplyEnabled ?? this.liveApplyEnabled,
     );
   }
 
@@ -168,6 +176,7 @@ class MountConfig {
         'selectedSeedColor': selectedSeedColor.toARGB32(),
         'selectedColorHex': selectedColorHex,
         'selectedPaletteId': selectedPaletteId,
+        'themeStyle': themeStyle,
         'recentColors': recentColors,
         'favoriteColors': favoriteColors,
         'generatedPalettes': generatedPalettes,
@@ -199,6 +208,7 @@ class MountConfig {
         'scopeToggles': scopeToggles,
         'controlAppToggles': controlAppToggles,
         'activeProfileId': activeProfileId,
+        'liveApplyEnabled': liveApplyEnabled,
       };
 
   String encode() => jsonEncode(toJson());
@@ -223,6 +233,7 @@ class MountConfig {
       selectedSeedColor: c('selectedSeedColor', fallback.selectedSeedColor),
       selectedColorHex: map['selectedColorHex'] as String?,
       selectedPaletteId: map['selectedPaletteId'] as String?,
+      themeStyle: map['themeStyle'] as String?,
       recentColors: (map['recentColors'] as List<dynamic>?)?.map((e) => (e as num).toInt()).toList(),
       favoriteColors: (map['favoriteColors'] as List<dynamic>?)?.map((e) => (e as num).toInt()).toList(),
       generatedPalettes: nestedMap('generatedPalettes', fallback.generatedPalettes),
@@ -254,6 +265,7 @@ class MountConfig {
       scopeToggles: (map['scopeToggles'] as Map<String, dynamic>?)?.map((key, value) => MapEntry(key, value == true)),
       controlAppToggles: (map['controlAppToggles'] as Map<String, dynamic>?)?.map((key, value) => MapEntry(key, value == true)),
       activeProfileId: map['activeProfileId'] as String?,
+      liveApplyEnabled: map['liveApplyEnabled'] as bool?,
     );
   }
 

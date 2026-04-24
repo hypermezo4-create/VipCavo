@@ -1,3 +1,4 @@
+import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
 import 'package:deadzon/features/mount/presentation/app_picker_screen.dart';
@@ -65,10 +66,13 @@ class MountStudioScreen extends ConsumerWidget {
               child: _BottomActionBar(
                 onPreview: () => controller.setTab(0),
                 onReset: () => _showResetDialog(context, controller),
+                liveApplyEnabled: controller.config.liveApplyEnabled,
+                onLiveApplyChanged: controller.setLiveApplyEnabled,
+                accentColor: DeadzonThemeTokens.accent(context),
                 onApply: () async {
                   await controller.apply();
                   if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mount configuration saved.')));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved for ROM bridge. Applied inside DeadZon.')));
                 },
               ),
             ),
@@ -338,7 +342,7 @@ class _SegmentTabs extends StatelessWidget {
               label: Text(tabs[index]),
               onSelected: (_) => onTap(index),
               labelStyle: TextStyle(color: Colors.white.withValues(alpha: active ? 0.98 : 0.72), fontWeight: FontWeight.w600),
-              selectedColor: const Color(0xFF79E3CB).withValues(alpha: 0.3),
+              selectedColor: DeadzonThemeTokens.accent(context).withValues(alpha: 0.3),
               backgroundColor: Colors.white.withValues(alpha: 0.08),
               side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
             ),
@@ -350,11 +354,21 @@ class _SegmentTabs extends StatelessWidget {
 }
 
 class _BottomActionBar extends StatelessWidget {
-  const _BottomActionBar({required this.onPreview, required this.onReset, required this.onApply});
+  const _BottomActionBar({
+    required this.onPreview,
+    required this.onReset,
+    required this.onApply,
+    required this.liveApplyEnabled,
+    required this.onLiveApplyChanged,
+    required this.accentColor,
+  });
 
   final VoidCallback onPreview;
   final VoidCallback onReset;
   final VoidCallback onApply;
+  final bool liveApplyEnabled;
+  final ValueChanged<bool> onLiveApplyChanged;
+  final Color accentColor;
 
   @override
   Widget build(BuildContext context) {
@@ -366,13 +380,26 @@ class _BottomActionBar extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.all(10),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Expanded(child: OutlinedButton(onPressed: onPreview, child: const Text('Preview'))),
-            const SizedBox(width: 8),
-            Expanded(child: OutlinedButton(onPressed: onReset, child: const Text('Reset'))),
-            const SizedBox(width: 8),
-            Expanded(child: FilledButton(onPressed: onApply, child: const Text('Apply'))),
+            SwitchListTile.adaptive(
+              dense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 6),
+              activeThumbColor: accentColor,
+              title: const Text('Live apply to DeadZon', style: TextStyle(fontSize: 13.5)),
+              value: liveApplyEnabled,
+              onChanged: onLiveApplyChanged,
+            ),
+            Row(
+              children: <Widget>[
+                Expanded(child: OutlinedButton(onPressed: onPreview, child: const Text('Preview'))),
+                const SizedBox(width: 8),
+                Expanded(child: OutlinedButton(onPressed: onReset, child: const Text('Reset'))),
+                const SizedBox(width: 8),
+                Expanded(child: FilledButton(onPressed: onApply, child: const Text('Apply'))),
+              ],
+            ),
           ],
         ),
       ),
