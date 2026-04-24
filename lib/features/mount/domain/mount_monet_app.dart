@@ -37,10 +37,28 @@ class MountSelectableApp {
   const MountSelectableApp({
     required this.name,
     required this.packageName,
+    required this.category,
     required this.installed,
+    this.selected = false,
   });
 
   final String name;
   final String packageName;
+  final String category;
   final bool installed;
+  final bool selected;
+
+  MountSelectableApp copyWith({
+    String? category,
+    bool? installed,
+    bool? selected,
+  }) {
+    return MountSelectableApp(
+      name: name,
+      packageName: packageName,
+      category: category ?? this.category,
+      installed: installed ?? this.installed,
+      selected: selected ?? this.selected,
+    );
+  }
 }

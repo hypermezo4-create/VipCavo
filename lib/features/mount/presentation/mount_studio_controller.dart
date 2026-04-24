@@ -38,12 +38,18 @@ class MountStudioController extends ChangeNotifier {
   bool loading = true;
   String controlAppsSearch = '';
   String selectedControlCategory = 'All';
-  String applyStatusMessage = 'Awaiting apply. DeadZon app theme and ROM bridge config are local only.';
+  String applyStatusMessage = 'Awaiting apply. DeadZon app theme and bridge payload are local only.';
   bool appThemeApplied = false;
   bool romConfigSaved = false;
   Timer? _persistTimer;
 
-  static const List<String> controlCategories = <String>['All', 'Core System', 'Xiaomi / HyperOS', 'Media', 'Phone & Messages', 'Tools', 'Security', 'Launcher & UI', 'Connectivity', 'Other'];
+  static const List<String> controlCategories = <String>[
+    'All',
+    'Core System',
+    'Xiaomi / HyperOS',
+    'User Selected',
+    'Missing',
+  ];
 
   void updateThemeController(DeadzonThemeController controller) {
     _themeController = controller;
@@ -56,9 +62,11 @@ class MountStudioController extends ChangeNotifier {
     config = await _service.loadConfig();
     final persistedTab = await _service.loadActiveTab();
     currentTab = persistedTab.clamp(0, 5).toInt();
-    selectableApps = await _service.loadSelectableApps();
+    final loadedApps = await _service.loadSelectableApps();
+    selectableApps = _hydrateSelectableApps(loadedApps, config.selectedPackageNames);
     wallpaperSets = await _service.getWallpaperColors();
     _hydrateGeneratedPalettes();
+
     final installedPackages = selectableApps.where((app) => app.installed).map((app) => app.packageName).toSet();
     controlApps = MountDefaults.controlApps.map((app) {
       final enabled = config.controlAppToggles[app.key] ?? app.defaultEnabled;
@@ -71,6 +79,27 @@ class MountStudioController extends ChangeNotifier {
     notifyListeners();
   }
 
+  List<MountSelectableApp> _hydrateSelectableApps(List<MountSelectableApp> apps, List<String> selectedPackages) {
+    final selectedSet = selectedPackages.toSet();
+    return apps
+        .map(
+          (app) => app.copyWith(
+            category: _normalizeCategory(app.category, installed: app.installed),
+            selected: app.installed && selectedSet.contains(app.packageName),
+          ),
+        )
+        .toList()
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  }
+
+  String _normalizeCategory(String raw, {required bool installed}) {
+    if (!installed) return 'Missing';
+    if (raw == 'Core System' || raw == 'Xiaomi / HyperOS' || raw == 'Launcher' || raw == 'User Apps') {
+      return raw;
+    }
+    return 'User Apps';
+  }
+
   void _hydrateGeneratedPalettes() {
     if (config.generatedPalettes.isEmpty) {
       config = config.copyWith(generatedPalettes: _engine.generate(config.selectedSeedColor));
@@ -78,6 +107,8 @@ class MountStudioController extends ChangeNotifier {
   }
 
   Future<void> _persist() async {
+    final selectedPackages = selectableApps.where((app) => app.selected && app.installed).map((app) => app.packageName).toList();
+    config = config.copyWith(selectedPackageNames: selectedPackages, scopeSelectedApps: selectedPackages.isNotEmpty);
     await _service.saveConfig(
       config.copyWith(
         controlAppToggles: Map<String, bool>.fromEntries(controlApps.map((e) => MapEntry(e.key, e.enabled))),
@@ -237,6 +268,8 @@ class MountStudioController extends ChangeNotifier {
   }
 
   Future<void> setSelectedPackages(List<String> packages) async {
+    final selectedSet = packages.toSet();
+    selectableApps = selectableApps.map((app) => app.copyWith(selected: app.installed && selectedSet.contains(app.packageName))).toList();
     config = config.copyWith(selectedPackageNames: packages, scopeSelectedApps: packages.isNotEmpty);
     notifyListeners();
     await _persist();
@@ -248,9 +281,9 @@ class MountStudioController extends ChangeNotifier {
     await _persist();
   }
 
-  int get selectedAppsCount => config.selectedPackageNames.length;
+  int get selectedAppsCount => selectableApps.where((app) => app.selected).length;
 
-  int get installedTargetsCount => controlApps.where((app) => app.isInstalled).length;
+  int get installedTargetsCount => selectableApps.where((app) => app.installed).length;
 
   int get enabledRomTargetsCount {
     final targets = <bool>[
@@ -271,9 +304,24 @@ class MountStudioController extends ChangeNotifier {
     await _persist();
   }
 
+  Future<void> toggleSelectableApp(String packageName, bool selected) async {
+    selectableApps = selectableApps
+        .map((app) => app.packageName == packageName && app.installed ? app.copyWith(selected: selected) : app)
+        .toList();
+    await _syncSelectedPackages();
+  }
+
   Future<void> selectAllControlApps(bool enabled) async {
-    final visibleKeys = filteredControlApps.map((app) => app.key).toSet();
-    controlApps = controlApps.map((app) => visibleKeys.contains(app.key) ? app.copyWith(enabled: enabled) : app).toList();
+    final visiblePackages = filteredSelectableApps.where((app) => app.installed).map((app) => app.packageName).toSet();
+    selectableApps = selectableApps
+        .map((app) => visiblePackages.contains(app.packageName) ? app.copyWith(selected: enabled) : app)
+        .toList();
+    await _syncSelectedPackages();
+  }
+
+  Future<void> _syncSelectedPackages() async {
+    final selectedPackages = selectableApps.where((app) => app.selected && app.installed).map((app) => app.packageName).toList();
+    config = config.copyWith(selectedPackageNames: selectedPackages, scopeSelectedApps: selectedPackages.isNotEmpty);
     notifyListeners();
     await _persist();
   }
@@ -288,11 +336,32 @@ class MountStudioController extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<MountMonetApp> get filteredControlApps => controlApps.where((app) {
-    final matchesSearch = app.title.toLowerCase().contains(controlAppsSearch.toLowerCase()) || app.key.toLowerCase().contains(controlAppsSearch.toLowerCase());
-    final matchesCategory = selectedControlCategory == 'All' || app.category == selectedControlCategory;
-    return matchesSearch && matchesCategory;
-  }).toList();
+  List<MountSelectableApp> get filteredSelectableApps {
+    return selectableApps.where((app) {
+      final query = controlAppsSearch.toLowerCase();
+      final matchesSearch = app.name.toLowerCase().contains(query) || app.packageName.toLowerCase().contains(query);
+      final matchesCategory = switch (selectedControlCategory) {
+        'All' => true,
+        'Core System' => app.category == 'Core System',
+        'Xiaomi / HyperOS' => app.category == 'Xiaomi / HyperOS',
+        'User Selected' => app.selected,
+        'Missing' => !app.installed,
+        _ => true,
+      };
+      return matchesSearch && matchesCategory;
+    }).toList();
+  }
+
+  List<MountMonetApp> get filteredControlApps => controlApps;
+
+  Map<String, dynamic> exportBridgePayload() {
+    return _service.exportBridgePayload(
+      config: config,
+      controlApps: controlApps,
+      appThemeApplied: appThemeApplied,
+      romConfigSaved: romConfigSaved,
+    );
+  }
 
   Future<void> applyProfile(String id) async {
     MountProfile? profile;
@@ -303,11 +372,16 @@ class MountStudioController extends ChangeNotifier {
       }
     }
     if (profile == null) return;
+
+    final selectedSet = profile.config.selectedPackageNames.toSet();
+    selectableApps = selectableApps
+        .map((app) => app.copyWith(selected: app.installed && selectedSet.contains(app.packageName)))
+        .toList();
+
     config = profile.config.copyWith(
       activeProfileId: profile.id,
-      selectedPackageNames: config.selectedPackageNames,
+      selectedPackageNames: selectableApps.where((app) => app.selected).map((app) => app.packageName).toList(),
       controlAppToggles: config.controlAppToggles,
-      monetEnabled: config.monetEnabled,
       liveApplyEnabled: config.liveApplyEnabled,
     );
     await _applyToGlobalIfLive();
@@ -319,6 +393,7 @@ class MountStudioController extends ChangeNotifier {
 
   Future<void> apply() async {
     final configToPersist = config.copyWith(
+      selectedPackageNames: selectableApps.where((app) => app.selected && app.installed).map((app) => app.packageName).toList(),
       controlAppToggles: Map<String, bool>.fromEntries(controlApps.map((e) => MapEntry(e.key, e.enabled))),
       scopeToggles: <String, bool>{
         'statusbar': config.scopeStatusbar,
@@ -333,10 +408,15 @@ class MountStudioController extends ChangeNotifier {
     config = configToPersist;
     await _service.saveConfig(configToPersist);
     await _themeController.applyMountConfig(configToPersist, persist: false);
-    await _service.saveBridgeConfig(configToPersist, controlApps);
     appThemeApplied = true;
     romConfigSaved = true;
-    applyStatusMessage = 'Mount saved. App theme applied. ROM bridge config saved.';
+    await _service.saveBridgeConfig(
+      configToPersist,
+      controlApps,
+      appThemeApplied: appThemeApplied,
+      romConfigSaved: romConfigSaved,
+    );
+    applyStatusMessage = 'Mount V2 saved. App theme applied. Bridge payload ready.';
     notifyListeners();
   }
 
@@ -351,7 +431,12 @@ class MountStudioController extends ChangeNotifier {
     }
     final fallback = (profile?.config ?? MountDefaults.baseConfig()).copyWith(activeProfileId: profile?.id ?? 'custom');
 
-    config = fallback.copyWith(selectedPackageNames: config.selectedPackageNames, controlAppToggles: config.controlAppToggles, monetEnabled: config.monetEnabled, liveApplyEnabled: config.liveApplyEnabled);
+    final selectedSet = fallback.selectedPackageNames.toSet();
+    selectableApps = selectableApps
+        .map((app) => app.copyWith(selected: app.installed && selectedSet.contains(app.packageName)))
+        .toList();
+
+    config = fallback.copyWith(controlAppToggles: config.controlAppToggles, liveApplyEnabled: config.liveApplyEnabled);
     await _applyToGlobalIfLive();
     notifyListeners();
     await _persist();
@@ -361,6 +446,7 @@ class MountStudioController extends ChangeNotifier {
     await _service.reset();
     config = MountDefaults.baseConfig();
     controlApps = MountDefaults.controlApps;
+    selectableApps = _hydrateSelectableApps(MountDefaults.mockSelectableApps, const <String>[]);
     appThemeApplied = false;
     romConfigSaved = false;
     await _themeController.resetToDefaults();

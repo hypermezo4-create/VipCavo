@@ -16,11 +16,17 @@ class MountBridgeConfigService {
   Map<String, dynamic> buildBridgeMap({
     required MountConfig config,
     required List<MountMonetApp> controlApps,
+    required bool appThemeApplied,
+    required bool romConfigSaved,
   }) {
     return <String, dynamic>{
-      'schemaVersion': 1,
+      'schemaVersion': 2,
       'mountPluginEnabled': config.monetEnabled,
-      'romTargets': <String, bool>{
+      'appThemeApplied': appThemeApplied,
+      'romConfigSaved': romConfigSaved,
+      'realRomBridgeInstalled': false,
+      'activeProfile': config.activeProfileId,
+      'targets': <String, bool>{
         'statusbar': config.scopeStatusbar,
         'controlCenter': config.scopeControlCenter,
         'notifications': config.scopeNotifications,
@@ -29,7 +35,31 @@ class MountBridgeConfigService {
         'launcher': config.scopeLauncher,
         'selectedApps': config.scopeSelectedApps,
       },
-      'selectedPackageNames': config.selectedPackageNames,
+      'selectedPackages': config.selectedPackageNames,
+      'appEffects': <String, dynamic>{
+        'glassOpacity': config.glassOpacity,
+        'blurStrength': config.blurStrength,
+        'accentIntensity': config.accentIntensity,
+        'glowAmount': config.glowAmount,
+        'cornerRadius': config.cornerRadius,
+        'shadowDepth': config.shadowDepth,
+        'borderVisibility': config.borderVisibility,
+      },
+      'colors': <String, dynamic>{
+        'selectedPaletteId': config.selectedPaletteId,
+        'selectedSeedColor': config.selectedSeedColor.toARGB32(),
+        'selectedColorHex': config.selectedColorHex,
+        'cardBackgroundTint': config.cardBackgroundTint.toARGB32(),
+        'iconAccentColor': config.iconAccentColor.toARGB32(),
+        'textAccentColor': config.textAccentColor.toARGB32(),
+      },
+      'components': <String, dynamic>{
+        'seekbarColor': config.seekbarColor.toARGB32(),
+        'switchOnColor': config.switchOnColor.toARGB32(),
+        'switchOffColor': config.switchOffColor.toARGB32(),
+        'checkboxOnColor': config.checkboxOnColor.toARGB32(),
+        'checkboxOffColor': config.checkboxOffColor.toARGB32(),
+      },
       'controlApps': <Map<String, dynamic>>[
         for (final app in controlApps)
           <String, dynamic>{
@@ -41,22 +71,21 @@ class MountBridgeConfigService {
             'packageNameCandidates': app.packageNameCandidates,
           },
       ],
-      'theme': <String, dynamic>{
-        'selectedPaletteId': config.selectedPaletteId,
-        'selectedSeedColor': config.selectedSeedColor.toARGB32(),
-        'selectedColorHex': config.selectedColorHex,
-        'glassOpacity': config.glassOpacity,
-        'blurStrength': config.blurStrength,
-        'accentIntensity': config.accentIntensity,
-      },
     };
   }
 
   Future<bool> saveBridgeConfig({
     required MountConfig config,
     required List<MountMonetApp> controlApps,
+    required bool appThemeApplied,
+    required bool romConfigSaved,
   }) async {
-    final bridgeMap = buildBridgeMap(config: config, controlApps: controlApps);
+    final bridgeMap = buildBridgeMap(
+      config: config,
+      controlApps: controlApps,
+      appThemeApplied: appThemeApplied,
+      romConfigSaved: romConfigSaved,
+    );
     await _storage.saveBridgeConfig(bridgeMap);
     await _nativeBridge.writeMountBridgeConfig(bridgeMap);
     return true;

@@ -23,11 +23,13 @@ class MountNativeBridgeService {
         if (name.isEmpty || packageName.isEmpty) {
           continue;
         }
+        final installed = item['installed'] == true;
         apps.add(
           MountSelectableApp(
             name: name,
             packageName: packageName,
-            installed: item['installed'] == true,
+            category: _inferCategory(packageName),
+            installed: installed,
           ),
         );
       }
@@ -65,5 +67,20 @@ class MountNativeBridgeService {
     } on MissingPluginException {
       return false;
     }
+  }
+
+  String _inferCategory(String packageName) {
+    if (packageName.startsWith('com.android.systemui') ||
+        packageName == 'com.android.settings' ||
+        packageName.startsWith('com.android.permission')) {
+      return 'Core System';
+    }
+    if (packageName.startsWith('com.miui.') || packageName.startsWith('com.xiaomi.') || packageName.startsWith('miui.')) {
+      return 'Xiaomi / HyperOS';
+    }
+    if (packageName.contains('launcher') || packageName == 'com.miui.home') {
+      return 'Launcher';
+    }
+    return 'User Apps';
   }
 }

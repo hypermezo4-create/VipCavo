@@ -39,7 +39,7 @@ class MountStudioScreen extends StatelessWidget {
         child: Stack(
           children: <Widget>[
             ListView(
-              padding: const EdgeInsets.fromLTRB(18, 14, 18, 236),
+              padding: EdgeInsets.fromLTRB(18, 14, 18, 236 + MediaQuery.paddingOf(context).bottom),
               physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
               children: <Widget>[
                 const PremiumTopBar(title: 'Mount Studio', subtitle: 'Monet colors, app effects & bridge targets'),
@@ -59,7 +59,7 @@ class MountStudioScreen extends StatelessWidget {
             Positioned(
               left: 16,
               right: 16,
-              bottom: 12,
+              bottom: 12 + MediaQuery.paddingOf(context).bottom,
               child: _BottomActionBar(
                 onPreview: () => controller.setTab(0),
                 onReset: () => _showResetDialog(context, controller),
@@ -70,7 +70,7 @@ class MountStudioScreen extends StatelessWidget {
                   await controller.apply();
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Mount saved. App theme applied. ROM bridge config saved.')),
+                    const SnackBar(content: Text('Mount V2 saved. App theme applied. Bridge payload ready.')),
                   );
                 },
               ),
