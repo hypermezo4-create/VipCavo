@@ -42,6 +42,44 @@ class MountNativeBridgeService {
     }
   }
 
+  Future<Map<String, bool>?> getKnownPackageInstallStates(Set<String> packageNames) async {
+    try {
+      if (packageNames.isEmpty) {
+        return const <String, bool>{};
+      }
+      final payload = await _channel.invokeMethod<Map<Object?, Object?>>(
+        'getKnownPackageInstallStates',
+        <String, dynamic>{'packageNames': packageNames.toList()},
+      );
+      if (payload == null) {
+        return null;
+      }
+      final result = <String, bool>{};
+      payload.forEach((rawKey, rawValue) {
+        final key = '$rawKey'.trim();
+        if (key.isEmpty) return;
+        result[key] = rawValue == true;
+      });
+      return result;
+    } on PlatformException {
+      return null;
+    } on MissingPluginException {
+      return null;
+    }
+  }
+
+  Future<String?> getCurrentPackageName() async {
+    try {
+      final value = await _channel.invokeMethod<String>('getCurrentPackageName');
+      final cleaned = value?.trim();
+      return (cleaned == null || cleaned.isEmpty) ? null : cleaned;
+    } on PlatformException {
+      return null;
+    } on MissingPluginException {
+      return null;
+    }
+  }
+
   Future<bool> writeMountBridgeConfig(Map<String, dynamic> config) async {
     try {
       final saved = await _channel.invokeMethod<bool>(

@@ -37,6 +37,7 @@ class MountSelectableApp {
   const MountSelectableApp({
     required this.name,
     required this.packageName,
+    this.packageNameCandidates = const <String>[],
     required this.category,
     required this.installed,
     this.selected = false,
@@ -44,6 +45,7 @@ class MountSelectableApp {
 
   final String name;
   final String packageName;
+  final List<String> packageNameCandidates;
   final String category;
   final bool installed;
   final bool selected;
@@ -56,6 +58,7 @@ class MountSelectableApp {
     return MountSelectableApp(
       name: name,
       packageName: packageName,
+      packageNameCandidates: packageNameCandidates,
       category: category ?? this.category,
       installed: installed ?? this.installed,
       selected: selected ?? this.selected,

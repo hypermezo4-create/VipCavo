@@ -38,11 +38,29 @@ class MountService {
   Future<List<WallpaperColorSet>> getWallpaperColors() => _monetPickerLauncher.getWallpaperColors();
 
   Future<List<MountSelectableApp>> loadSelectableApps() async {
-    final nativeApps = await _nativeBridgeService.getInstalledPackages();
-    if (nativeApps != null && nativeApps.isNotEmpty) {
-      return nativeApps;
+    final knownTargets = MountDefaults.mockSelectableApps;
+    final knownPackages = knownTargets
+        .expand((app) => app.packageNameCandidates.isEmpty ? <String>[app.packageName] : app.packageNameCandidates)
+        .toSet();
+
+    final installedStates = await _nativeBridgeService.getKnownPackageInstallStates(knownPackages);
+    final currentPackageName = await _nativeBridgeService.getCurrentPackageName();
+    final blockedPackages = <String>{'com.mezo.deadzon'};
+    if (currentPackageName != null) {
+      blockedPackages.add(currentPackageName);
     }
-    return MountDefaults.mockSelectableApps;
+
+    return knownTargets
+        .where((app) {
+          final candidates = app.packageNameCandidates.isEmpty ? <String>[app.packageName] : app.packageNameCandidates;
+          return !candidates.any(blockedPackages.contains) && !blockedPackages.contains(app.packageName);
+        })
+        .map((app) {
+          final candidates = app.packageNameCandidates.isEmpty ? <String>[app.packageName] : app.packageNameCandidates;
+          final installed = installedStates == null ? app.installed : candidates.any((pkg) => installedStates[pkg] == true);
+          return app.copyWith(installed: installed);
+        })
+        .toList(growable: false);
   }
 
   Map<String, dynamic> exportBridgePayload({
