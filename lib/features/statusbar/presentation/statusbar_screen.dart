@@ -13,6 +13,7 @@ import 'package:deadzon/features/statusbar/statusbar_detail_content.dart';
 import 'package:deadzon/features/statusbar/statusbar_mapper.dart';
 import 'package:deadzon/features/statusbar/statusbar_models.dart';
 import 'package:deadzon/features/statusbar/statusbar_section_configs.dart';
+import 'package:deadzon/features/statusbar/statusbar_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
