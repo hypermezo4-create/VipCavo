@@ -1,22 +1,22 @@
+import 'dart:convert';
+
 import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
 import 'package:deadzon/core/widgets/section_header.dart';
 import 'package:deadzon/core/widgets/settings_row.dart';
 import 'package:deadzon/features/statusbar/data/resize_statusbar_service.dart';
-import 'package:deadzon/features/statusbar/data/statusbar_board_model.dart';
-import 'package:deadzon/features/statusbar/data/statusbar_board_service.dart';
-import 'package:deadzon/features/statusbar/presentation/mezo_controls.dart';
-import 'package:deadzon/features/statusbar/statusbar_board_source_map.dart';
 import 'package:deadzon/features/statusbar/mezo_port_map.dart';
+import 'package:deadzon/features/statusbar/presentation/mezo_controls.dart';
 import 'package:deadzon/features/statusbar/statusbar_detail_content.dart';
 import 'package:deadzon/features/statusbar/statusbar_mapper.dart';
 import 'package:deadzon/features/statusbar/statusbar_models.dart';
 import 'package:deadzon/features/statusbar/statusbar_section_configs.dart';
 import 'package:deadzon/features/statusbar/statusbar_strings.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 
 class StatusbarScreen extends StatefulWidget {
   const StatusbarScreen({super.key});
@@ -26,31 +26,97 @@ class StatusbarScreen extends StatefulWidget {
 }
 
 class _StatusbarScreenState extends State<StatusbarScreen> {
-  late final List<MezoStatusbarCardSource> _cards;
-  StatusbarBoardState? _boardState;
+  static const String _prefsModeKey = 'statusbar_studio_layout_mode';
+  static const String _prefsSingleOrderKey = 'statusbar_studio_single_order';
+  static const String _prefsTwoRowOrderKey = 'statusbar_studio_two_row_order';
+
+  late List<String> _singleRowOrder;
+  late Map<_TwoRowLane, List<String>> _twoRowOrder;
+  _StudioLayoutMode _layoutMode = _StudioLayoutMode.singleRow;
+  bool _isHydrating = true;
 
   @override
   void initState() {
     super.initState();
-    _cards = MezoStatusbarBoardSourceMap.cards;
-    _loadBoard();
+    _singleRowOrder = _defaultSingleRowOrder();
+    _twoRowOrder = _defaultTwoRowsOrder();
+    _hydrateStudioLayout();
   }
 
-  Future<void> _loadBoard() async {
-    final loaded = await StatusbarBoardService.load();
+  Future<void> _hydrateStudioLayout() async {
+    final prefs = await SharedPreferences.getInstance();
+    final mode = prefs.getString(_prefsModeKey);
+    final singleRaw = prefs.getStringList(_prefsSingleOrderKey);
+    final twoRowsRaw = prefs.getString(_prefsTwoRowOrderKey);
     if (!mounted) {
       return;
     }
-    setState(() => _boardState = loaded);
+    setState(() {
+      _layoutMode = mode == _StudioLayoutMode.twoRows.name ? _StudioLayoutMode.twoRows : _StudioLayoutMode.singleRow;
+      if (singleRaw != null && singleRaw.length == _studioItems.length) {
+        _singleRowOrder = _normalizeOrder(singleRaw);
+      }
+      if (twoRowsRaw != null) {
+        final decoded = _decodeTwoRowOrder(twoRowsRaw);
+        if (decoded != null) {
+          _twoRowOrder = decoded;
+        }
+      }
+      _isHydrating = false;
+    });
   }
 
-  Future<void> _updateBoard(StatusbarBoardState next) async {
-    setState(() => _boardState = next);
-    await StatusbarBoardService.writeModules(next.modules);
-    await StatusbarBoardService.writeClusterOffsets(
-      left: next.leftClusterOffset,
-      right: next.rightClusterOffset,
-    );
+  List<String> _normalizeOrder(List<String> candidate) {
+    final allowed = _studioItems.map((item) => item.id).toSet();
+    final next = <String>[];
+    for (final id in candidate) {
+      if (allowed.contains(id) && !next.contains(id)) {
+        next.add(id);
+      }
+    }
+    for (final item in _studioItems) {
+      if (!next.contains(item.id)) {
+        next.add(item.id);
+      }
+    }
+    return next;
+  }
+
+  Future<void> _restoreDefaultLayout() async {
+    setState(() {
+      _layoutMode = _StudioLayoutMode.singleRow;
+      _singleRowOrder = _defaultSingleRowOrder();
+      _twoRowOrder = _defaultTwoRowsOrder();
+    });
+    await _persistStudioLayout();
+    _showMessage('Default layout restored');
+  }
+
+  Future<void> _persistStudioLayout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsModeKey, _layoutMode.name);
+    await prefs.setStringList(_prefsSingleOrderKey, _singleRowOrder);
+    await prefs.setString(_prefsTwoRowOrderKey, jsonEncode(_twoRowOrder.map((k, v) => MapEntry(k.name, v))));
+  }
+
+  Map<_TwoRowLane, List<String>>? _decodeTwoRowOrder(String raw) {
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) {
+        return null;
+      }
+      final next = <_TwoRowLane, List<String>>{};
+      for (final lane in _TwoRowLane.values) {
+        final current = decoded[lane.name];
+        if (current is! List) {
+          return null;
+        }
+        next[lane] = current.map((item) => item.toString()).toList(growable: false);
+      }
+      return next;
+    } catch (_) {
+      return null;
+    }
   }
 
   void _openSection(String sectionId) {
@@ -62,6 +128,86 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
     );
   }
 
+  Future<void> _openArrangeSheet() async {
+    final result = await showModalBottomSheet<_ArrangeLayoutResult>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => _ArrangeLayoutSheet(
+        mode: _layoutMode,
+        singleRowOrder: _singleRowOrder,
+        twoRowsOrder: _twoRowOrder,
+      ),
+    );
+    if (result == null || !mounted) {
+      return;
+    }
+    setState(() {
+      _layoutMode = result.mode;
+      _singleRowOrder = result.singleRowOrder;
+      _twoRowOrder = result.twoRowsOrder;
+    });
+    await _persistStudioLayout();
+    _showMessage('Layout saved');
+  }
+
+  void _showPreviewFeedback() {
+    _showMessage('Preview updated');
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF0D263F),
+      ),
+    );
+  }
+
+  Future<void> _openQuickSection(_QuickSection section) async {
+    if (section.children.isEmpty) {
+      _openSection(section.sectionId!);
+      return;
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF0A1B2F),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (_) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const SizedBox(height: 8),
+              Container(
+                width: 42,
+                height: 5,
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.24), borderRadius: BorderRadius.circular(100)),
+              ),
+              const SizedBox(height: 14),
+              Text(section.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
+              const SizedBox(height: 8),
+              ...section.children.map((child) {
+                return ListTile(
+                  leading: Icon(child.icon, color: const Color(0xFF8DE8FF)),
+                  title: Text(child.title, style: const TextStyle(color: Colors.white)),
+                  subtitle: Text(child.subtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.66))),
+                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.white70),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _openSection(child.sectionId);
+                  },
+                );
+              }),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -69,419 +215,445 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: <Color>[Color(0xFF0F2E39), Color(0xFF0A1E27), Color(0xFF040809)],
+          colors: <Color>[Color(0xFF071225), Color(0xFF050E1F), Color(0xFF020812)],
         ),
       ),
       child: SafeArea(
-        child: ListView(
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-          padding: const EdgeInsets.fromLTRB(18, 14, 18, 180),
-          children: <Widget>[
-            const PremiumTopBar(
-              title: 'Statusbar adjustment',
-              subtitle: 'Customize status bar layout and icon positions',
-            ),
-            const SizedBox(height: 18),
-            if (_boardState == null)
-              const GlassCard(
-                child: Padding(
-                  padding: EdgeInsets.all(14),
-                  child: LinearProgressIndicator(minHeight: 2),
+        child: AnimatedSwitcher(
+          duration: DesignTokens.motionFast,
+          child: _isHydrating
+              ? const Center(child: CircularProgressIndicator())
+              : ListView(
+                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                  padding: const EdgeInsets.fromLTRB(20, 14, 20, 170),
+                  children: <Widget>[
+                    const PremiumTopBar(
+                      title: 'Statusbar Studio',
+                      subtitle: 'Arrange your layout with live preview',
+                    ),
+                    const SizedBox(height: 18),
+                    GlassCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Row(
+                            children: <Widget>[
+                              Container(
+                                width: 42,
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  color: const Color(0xFF173A69).withValues(alpha: 0.66),
+                                ),
+                                child: const Icon(Icons.space_dashboard_rounded, color: Color(0xFF8DE8FF)),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Layout Studio', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w800)),
+                                    Text(
+                                      'Design and arrange your status bar',
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white.withValues(alpha: 0.72)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: <Widget>[
+                              _StudioActionButton(label: 'Arrange layout', icon: Icons.reorder_rounded, onTap: _openArrangeSheet),
+                              _StudioActionButton(label: 'Preview', icon: Icons.preview_rounded, onTap: _showPreviewFeedback),
+                              _StudioActionButton(label: 'Restore default', icon: Icons.restart_alt_rounded, onTap: _restoreDefaultLayout),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          const SectionHeader(title: 'Live Preview', subtitle: 'Single Row by default with all icons visible'),
+                          const SizedBox(height: 10),
+                          _StatusbarLivePreview(
+                            mode: _layoutMode,
+                            singleRowOrder: _singleRowOrder,
+                            twoRowsOrder: _twoRowOrder,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    const SectionHeader(title: 'Quick Sections', subtitle: 'Jump to focused controls'),
+                    const SizedBox(height: 10),
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _quickSections.length,
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        mainAxisExtent: 120,
+                      ),
+                      itemBuilder: (context, index) {
+                        final section = _quickSections[index];
+                        return _QuickSectionCard(section: section, onTap: () => _openQuickSection(section));
+                      },
+                    ),
+                  ],
                 ),
-              )
-            else
-              _StatusControlBoard(
-                boardState: _boardState!,
-                onChanged: _updateBoard,
-                onOpenSection: _openSection,
-              ),
-            const SizedBox(height: 18),
-            _StatusbarSectionGrid(cards: _cards, onOpenSection: _openSection),
-          ],
         ),
       ),
     );
   }
 }
 
-
-class _StatusControlBoard extends StatefulWidget {
-  const _StatusControlBoard({
-    required this.boardState,
-    required this.onChanged,
-    required this.onOpenSection,
+class _StatusbarLivePreview extends StatelessWidget {
+  const _StatusbarLivePreview({
+    required this.mode,
+    required this.singleRowOrder,
+    required this.twoRowsOrder,
   });
 
-  final StatusbarBoardState boardState;
-  final ValueChanged<StatusbarBoardState> onChanged;
-  final ValueChanged<String> onOpenSection;
+  final _StudioLayoutMode mode;
+  final List<String> singleRowOrder;
+  final Map<_TwoRowLane, List<String>> twoRowsOrder;
 
   @override
-  State<_StatusControlBoard> createState() => _StatusControlBoardState();
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: DesignTokens.motionFast,
+      curve: DesignTokens.motionCurve,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: const Color(0xFF081224).withValues(alpha: 0.9),
+        border: Border.all(color: const Color(0xFF6FAAFF).withValues(alpha: 0.42)),
+      ),
+      child: mode == _StudioLayoutMode.singleRow
+          ? _PreviewIconWrap(order: singleRowOrder)
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                _PreviewIconWrap(order: twoRowsOrder[_TwoRowLane.leftTop]!),
+                const SizedBox(height: 6),
+                _PreviewIconWrap(order: twoRowsOrder[_TwoRowLane.leftBottom]!),
+                const SizedBox(height: 10),
+                _PreviewIconWrap(order: twoRowsOrder[_TwoRowLane.rightTop]!),
+                const SizedBox(height: 6),
+                _PreviewIconWrap(order: twoRowsOrder[_TwoRowLane.rightBottom]!),
+              ],
+            ),
+    );
+  }
 }
 
-class _StatusControlBoardState extends State<_StatusControlBoard> {
-  static const double _boardHeight = 268;
-  static const double _boardHorizontalPadding = 8;
-  static const double _boardTopInset = 62;
-  static const double _boardActiveTopHeight = 112;
-  static const double _boardLowerStartY = 168;
-  static const double _minTileSize = 24;
-  static const double _maxTileSize = 40;
-  static const double _tileGap = 4;
+class _PreviewIconWrap extends StatelessWidget {
+  const _PreviewIconWrap({required this.order});
 
-  final GlobalKey _boardKey = GlobalKey();
-  late StatusbarBoardState _workingState;
-  String? _draggingId;
-  int? _activePointer;
-  Offset _dragOffset = Offset.zero;
-  Offset _pointerAnchor = Offset.zero;
+  final List<String> order;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: order.map((id) {
+        final item = _studioItemById[id]!;
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: const Color(0xFF17314F).withValues(alpha: 0.8),
+            border: Border.all(color: item.color.withValues(alpha: 0.42)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(item.icon, size: 14, color: Colors.white),
+              const SizedBox(width: 5),
+              Text(item.shortLabel, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _ArrangeLayoutSheet extends StatefulWidget {
+  const _ArrangeLayoutSheet({
+    required this.mode,
+    required this.singleRowOrder,
+    required this.twoRowsOrder,
+  });
+
+  final _StudioLayoutMode mode;
+  final List<String> singleRowOrder;
+  final Map<_TwoRowLane, List<String>> twoRowsOrder;
+
+  @override
+  State<_ArrangeLayoutSheet> createState() => _ArrangeLayoutSheetState();
+}
+
+class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
+  late _StudioLayoutMode _mode;
+  late List<String> _singleOrder;
+  late Map<_TwoRowLane, List<String>> _twoRows;
 
   @override
   void initState() {
     super.initState();
-    _workingState = widget.boardState;
+    _mode = widget.mode;
+    _singleOrder = List<String>.from(widget.singleRowOrder);
+    _twoRows = <_TwoRowLane, List<String>>{
+      for (final lane in _TwoRowLane.values) lane: List<String>.from(widget.twoRowsOrder[lane]!),
+    };
   }
 
-  @override
-  void didUpdateWidget(covariant _StatusControlBoard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (_draggingId == null && oldWidget.boardState != widget.boardState) {
-      _workingState = widget.boardState;
+  void _swapSingle(String source, String target) {
+    final sourceIndex = _singleOrder.indexOf(source);
+    final targetIndex = _singleOrder.indexOf(target);
+    if (sourceIndex == -1 || targetIndex == -1 || sourceIndex == targetIndex) {
+      return;
     }
+    setState(() {
+      final hold = _singleOrder[sourceIndex];
+      _singleOrder[sourceIndex] = _singleOrder[targetIndex];
+      _singleOrder[targetIndex] = hold;
+    });
+  }
+
+  void _swapTwoRows(_TwoRowLane lane, String source, String target) {
+    final items = _twoRows[lane]!;
+    final sourceIndex = items.indexOf(source);
+    final targetIndex = items.indexOf(target);
+    if (sourceIndex == -1 || targetIndex == -1 || sourceIndex == targetIndex) {
+      return;
+    }
+    setState(() {
+      final hold = items[sourceIndex];
+      items[sourceIndex] = items[targetIndex];
+      items[targetIndex] = hold;
+    });
+  }
+
+  void _resetToDefault() {
+    setState(() {
+      _mode = _StudioLayoutMode.singleRow;
+      _singleOrder = _defaultSingleRowOrder();
+      _twoRows = _defaultTwoRowsOrder();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Default layout restored')));
   }
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
+    return FractionallySizedBox(
+      heightFactor: 0.9,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF071121),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          border: Border.all(color: const Color(0xFF5BA6FF).withValues(alpha: 0.22)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
             children: <Widget>[
-              Expanded(
-                child: Text(
-                  'Statusbar adjustment',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
+              const SizedBox(height: 10),
+              Container(width: 44, height: 5, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(100))),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 12, 0),
+                child: Row(
+                  children: <Widget>[
+                    TextButton(onPressed: _resetToDefault, child: const Text('Reset')),
+                    Expanded(
+                      child: Text(
+                        'Arrange Layout',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(
+                          _ArrangeLayoutResult(
+                            mode: _mode,
+                            singleRowOrder: _singleOrder,
+                            twoRowsOrder: _twoRows,
+                          ),
+                        );
+                      },
+                      child: const Text('Save'),
+                    ),
+                  ],
                 ),
               ),
-              TextButton.icon(
-                onPressed: _resetBoard,
-                icon: const Icon(Icons.restart_alt_rounded),
-                label: const Text('Reset'),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: SegmentedButton<_StudioLayoutMode>(
+                  style: SegmentedButton.styleFrom(
+                    selectedBackgroundColor: const Color(0xFF183A63),
+                    selectedForegroundColor: Colors.white,
+                    foregroundColor: Colors.white70,
+                  ),
+                  segments: const <ButtonSegment<_StudioLayoutMode>>[
+                    ButtonSegment<_StudioLayoutMode>(value: _StudioLayoutMode.singleRow, label: Text('Single Row')),
+                    ButtonSegment<_StudioLayoutMode>(value: _StudioLayoutMode.twoRows, label: Text('Two Rows')),
+                  ],
+                  selected: <_StudioLayoutMode>{_mode},
+                  onSelectionChanged: (selection) => setState(() => _mode = selection.first),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _StatusbarLivePreview(mode: _mode, singleRowOrder: _singleOrder, twoRowsOrder: _twoRows),
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 2, 16, 24),
+                  child: _mode == _StudioLayoutMode.singleRow
+                      ? _DragArrangeLane(
+                          label: 'Single row icons',
+                          order: _singleOrder,
+                          onSwap: _swapSingle,
+                        )
+                      : Column(
+                          children: _TwoRowLane.values.map((lane) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: _DragArrangeLane(
+                                label: lane.title,
+                                order: _twoRows[lane]!,
+                                onSwap: (source, target) => _swapTwoRows(lane, source, target),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DragArrangeLane extends StatelessWidget {
+  const _DragArrangeLane({
+    required this.label,
+    required this.order,
+    required this.onSwap,
+  });
+
+  final String label;
+  final List<String> order;
+  final void Function(String source, String target) onSwap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
           const SizedBox(height: 10),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final slots = _slots(constraints.maxWidth);
-              final tileSize = _tileSizeForSlots(slots);
-              return SizedBox(
-                height: _boardHeight,
-                child: DecoratedBox(
-                  key: _boardKey,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: const Color(0xFF8D67FF).withValues(alpha: 0.55)),
-                    color: const Color(0xFF060B10),
-                  ),
-                  child: Stack(
-                    children: <Widget>[
-                      Positioned.fill(child: _BoardGuides(slots: slots)),
-                      ..._workingState.modules.where((m) => m.visible).map((module) => _moduleWidget(module, slots, tileSize)),
-                    ],
-                  ),
-                ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: order.map((id) {
+              final item = _studioItemById[id]!;
+              return DragTarget<String>(
+                onWillAcceptWithDetails: (details) => details.data != id,
+                onAcceptWithDetails: (details) => onSwap(details.data, id),
+                builder: (context, candidate, rejected) {
+                  final hovered = candidate.isNotEmpty;
+                  return Draggable<String>(
+                    data: id,
+                    feedback: Material(
+                      color: Colors.transparent,
+                      child: _ArrangeChip(item: item, highlighted: true),
+                    ),
+                    childWhenDragging: Opacity(opacity: 0.34, child: _ArrangeChip(item: item)),
+                    child: _ArrangeChip(item: item, highlighted: hovered),
+                  );
+                },
               );
-            },
+            }).toList(),
           ),
         ],
       ),
     );
   }
-
-  List<_Slot> _slots(double width) {
-    final centerX = width / 2;
-    final topRowOneY = _boardTopInset;
-    final topRowTwoY = _boardTopInset + 40;
-    final bottomRowY = _boardLowerStartY;
-
-    return <_Slot>[
-      _Slot(sectorBase: 20, left: _boardHorizontalPadding, right: centerX - 6, y: topRowOneY),
-      _Slot(sectorBase: 30, left: centerX + 6, right: width - _boardHorizontalPadding, y: topRowOneY),
-      _Slot(sectorBase: 0, left: _boardHorizontalPadding, right: centerX - 6, y: topRowTwoY),
-      _Slot(sectorBase: 10, left: centerX + 6, right: width - _boardHorizontalPadding, y: topRowTwoY),
-      _Slot(sectorBase: 40, left: _boardHorizontalPadding, right: centerX - 6, y: bottomRowY),
-      _Slot(sectorBase: 50, left: centerX + 6, right: width - _boardHorizontalPadding, y: bottomRowY),
-    ];
-  }
-
-  double _tileSizeForSlots(List<_Slot> slots) {
-    var maxCount = 1;
-    for (final slot in slots) {
-      final count = _workingState.modules.where((m) => _sectorBase(m.currentPositionCode) == slot.sectorBase && m.visible).length;
-      if (count > maxCount) {
-        maxCount = count;
-      }
-    }
-    final topSlotWidth = slots.first.right - slots.first.left;
-    final calculated = (topSlotWidth - (_tileGap * (maxCount - 1))) / maxCount;
-    return calculated.clamp(_minTileSize, _maxTileSize).toDouble();
-  }
-
-  Widget _moduleWidget(StatusbarBoardModuleState module, List<_Slot> slots, double tileSize) {
-    final moduleSlot = slots.firstWhere((slot) => slot.sectorBase == _sectorBase(module.currentPositionCode), orElse: () => slots.first);
-    final positionInSlot = _positionInSlot(module.currentPositionCode);
-    final left = moduleSlot.left + ((positionInSlot - 1) * (tileSize + _tileGap));
-    final top = moduleSlot.y + module.offsetY;
-    final dragging = _draggingId == module.id;
-    final pos = dragging ? _dragOffset : Offset(left, top);
-
-    return Positioned(
-      left: pos.dx,
-      top: pos.dy,
-      child: Listener(
-        onPointerDown: (event) {
-          setState(() {
-            _activePointer = event.pointer;
-            _draggingId = module.id;
-            _dragOffset = Offset(left, top);
-            _pointerAnchor = event.localPosition;
-          });
-        },
-        onPointerMove: (event) {
-          if (_activePointer != event.pointer || _draggingId != module.id) {
-            return;
-          }
-          final boardContext = _boardKey.currentContext;
-          final boardBox = boardContext?.findRenderObject() as RenderBox?;
-          if (boardBox == null) {
-            return;
-          }
-          final local = boardBox.globalToLocal(event.position);
-          final nextTopLeft = local - _pointerAnchor;
-          setState(() => _dragOffset = nextTopLeft);
-          _liveRelayout(module.id, nextTopLeft, slots, tileSize);
-        },
-        onPointerUp: (event) => _endDrag(event.pointer),
-        onPointerCancel: (event) => _endDrag(event.pointer),
-        child: SizedBox(
-          width: tileSize,
-          height: tileSize,
-          child: _BoardModuleBadge(
-            module: module,
-            size: tileSize,
-            isDragging: dragging,
-            onTap: () => _showModuleSheet(context, module),
-          ),
-        ),
-      ),
-    );
-  }
-
-  int _sectorBase(int code) {
-    if (code >= 50) return 50;
-    if (code >= 40) return 40;
-    if (code >= 30) return 30;
-    if (code >= 20) return 20;
-    if (code >= 10) return 10;
-    return 0;
-  }
-
-  int _positionInSlot(int code) {
-    final pos = code % 10;
-    return pos == 0 ? 1 : pos;
-  }
-
-  int _nearestCodeFor(Offset pos, List<_Slot> slots, double tileSize, Set<int> occupied, String moduleId) {
-    final centerY = pos.dy + (tileSize / 2);
-    final centerX = pos.dx + (tileSize / 2);
-
-    final isBelowDivider = centerY > (_boardTopInset + _boardActiveTopHeight);
-    final leftSide = centerX < (slots.first.right + slots[1].left) / 2;
-
-    final sector = switch ((isBelowDivider, leftSide)) {
-      (true, true) => 40,
-      (true, false) => 50,
-      (false, true) => centerY < (_boardTopInset + 28) ? 20 : 0,
-      (false, false) => centerY < (_boardTopInset + 28) ? 30 : 10,
-    };
-
-    final sectorSlot = slots.firstWhere((slot) => slot.sectorBase == sector);
-    final rawIndex = ((centerX - sectorSlot.left) / (tileSize + _tileGap)).round() + 1;
-    final clamped = rawIndex.clamp(1, 9);
-
-    var candidate = sector + clamped;
-    if (!occupied.contains(candidate)) {
-      return candidate;
-    }
-    for (var i = 1; i <= 9; i++) {
-      final alt = sector + i;
-      if (!occupied.contains(alt)) {
-        return alt;
-      }
-    }
-    final current = _workingState.modules.firstWhere((m) => m.id == moduleId).currentPositionCode;
-    return current;
-  }
-
-  void _liveRelayout(String moduleId, Offset pos, List<_Slot> slots, double tileSize) {
-    final occupied = _workingState.modules.where((m) => m.id != moduleId).map((m) => m.currentPositionCode).toSet();
-    final nextCode = _nearestCodeFor(pos, slots, tileSize, occupied, moduleId);
-    final moved = _workingState.modules.firstWhere((m) => m.id == moduleId).copyWith(currentPositionCode: nextCode, visible: true, enabled: true);
-    final updated = <StatusbarBoardModuleState>[..._workingState.modules.where((m) => m.id != moduleId), moved];
-    setState(() {
-      _workingState = _workingState.copyWith(modules: updated);
-    });
-  }
-
-  Future<void> _resetBoard() async {
-    final next = _workingState.copyWith(modules: StatusbarBoardService.defaultModules());
-    setState(() => _workingState = next);
-    widget.onChanged(next);
-  }
-
-  Future<void> _showModuleSheet(BuildContext context, StatusbarBoardModuleState module) async {
-    var current = module;
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) => Container(
-        margin: const EdgeInsets.all(12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: const Color(0xFF0B1418), borderRadius: BorderRadius.circular(24)),
-        child: StatefulBuilder(
-          builder: (context, setModal) => Column(mainAxisSize: MainAxisSize.min, children: [
-            Text(current.module.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-            SwitchListTile.adaptive(
-              value: current.visible,
-              onChanged: (v) {
-                final n = current.copyWith(visible: v);
-                setModal(() => current = n);
-                _updateSingle(n);
-              },
-              title: const Text('Visible', style: TextStyle(color: Colors.white)),
-            ),
-          ]),
-        ),
-      ),
-    );
-  }
-
-  void _updateSingle(StatusbarBoardModuleState next) {
-    final updated = _workingState.modules.map((m) => m.id == next.id ? next : m).toList(growable: false);
-    final nextState = _workingState.copyWith(modules: updated);
-    setState(() => _workingState = nextState);
-    widget.onChanged(nextState);
-  }
-
-  void _endDrag(int pointer) {
-    if (_activePointer != pointer) {
-      return;
-    }
-    final nextState = _workingState.copyWith(modules: _workingState.modules);
-    setState(() {
-      _activePointer = null;
-      _draggingId = null;
-      _workingState = nextState;
-    });
-    widget.onChanged(nextState);
-  }
 }
 
-class _Slot {
-  const _Slot({required this.sectorBase, required this.left, required this.right, required this.y});
-
-  final int sectorBase;
-  final double left;
-  final double right;
-  final double y;
-}
-
-class _BoardGuides extends StatelessWidget {
-  const _BoardGuides({required this.slots});
-  final List<_Slot> slots;
-
-  @override
-  Widget build(BuildContext context) {
-    final leftTop = slots.firstWhere((slot) => slot.sectorBase == 20);
-    final rightTop = slots.firstWhere((slot) => slot.sectorBase == 30);
-    final center = (leftTop.right + rightTop.left) / 2;
-
-    return Stack(children: [
-      Positioned(
-        left: center - 1,
-        top: 24,
-        bottom: 24,
-        child: Container(width: 2, color: Colors.white.withValues(alpha: 0.34)),
-      ),
-      Positioned(
-        left: 18,
-        right: 18,
-        top: 132,
-        child: Container(height: 2, color: Colors.white.withValues(alpha: 0.18)),
-      ),
-      Positioned(
-        left: 18,
-        right: 18,
-        top: 186,
-        child: Container(height: 2, color: Colors.white.withValues(alpha: 0.10)),
-      ),
-      Positioned(left: 18, top: 18, child: Text('Left side', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.w600))),
-      Positioned(right: 18, top: 18, child: Text('Right side', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.w600))),
-      Positioned(left: 18, top: 46, child: Text('Top row A (20/30)', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11))),
-      Positioned(left: 18, top: 86, child: Text('Top row B (0/10)', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11))),
-      Positioned(left: 18, top: 150, child: Text('Lower area (40/50)', style: TextStyle(color: Colors.white.withValues(alpha: 0.42), fontSize: 11))),
-    ]);
-  }
-}
-
-class _StatusbarSectionGrid extends StatelessWidget {
-  const _StatusbarSectionGrid({
-    required this.cards,
-    required this.onOpenSection,
+class _ArrangeChip extends StatelessWidget {
+  const _ArrangeChip({
+    required this.item,
+    this.highlighted = false,
   });
 
-  final List<MezoStatusbarCardSource> cards;
-  final ValueChanged<String> onOpenSection;
+  final _StudioItem item;
+  final bool highlighted;
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 430;
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: cards.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: compact ? 2 : 3,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            mainAxisExtent: compact ? 196 : 188,
-          ),
-          itemBuilder: (context, index) {
-            final card = cards[index];
-            return _StatusSectionCard(
-              source: card,
-              onTap: () => onOpenSection(card.sectionId),
-            );
-          },
-        );
-      },
+    return AnimatedContainer(
+      duration: DesignTokens.motionFast,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: highlighted ? const Color(0xFF1B4777) : const Color(0xFF10273F),
+        border: Border.all(color: item.color.withValues(alpha: highlighted ? 0.9 : 0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(item.icon, size: 14, color: Colors.white),
+          const SizedBox(width: 6),
+          Text(item.shortLabel, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+        ],
+      ),
     );
   }
 }
 
-class _StatusSectionCard extends StatelessWidget {
-  const _StatusSectionCard({
-    required this.source,
+class _StudioActionButton extends StatelessWidget {
+  const _StudioActionButton({
+    required this.label,
+    required this.icon,
     required this.onTap,
   });
 
-  final MezoStatusbarCardSource source;
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.icon(
+      onPressed: onTap,
+      style: FilledButton.styleFrom(
+        backgroundColor: const Color(0xFF1A3F6C).withValues(alpha: 0.68),
+        foregroundColor: Colors.white,
+      ),
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+    );
+  }
+}
+
+class _QuickSectionCard extends StatelessWidget {
+  const _QuickSectionCard({
+    required this.section,
+    required this.onTap,
+  });
+
+  final _QuickSection section;
   final VoidCallback onTap;
 
   @override
@@ -490,150 +662,194 @@ class _StatusSectionCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(22),
         child: Ink(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(26),
-            color: const Color(0xFF141619).withValues(alpha: 0.94),
-            border: Border.all(color: const Color(0xFF9E38FF).withValues(alpha: 0.82), width: 1.1),
-            boxShadow: const <BoxShadow>[
-              BoxShadow(color: Color(0x1C9E38FF), blurRadius: 18, spreadRadius: -10),
-              BoxShadow(color: Color(0x32000000), blurRadius: 18, offset: Offset(0, 10)),
+            borderRadius: BorderRadius.circular(22),
+            color: const Color(0xFF112339).withValues(alpha: 0.84),
+            border: Border.all(color: section.color.withValues(alpha: 0.42)),
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Icon(section.icon, color: Colors.white),
+              const Spacer(),
+              Text(section.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 2),
+              Text(section.subtitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white.withValues(alpha: 0.72), fontSize: 12)),
             ],
           ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                _MezoDrawableImage(
-                  path: source.drawableAssetPath,
-                  width: 62,
-                  height: 32,
-                  fallbackIcon: Icons.widgets_rounded,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  source.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  source.summary,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.74),
-                        height: 1.25,
-                      ),
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );
   }
 }
 
-class _BoardModuleBadge extends StatelessWidget {
-  const _BoardModuleBadge({
-    required this.module,
-    required this.size,
-    required this.isDragging,
-    required this.onTap,
-  });
+enum _StudioLayoutMode { singleRow, twoRows }
 
-  final StatusbarBoardModuleState module;
-  final double size;
-  final bool isDragging;
-  final VoidCallback onTap;
+enum _TwoRowLane {
+  leftTop('Left Row 1'),
+  leftBottom('Left Row 2'),
+  rightTop('Right Row 1'),
+  rightBottom('Right Row 2');
 
-  @override
-  Widget build(BuildContext context) {
-    final opacity = module.visible ? 1.0 : 0.38;
-
-    return AnimatedScale(
-      duration: DesignTokens.motionFast,
-      scale: isDragging ? 1.08 : 1,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: AnimatedOpacity(
-          duration: DesignTokens.motionFast,
-          opacity: opacity,
-          child: AnimatedContainer(
-            duration: DesignTokens.motionFast,
-            curve: DesignTokens.motionCurve,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(size * 0.24),
-              color: const Color(0xFF10272E),
-              border: Border.all(color: module.module.color.withValues(alpha: isDragging ? 0.9 : 0.5), width: isDragging ? 1.6 : 1.1),
-              boxShadow: isDragging
-                  ? <BoxShadow>[
-                      BoxShadow(color: module.module.color.withValues(alpha: 0.35), blurRadius: 16, spreadRadius: 2),
-                    ]
-                  : const <BoxShadow>[],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(size * 0.2),
-              child: Image.asset(
-                module.asset,
-                width: size * 0.8,
-                height: size * 0.8,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return Icon(
-                    module.module.icon,
-                    color: Colors.white,
-                    size: (size * 0.58).clamp(14, 24).toDouble(),
-                  );
-                },
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  const _TwoRowLane(this.title);
+  final String title;
 }
 
-class _MezoDrawableImage extends StatelessWidget {
-  const _MezoDrawableImage({
-    required this.path,
-    required this.width,
-    required this.height,
-    required this.fallbackIcon,
+@immutable
+class _ArrangeLayoutResult {
+  const _ArrangeLayoutResult({
+    required this.mode,
+    required this.singleRowOrder,
+    required this.twoRowsOrder,
   });
 
-  final String path;
-  final double width;
-  final double height;
-  final IconData fallbackIcon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Image.asset(
-      path,
-      width: width,
-      height: height,
-      fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) {
-        return SizedBox(
-          width: width,
-          height: height,
-          child: Icon(fallbackIcon, color: Colors.white70, size: height * 0.7),
-        );
-      },
-    );
-  }
+  final _StudioLayoutMode mode;
+  final List<String> singleRowOrder;
+  final Map<_TwoRowLane, List<String>> twoRowsOrder;
 }
+
+@immutable
+class _StudioItem {
+  const _StudioItem({
+    required this.id,
+    required this.shortLabel,
+    required this.icon,
+    required this.color,
+  });
+
+  final String id;
+  final String shortLabel;
+  final IconData icon;
+  final Color color;
+}
+
+@immutable
+class _QuickSection {
+  const _QuickSection({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    this.sectionId,
+    this.children = const <_QuickSectionChild>[],
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final String? sectionId;
+  final List<_QuickSectionChild> children;
+}
+
+@immutable
+class _QuickSectionChild {
+  const _QuickSectionChild({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.sectionId,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final String sectionId;
+}
+
+const List<_StudioItem> _studioItems = <_StudioItem>[
+  _StudioItem(id: 'time_status_time', shortLabel: 'Time', icon: Icons.access_time_rounded, color: Color(0xFF7DDCFF)),
+  _StudioItem(id: 'notification_call', shortLabel: 'Call', icon: Icons.call_rounded, color: Color(0xFFFFA1A1)),
+  _StudioItem(id: 'speed_gauge', shortLabel: 'Gauge', icon: Icons.speed_rounded, color: Color(0xFF7BC5FF)),
+  _StudioItem(id: 'clock', shortLabel: 'Clock', icon: Icons.schedule_rounded, color: Color(0xFF9CD9FF)),
+  _StudioItem(id: 'prompt_plug', shortLabel: 'Plug', icon: Icons.power_rounded, color: Color(0xFFBDE9FF)),
+  _StudioItem(id: 'netspeed_moon', shortLabel: 'Moon', icon: Icons.nightlight_round, color: Color(0xFFABC3FF)),
+  _StudioItem(id: 'temperature', shortLabel: 'Temp', icon: Icons.thermostat_rounded, color: Color(0xFFA8E7FF)),
+  _StudioItem(id: 'date_day', shortLabel: 'Day', icon: Icons.calendar_today_rounded, color: Color(0xFFD0DCFF)),
+  _StudioItem(id: 'bluetooth', shortLabel: 'BT', icon: Icons.bluetooth_rounded, color: Color(0xFF97C0FF)),
+  _StudioItem(id: 'sim_1', shortLabel: 'SIM1', icon: Icons.sim_card_rounded, color: Color(0xFF9FB7FF)),
+  _StudioItem(id: 'sim_2', shortLabel: 'SIM2', icon: Icons.sim_card_rounded, color: Color(0xFFA8C1FF)),
+  _StudioItem(id: 'wifi', shortLabel: 'Wi-Fi', icon: Icons.wifi_rounded, color: Color(0xFF89DFFF)),
+  _StudioItem(id: 'battery', shortLabel: 'Battery', icon: Icons.battery_5_bar_rounded, color: Color(0xFF95FFBA)),
+  _StudioItem(id: 'weather', shortLabel: 'Weather', icon: Icons.wb_sunny_rounded, color: Color(0xFF8EE6FF)),
+  _StudioItem(id: 'date_31_12', shortLabel: '31/12', icon: Icons.event_note_rounded, color: Color(0xFFC1CDFF)),
+  _StudioItem(id: 'alarm', shortLabel: 'Alarm', icon: Icons.alarm_rounded, color: Color(0xFFDED8FF)),
+  _StudioItem(id: 'network_blue', shortLabel: 'Net B', icon: Icons.network_cell_rounded, color: Color(0xFF81C9FF)),
+  _StudioItem(id: 'network_red', shortLabel: 'Net R', icon: Icons.network_cell_rounded, color: Color(0xFFFFACAC)),
+  _StudioItem(id: 'wifi_secondary', shortLabel: 'Wi-Fi2', icon: Icons.wifi_tethering_rounded, color: Color(0xFF89DBFF)),
+  _StudioItem(id: 'charging', shortLabel: 'Charge', icon: Icons.bolt_rounded, color: Color(0xFFB6FFB0)),
+];
+
+final Map<String, _StudioItem> _studioItemById = {for (final item in _studioItems) item.id: item};
+
+const List<_QuickSection> _quickSections = <_QuickSection>[
+  _QuickSection(title: 'Battery', subtitle: 'Style, percent and charging', icon: Icons.battery_6_bar_rounded, color: Color(0xFF8BF3AE), sectionId: 'battery'),
+  _QuickSection(title: 'Clock', subtitle: 'Time format and spacing', icon: Icons.access_time_rounded, color: Color(0xFF8DD0FF), sectionId: 'clock'),
+  _QuickSection(title: 'Network', subtitle: 'Wi-Fi and SIM indicators', icon: Icons.signal_cellular_alt_rounded, color: Color(0xFF9AB2FF), sectionId: 'network'),
+  _QuickSection(
+    title: 'Date & Weather',
+    subtitle: 'Date and weather cards',
+    icon: Icons.calendar_month_rounded,
+    color: Color(0xFFB7C6FF),
+    children: <_QuickSectionChild>[
+      _QuickSectionChild(title: 'Date', subtitle: 'Date format and layout', icon: Icons.calendar_month_rounded, sectionId: 'date'),
+      _QuickSectionChild(title: 'Weather', subtitle: 'Weather icon and temperature', icon: Icons.cloud_rounded, sectionId: 'weather'),
+    ],
+  ),
+  _QuickSection(
+    title: 'Icons',
+    subtitle: 'Status and notifications',
+    icon: Icons.widgets_rounded,
+    color: Color(0xFFA9F4E0),
+    children: <_QuickSectionChild>[
+      _QuickSectionChild(title: 'Status icons', subtitle: 'Utility icons visibility', icon: Icons.widgets_rounded, sectionId: 'status_icons'),
+      _QuickSectionChild(title: 'Notification icons', subtitle: 'Notification icon layout', icon: Icons.notifications_rounded, sectionId: 'notification_icons'),
+    ],
+  ),
+  _QuickSection(
+    title: 'Prompt & Background',
+    subtitle: 'Prompt and visual layer',
+    icon: Icons.format_paint_rounded,
+    color: Color(0xFF94E0D4),
+    children: <_QuickSectionChild>[
+      _QuickSectionChild(title: 'Prompt icon', subtitle: 'Prompt icon behavior', icon: Icons.chat_bubble_outline_rounded, sectionId: 'prompt_icon'),
+      _QuickSectionChild(title: 'Background', subtitle: 'Background blur and glow', icon: Icons.format_paint_rounded, sectionId: 'background'),
+    ],
+  ),
+];
+
+List<String> _defaultSingleRowOrder() => const <String>[
+      'time_status_time',
+      'notification_call',
+      'speed_gauge',
+      'clock',
+      'prompt_plug',
+      'netspeed_moon',
+      'temperature',
+      'date_day',
+      'bluetooth',
+      'sim_1',
+      'sim_2',
+      'wifi',
+      'battery',
+      'weather',
+      'date_31_12',
+      'alarm',
+      'network_blue',
+      'network_red',
+      'wifi_secondary',
+      'charging',
+    ];
+
+Map<_TwoRowLane, List<String>> _defaultTwoRowsOrder() => <_TwoRowLane, List<String>>{
+      _TwoRowLane.leftTop: <String>['time_status_time', 'notification_call', 'speed_gauge'],
+      _TwoRowLane.leftBottom: <String>['clock', 'prompt_plug', 'netspeed_moon'],
+      _TwoRowLane.rightTop: <String>['temperature', 'date_day', 'bluetooth', 'sim_1', 'sim_2', 'wifi', 'battery'],
+      _TwoRowLane.rightBottom: <String>['weather', 'date_31_12', 'alarm', 'network_blue', 'network_red', 'wifi_secondary', 'charging'],
+    };
 
 class StatusbarDetailScreen extends StatefulWidget {
   const StatusbarDetailScreen({required this.section, super.key});
