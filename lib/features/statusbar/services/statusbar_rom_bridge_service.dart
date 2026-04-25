@@ -30,7 +30,7 @@ class StatusbarRomBridgeService {
   static const MethodChannel _channel = MethodChannel('deadzon/mezo_settings');
   static const String key = 'status_bar_elem_position';
   static const String defaultPositionString =
-      'elem_status.33;elem_clock.21;elem_bat.31;elem_net1.1;elem_net2.11;elem_wifi.2;elem_notif.22;elem_speed.3;elem_weather.32;elem_date.12;';
+      'elem_clock.21;elem_speed.22;elem_notif.23;elem_weather.31;elem_status.32;elem_date.33;elem_net2.34;elem_net1.35;elem_wifi.36;elem_bat.37;';
 
   static Future<StatusbarRomBridgeResult> checkBridge() async {
     final root = await _runRoot('id');

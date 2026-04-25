@@ -95,7 +95,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
     if (result.success) {
       return 'Layout applied successfully.';
     }
-    return 'Layout saved locally. Live sync is unavailable right now.';
+    return 'Layout could not be applied. Saved locally.';
   }
 
   Future<void> _restoreMezoDefault() async {
@@ -704,18 +704,8 @@ class _BoardGuides extends StatelessWidget {
         bottom: 24,
         child: Container(width: 2, color: Colors.white.withValues(alpha: 0.34)),
       ),
-      Positioned(
-        left: 18,
-        right: 18,
-        top: 132,
-        child: Container(height: 2, color: Colors.white.withValues(alpha: 0.18)),
-      ),
-      Positioned(
-        left: 18,
-        right: 18,
-        top: 186,
-        child: Container(height: 2, color: Colors.white.withValues(alpha: 0.10)),
-      ),
+      Positioned(left: 18, right: 18, top: 132, child: Container(height: 30, color: Colors.white.withValues(alpha: 0.24))),
+      Positioned(left: 18, right: 18, top: 182, child: Container(height: 2, color: Colors.white.withValues(alpha: 0.14))),
       Positioned(left: 18, top: 18, child: Text('Left side', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.w600))),
       Positioned(right: 18, top: 18, child: Text('Right side', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.w600))),
       Positioned(left: center - 22, top: 18, child: Text('Center', style: TextStyle(color: Colors.white.withValues(alpha: 0.62), fontSize: 12, fontWeight: FontWeight.w600))),
@@ -745,7 +735,7 @@ class _StatusbarSectionGrid extends StatelessWidget {
             crossAxisCount: compact ? 2 : 3,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            mainAxisExtent: compact ? 176 : 176,
+            mainAxisExtent: compact ? 192 : 182,
           ),
           itemBuilder: (context, index) {
             final card = cards[index];
@@ -791,16 +781,19 @@ class _StatusSectionCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                _MezoDrawableImage(
-                  path: source.drawableAssetPath,
-                  width: 62,
-                  height: 32,
-                  fallbackIcon: Icons.widgets_rounded,
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: _MezoDrawableImage(
+                    path: source.drawableAssetPath,
+                    width: 72,
+                    height: 40,
+                    fallbackIcon: Icons.widgets_rounded,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   source.title,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: Colors.white,
