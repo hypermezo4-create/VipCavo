@@ -183,6 +183,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
                       FilledButton.icon(
                         onPressed: () async {
                           await _applyCurrentToRom();
+                          if (!sheetContext.mounted) return;
                           Navigator.of(sheetContext).pop();
                         },
                         icon: const Icon(Icons.check_circle_outline_rounded),
