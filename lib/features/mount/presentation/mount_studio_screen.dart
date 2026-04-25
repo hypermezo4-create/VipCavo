@@ -494,9 +494,9 @@ class _InlineColorDialogState extends State<_InlineColorDialog> {
               ),
               CircleAvatar(radius: 22, backgroundColor: color),
               const SizedBox(height: 8),
-              _rgbSlider(color.red.toDouble(), (v) => setState(() => color = color.withRed(v.round()))),
-              _rgbSlider(color.green.toDouble(), (v) => setState(() => color = color.withGreen(v.round()))),
-              _rgbSlider(color.blue.toDouble(), (v) => setState(() => color = color.withBlue(v.round()))),
+              _rgbSlider(((color.r * 255.0).round().clamp(0, 255)).toDouble(), (v) => setState(() => color = color.withRed(v.round()))),
+              _rgbSlider(((color.g * 255.0).round().clamp(0, 255)).toDouble(), (v) => setState(() => color = color.withGreen(v.round()))),
+              _rgbSlider(((color.b * 255.0).round().clamp(0, 255)).toDouble(), (v) => setState(() => color = color.withBlue(v.round()))),
               const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
