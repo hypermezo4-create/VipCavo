@@ -1,12 +1,37 @@
 import 'package:deadzon/features/statusbar/data/mezo_resize_source.dart';
 import 'package:deadzon/features/statusbar/statusbar_models.dart';
+import 'package:deadzon/features/statusbar/statusbar_source_inventory.dart';
 import 'package:deadzon/features/statusbar/statusbar_strings.dart';
 
 class StatusBarMapper {
   const StatusBarMapper._();
 
   static List<StatusBarSettingItem> settingsForSection(String sectionId) {
-    return _mapped[sectionId] ?? const <StatusBarSettingItem>[];
+    final curated = _mapped[sectionId] ?? const <StatusBarSettingItem>[];
+    final extracted = StatusbarSourceInventory.extractedBySection[sectionId] ?? const <StatusBarSettingItem>[];
+    if (extracted.isEmpty) {
+      return curated;
+    }
+    return _mergeByLegacyKey(curated, extracted);
+  }
+
+  static List<StatusBarSettingItem> _mergeByLegacyKey(
+    List<StatusBarSettingItem> curated,
+    List<StatusBarSettingItem> extracted,
+  ) {
+    final seen = <String>{};
+    final merged = <StatusBarSettingItem>[];
+    for (final item in curated) {
+      merged.add(item);
+      seen.add(item.legacyKey);
+    }
+    for (final item in extracted) {
+      if (seen.contains(item.legacyKey)) {
+        continue;
+      }
+      merged.add(item);
+    }
+    return merged;
   }
 
   static final Map<String, List<StatusBarSettingItem>> _mapped = <String, List<StatusBarSettingItem>>{
