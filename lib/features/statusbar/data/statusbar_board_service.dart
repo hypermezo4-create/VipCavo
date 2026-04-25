@@ -8,25 +8,38 @@ class StatusbarBoardService {
   static const String _refreshIntent = 'my.intent.action.REFRESH_STATUSBAR';
 
   static Future<StatusbarBoardState> load() async {
-    final sourcePlacements = _decodeSerializedPlacements(statusbarBoardSourceDefaultLayout);
-    final oneRowPlacements = _buildOneRowPlacements();
+    final serialized = await ResizeStatusbarService.readString(
+      key: statusbarBoardSerializedKey,
+      fallback: statusbarBoardSourceDefaultLayout,
+    );
+    final parsed = parseSerializedLayout(serialized);
     final modules = <StatusbarBoardModuleState>[];
+
     for (final module in statusbarBoardModules) {
-      final sourcePlacement = oneRowPlacements[module.id] ?? sourcePlacements[module.id];
+      final parsedEntry = parsed[module.id];
+      final originalCode = statusbarBoardDefaultCodeById[module.id] ?? 0;
+      final currentCode = parsedEntry?.currentPositionCode ?? originalCode;
       final visible = await _readVisible(module);
-      final sideValue = await _readInt(module.sideKey, (sourcePlacement?.side ?? module.defaultSide) == StatusbarBoardSide.right ? 1 : 0);
-      final row = await _readInt(module.rowKey ?? 'status_bar_element_${module.id}_row', sourcePlacement?.row ?? module.defaultRow);
-      final order = await _readInt(module.orderKey, sourcePlacement?.orderIndex ?? module.defaultOrderIndex);
+      final enabled = await _readBool(
+        module.enabledKey ?? 'status_bar_element_${module.id}_enabled',
+        module.defaultEnabled,
+      );
+      final size = await _readInt(
+        module.sizeKey ?? 'status_bar_element_${module.id}_size',
+        (module.defaultSize * 100).round(),
+      );
       final offsetX = await _readInt(module.offsetKey, module.defaultOffset.round());
-      final enabled = await _readBool(module.enabledKey ?? 'status_bar_element_${module.id}_enabled', module.defaultEnabled);
-      final size = await _readInt(module.sizeKey ?? 'status_bar_element_${module.id}_size', (module.defaultSize * 100).round());
-      final offsetY = await _readInt(module.offsetYKey ?? 'status_bar_element_${module.id}_offset_y', module.defaultOffsetY.round());
+      final offsetY = await _readInt(
+        module.offsetYKey ?? 'status_bar_element_${module.id}_offset_y',
+        module.defaultOffsetY.round(),
+      );
+
       modules.add(
         StatusbarBoardModuleState(
           module: module,
-          side: sideValue == 1 ? StatusbarBoardSide.right : StatusbarBoardSide.left,
-          row: row == 2 ? 2 : 1,
-          orderIndex: order,
+          originalPositionCode: originalCode,
+          currentPositionCode: currentCode,
+          asset: module.iconAsset,
           visible: visible,
           enabled: enabled,
           size: size / 100,
@@ -36,60 +49,60 @@ class StatusbarBoardService {
       );
     }
 
-    final leftCluster = await _readInt(statusbarBoardLeftClusterOffsetKey, 0);
-    final rightCluster = await _readInt(statusbarBoardRightClusterOffsetKey, 0);
-
     return StatusbarBoardState(
-      modules: _normalize(modules),
-      leftClusterOffset: leftCluster.toDouble(),
-      rightClusterOffset: rightCluster.toDouble(),
+      modules: _ensureUniqueSlotOrdering(modules),
+      leftClusterOffset: 0,
+      rightClusterOffset: 0,
     );
   }
 
   static Future<void> writeModules(List<StatusbarBoardModuleState> modules) async {
-    for (final module in modules) {
+    final normalized = _ensureUniqueSlotOrdering(modules);
+
+    for (final module in normalized) {
       await Future.wait(<Future<void>>[
         _writeVisible(module),
         _writeBool(module.module.enabledKey ?? 'status_bar_element_${module.id}_enabled', module.enabled),
-        _writeInt(module.module.sideKey, module.side == StatusbarBoardSide.right ? 1 : 0),
-        _writeInt(module.module.orderKey, module.orderIndex),
-        _writeInt(module.module.rowKey ?? 'status_bar_element_${module.id}_row', module.row),
         _writeInt(module.module.offsetKey, module.offsetX.round()),
         _writeInt(module.module.sizeKey ?? 'status_bar_element_${module.id}_size', (module.size * 100).round()),
         _writeInt(module.module.offsetYKey ?? 'status_bar_element_${module.id}_offset_y', module.offsetY.round()),
       ]);
     }
+
+    await ResizeStatusbarService.writeString(
+      key: statusbarBoardSerializedKey,
+      value: encodeSerializedLayout(normalized),
+    );
     await _sendRefreshIntent();
   }
 
   static Future<void> writeClusterOffsets({required double left, required double right}) async {
-    await _writeInt(statusbarBoardLeftClusterOffsetKey, left.round());
-    await _writeInt(statusbarBoardRightClusterOffsetKey, right.round());
-    await _sendRefreshIntent();
+    return;
   }
 
   static List<StatusbarBoardModuleState> defaultModules() {
-    final sourcePlacements = _decodeSerializedPlacements(statusbarBoardSourceDefaultLayout);
-    final oneRowPlacements = _buildOneRowPlacements();
-    return _normalize(statusbarBoardModules.map((module) {
-      final sourcePlacement = oneRowPlacements[module.id] ?? sourcePlacements[module.id];
-      return StatusbarBoardModuleState(
-        module: module,
-        side: sourcePlacement?.side ?? module.defaultSide,
-        row: 1,
-        orderIndex: sourcePlacement?.orderIndex ?? module.defaultOrderIndex,
-        visible: module.defaultVisible,
-        enabled: module.defaultEnabled,
-        size: module.defaultSize,
-        offsetX: module.defaultOffset,
-        offsetY: module.defaultOffsetY,
-      );
-    }).toList(growable: false));
+    final parsed = parseSerializedLayout(statusbarBoardSourceDefaultLayout);
+    return _ensureUniqueSlotOrdering(
+      statusbarBoardModules.map((module) {
+        final defaultCode = statusbarBoardDefaultCodeById[module.id] ?? 0;
+        return StatusbarBoardModuleState(
+          module: module,
+          originalPositionCode: defaultCode,
+          currentPositionCode: parsed[module.id]?.currentPositionCode ?? defaultCode,
+          asset: module.iconAsset,
+          visible: module.defaultVisible,
+          enabled: module.defaultEnabled,
+          size: module.defaultSize,
+          offsetX: module.defaultOffset,
+          offsetY: module.defaultOffsetY,
+        );
+      }).toList(growable: false),
+    );
   }
 
-  static Map<String, _SourcePlacement> _decodeSerializedPlacements(String serialized) {
+  static Map<String, StatusbarBoardModuleState> parseSerializedLayout(String serialized) {
+    final parsed = <String, StatusbarBoardModuleState>{};
     final entries = serialized.split(';').where((entry) => entry.contains('.'));
-    final ordered = <_DecodedEntry>[];
     for (final entry in entries) {
       final parts = entry.split('.');
       if (parts.length != 2) {
@@ -97,73 +110,72 @@ class StatusbarBoardService {
       }
       final id = parts.first.trim();
       final code = int.tryParse(parts.last.trim());
-      if (id.isEmpty || code == null) {
+      final module = statusbarBoardModulesById[id];
+      if (id.isEmpty || code == null || module == null) {
         continue;
       }
-      final decoded = _decodeSideAndRow(code);
-      ordered.add(_DecodedEntry(id: id, side: decoded.side, row: decoded.row));
-    }
-
-    final orderCounters = <String, int>{};
-    final placements = <String, _SourcePlacement>{};
-    for (final item in ordered) {
-      final key = '${item.side.name}:${item.row}';
-      final index = orderCounters[key] ?? 0;
-      orderCounters[key] = index + 1;
-      placements[item.id] = _SourcePlacement(side: item.side, row: item.row, orderIndex: index);
-    }
-    return placements;
-  }
-
-  static Map<String, _SourcePlacement> _buildOneRowPlacements() {
-    final placements = <String, _SourcePlacement>{};
-    var leftOrder = 0;
-    var rightOrder = 0;
-    for (final module in statusbarBoardModules) {
-      final side = module.defaultSide == StatusbarBoardSide.right ? StatusbarBoardSide.right : StatusbarBoardSide.left;
-      final orderIndex = side == StatusbarBoardSide.left ? leftOrder++ : rightOrder++;
-      placements[module.id] = _SourcePlacement(
-        side: side,
-        row: 1,
-        orderIndex: orderIndex,
+      final originalCode = statusbarBoardDefaultCodeById[id] ?? code;
+      parsed[id] = StatusbarBoardModuleState(
+        module: module,
+        originalPositionCode: originalCode,
+        currentPositionCode: code,
+        asset: module.iconAsset,
+        visible: module.defaultVisible,
+        enabled: module.defaultEnabled,
+        size: module.defaultSize,
+        offsetX: module.defaultOffset,
+        offsetY: module.defaultOffsetY,
       );
     }
-    return placements;
+    return parsed;
   }
 
-  static _DecodedSideRow _decodeSideAndRow(int code) {
-    if (code >= 40) {
-      return const _DecodedSideRow(side: StatusbarBoardSide.right, row: 2);
+  static String encodeSerializedLayout(List<StatusbarBoardModuleState> modules) {
+    final sortedByLegacyOrder = modules.toList(growable: false)
+      ..sort((a, b) => a.module.legacyIndex.compareTo(b.module.legacyIndex));
+    final buffer = StringBuffer();
+    for (final module in sortedByLegacyOrder) {
+      buffer
+        ..write(module.id)
+        ..write('.')
+        ..write(module.currentPositionCode)
+        ..write(';');
     }
-    if (code >= 30) {
-      return const _DecodedSideRow(side: StatusbarBoardSide.right, row: 1);
-    }
-    if (code >= 20) {
-      return const _DecodedSideRow(side: StatusbarBoardSide.left, row: 1);
-    }
-    if (code >= 10) {
-      return const _DecodedSideRow(side: StatusbarBoardSide.left, row: 1);
-    }
-    if (code >= 4) {
-      return const _DecodedSideRow(side: StatusbarBoardSide.left, row: 2);
-    }
-    if (code <= 1) {
-      return const _DecodedSideRow(side: StatusbarBoardSide.left, row: 1);
-    }
-    return const _DecodedSideRow(side: StatusbarBoardSide.right, row: 1);
+    return buffer.toString();
   }
 
-  static List<StatusbarBoardModuleState> _normalize(List<StatusbarBoardModuleState> modules) {
-    final out = <StatusbarBoardModuleState>[];
-    for (final side in <StatusbarBoardSide>[StatusbarBoardSide.left, StatusbarBoardSide.right]) {
-      for (var row = 1; row <= 2; row++) {
-        final group = modules.where((m) => m.side == side && m.row == row).toList()..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-        for (var i = 0; i < group.length; i++) {
-          out.add(group[i].copyWith(orderIndex: i));
-        }
+  static List<StatusbarBoardModuleState> _ensureUniqueSlotOrdering(List<StatusbarBoardModuleState> modules) {
+    final bySlot = <int, List<StatusbarBoardModuleState>>{};
+    for (final module in modules) {
+      bySlot.putIfAbsent(module.currentPositionCode, () => <StatusbarBoardModuleState>[]).add(module);
+    }
+
+    final updated = modules.toList(growable: true);
+    for (final entry in bySlot.entries) {
+      final colliding = entry.value;
+      if (colliding.length <= 1) {
+        continue;
+      }
+      colliding.sort((a, b) => a.module.legacyIndex.compareTo(b.module.legacyIndex));
+      for (var i = 1; i < colliding.length; i++) {
+        final candidate = colliding[i];
+        final nextCode = _findNearestEmptyCode(entry.key, updated.map((m) => m.currentPositionCode).toSet());
+        final index = updated.indexWhere((m) => m.id == candidate.id);
+        updated[index] = candidate.copyWith(currentPositionCode: nextCode);
       }
     }
-    return out;
+    return updated;
+  }
+
+  static int _findNearestEmptyCode(int around, Set<int> occupied) {
+    final sector = (around ~/ 10) * 10;
+    for (var i = 1; i <= 9; i++) {
+      final candidate = sector + i;
+      if (!occupied.contains(candidate)) {
+        return candidate;
+      }
+    }
+    return around;
   }
 
   static Future<bool> _readVisible(StatusbarBoardModule module) async {
@@ -187,38 +199,4 @@ class StatusbarBoardService {
   static Future<void> _writeInt(String key, int value) => ResizeStatusbarService.writeInt(key: key, value: value);
   static Future<void> _writeBool(String key, bool value) => ResizeStatusbarService.writeBool(key: key, value: value);
   static Future<void> _sendRefreshIntent() => ResizeStatusbarService.sendBroadcastIntent(_refreshIntent);
-}
-
-class _SourcePlacement {
-  const _SourcePlacement({
-    required this.side,
-    required this.row,
-    required this.orderIndex,
-  });
-
-  final StatusbarBoardSide side;
-  final int row;
-  final int orderIndex;
-}
-
-class _DecodedSideRow {
-  const _DecodedSideRow({
-    required this.side,
-    required this.row,
-  });
-
-  final StatusbarBoardSide side;
-  final int row;
-}
-
-class _DecodedEntry {
-  const _DecodedEntry({
-    required this.id,
-    required this.side,
-    required this.row,
-  });
-
-  final String id;
-  final StatusbarBoardSide side;
-  final int row;
 }

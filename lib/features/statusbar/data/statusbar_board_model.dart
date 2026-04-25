@@ -27,9 +27,9 @@ class StatusbarBoardState {
 class StatusbarBoardModuleState {
   const StatusbarBoardModuleState({
     required this.module,
-    required this.side,
-    required this.row,
-    required this.orderIndex,
+    required this.originalPositionCode,
+    required this.currentPositionCode,
+    required this.asset,
     required this.visible,
     required this.enabled,
     required this.size,
@@ -38,9 +38,9 @@ class StatusbarBoardModuleState {
   });
 
   final StatusbarBoardModule module;
-  final StatusbarBoardSide side;
-  final int row;
-  final int orderIndex;
+  final int originalPositionCode;
+  final int currentPositionCode;
+  final String asset;
   final bool visible;
   final bool enabled;
   final double size;
@@ -51,9 +51,9 @@ class StatusbarBoardModuleState {
   String get sourceSmaliClass => module.sourceSmaliClass;
 
   StatusbarBoardModuleState copyWith({
-    StatusbarBoardSide? side,
-    int? row,
-    int? orderIndex,
+    int? originalPositionCode,
+    int? currentPositionCode,
+    String? asset,
     bool? visible,
     bool? enabled,
     double? size,
@@ -62,9 +62,9 @@ class StatusbarBoardModuleState {
   }) {
     return StatusbarBoardModuleState(
       module: module,
-      side: side ?? this.side,
-      row: row ?? this.row,
-      orderIndex: orderIndex ?? this.orderIndex,
+      originalPositionCode: originalPositionCode ?? this.originalPositionCode,
+      currentPositionCode: currentPositionCode ?? this.currentPositionCode,
+      asset: asset ?? this.asset,
       visible: visible ?? this.visible,
       enabled: enabled ?? this.enabled,
       size: size ?? this.size,
