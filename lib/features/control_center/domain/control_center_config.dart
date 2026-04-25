@@ -56,23 +56,23 @@ class ControlCenterConfig {
 
   String get extraTwoAsBridgeString => extraTwoMezoTiles.take(2).join(',');
 
-  static List<String> _decodeExtraTiles(Object? value) {
+  static List<String> decodeExtraTiles(Object? value) {
+    List<String> normalized = const <String>[];
     if (value is String && value.trim().isNotEmpty) {
-      return value.split(',').map((entry) => entry.trim()).where((entry) => entry.isNotEmpty).take(2).toList();
+      normalized = value.split(',').map((entry) => entry.trim()).where((entry) => entry.isNotEmpty).take(2).toList();
+    } else if (value is List<dynamic>) {
+      normalized = value.map((dynamic entry) => '$entry').where((entry) => entry.isNotEmpty).take(2).toList();
     }
-    if (value is List<dynamic>) {
-      return value.map((dynamic entry) => '$entry').where((entry) => entry.isNotEmpty).take(2).toList();
-    }
-    return const <String>['wifi', 'cell'];
+    return normalized.length == 2 ? normalized : const <String>['wifi', 'cell'];
   }
 
   static ControlCenterConfig decode(String raw) {
     final map = jsonDecode(raw) as Map<String, dynamic>;
-    final extraTiles = _decodeExtraTiles(map[extraTwoMezoTilesKey]);
+    final extraTiles = decodeExtraTiles(map[extraTwoMezoTilesKey]);
     return ControlCenterConfig(
       squareMezoTiles: map[squareMezoTilesKey] as bool? ?? true,
       controlCenterStyle: (map[controlCenterStyleKey] as num?)?.toInt() ?? 0,
-      extraTwoMezoTiles: extraTiles.length == 2 ? extraTiles : const <String>['wifi', 'cell'],
+      extraTwoMezoTiles: extraTiles,
       ccBlurRatio: (map[ccBlurRatioKey] as num?)?.toInt() ?? 100,
       lastUpdatedAt: DateTime.tryParse(map['lastUpdatedAt'] as String? ?? '') ?? DateTime.now(),
     );
