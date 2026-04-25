@@ -6,6 +6,7 @@ import 'package:deadzon/core/widgets/settings_row.dart';
 import 'package:deadzon/features/statusbar/data/resize_statusbar_service.dart';
 import 'package:deadzon/features/statusbar/data/statusbar_board_model.dart';
 import 'package:deadzon/features/statusbar/data/statusbar_board_service.dart';
+import 'package:deadzon/features/statusbar/statusbar_board_config.dart';
 import 'package:deadzon/features/statusbar/data/statusbar_settings_repository.dart';
 import 'package:deadzon/features/statusbar/mezo_port_map.dart';
 import 'package:deadzon/features/statusbar/presentation/mezo_controls.dart';
@@ -50,10 +51,8 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
     try {
       boardState = await StatusbarBoardService.load();
     } catch (_) {
-      boardState = StatusbarBoardState(
-        modules: StatusbarBoardService.defaultModules(),
-        leftClusterOffset: 0,
-        rightClusterOffset: 0,
+      boardState = _boardStateFromSerialized(
+        prefs.getString(statusbarBoardSerializedKey) ?? statusbarBoardSourceDefaultLayout,
       );
     }
     if (!mounted) {
@@ -78,7 +77,12 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
   Future<void> _persistStudioLayout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefsModeKey, _layoutMode.name);
-    await StatusbarBoardService.writeModules(_boardState.modules);
+    await prefs.setString(statusbarBoardSerializedKey, StatusbarBoardService.encodeSerializedLayout(_boardState.modules));
+    try {
+      await StatusbarBoardService.writeModules(_boardState.modules);
+    } catch (_) {
+      // Local old-key-compatible layout is still saved when native apply is unavailable.
+    }
   }
 
   void _openSection(String sectionId) {
@@ -270,30 +274,19 @@ class _SourceSingleRowPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       constraints: const BoxConstraints(minHeight: 46),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         color: Colors.black.withValues(alpha: 0.68),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              child: Row(
-                children: modules
-                    .map((module) => Padding(
-                          padding: const EdgeInsets.only(right: 10),
-                          child: _PreviewModule(module: module, dense: true),
-                        ))
-                    .toList(),
-              ),
-            ),
-          ),
-        ],
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 6,
+        runSpacing: 6,
+        children: modules.map((module) => _PreviewModule(module: module, dense: true)).toList(),
       ),
     );
   }
@@ -307,56 +300,55 @@ class _SourceTwoRowPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         color: Colors.black.withValues(alpha: 0.62),
         border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Column(
         children: <Widget>[
-          Expanded(child: _PreviewLaneColumn(lanes: const [_TwoRowLane.leftTop, _TwoRowLane.leftBottom], modules: modules)),
-          Container(width: 1, height: 46, color: Colors.white.withValues(alpha: 0.08)),
-          const SizedBox(width: 10),
-          Expanded(child: _PreviewLaneColumn(lanes: const [_TwoRowLane.rightTop, _TwoRowLane.rightBottom], modules: modules, alignEnd: true)),
+          _PreviewLaneRow(lane: _TwoRowLane.leftTop, modules: modules),
+          const SizedBox(height: 5),
+          _PreviewLaneRow(lane: _TwoRowLane.leftBottom, modules: modules),
+          Divider(height: 14, color: Colors.white.withValues(alpha: 0.08)),
+          _PreviewLaneRow(lane: _TwoRowLane.rightTop, modules: modules),
+          const SizedBox(height: 5),
+          _PreviewLaneRow(lane: _TwoRowLane.rightBottom, modules: modules),
         ],
       ),
     );
   }
 }
 
-class _PreviewLaneColumn extends StatelessWidget {
-  const _PreviewLaneColumn({required this.lanes, required this.modules, this.alignEnd = false});
+class _PreviewLaneRow extends StatelessWidget {
+  const _PreviewLaneRow({required this.lane, required this.modules});
 
-  final List<_TwoRowLane> lanes;
+  final _TwoRowLane lane;
   final List<StatusbarBoardModuleState> modules;
-  final bool alignEnd;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-      children: lanes
-          .map(
-            (lane) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 3),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                reverse: alignEnd,
-                child: Row(
-                  mainAxisAlignment: alignEnd ? MainAxisAlignment.end : MainAxisAlignment.start,
-                  children: _modulesForLane(modules, lane)
-                      .map((module) => Padding(
-                            padding: const EdgeInsetsDirectional.only(end: 8),
-                            child: _PreviewModule(module: module, dense: true),
-                          ))
-                      .toList(),
-                ),
-              ),
-            ),
-          )
-          .toList(),
+    final laneModules = _modulesForLane(modules, lane);
+    return Row(
+      children: <Widget>[
+        SizedBox(
+          width: 48,
+          child: Text(
+            lane.previewTitle,
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 9, fontWeight: FontWeight.w800),
+          ),
+        ),
+        Expanded(
+          child: Wrap(
+            spacing: 5,
+            runSpacing: 5,
+            alignment: lane.isRight ? WrapAlignment.end : WrapAlignment.start,
+            children: laneModules.map((module) => _PreviewModule(module: module, dense: true)).toList(),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -572,34 +564,15 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
                   onSelectionChanged: (selection) => setState(() => _mode = selection.first),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _StatusbarLivePreview(mode: _mode, modules: _modules),
-              ),
-              const SizedBox(height: 10),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 2, 16, 24),
-                  child: _mode == _StudioLayoutMode.singleRow
-                      ? _DragArrangeLane(
-                          label: 'Single row source order',
-                          modules: _singleSortedModules(_modules),
-                          onMoveWithin: _moveSingle,
-                        )
-                      : Column(
-                          children: _TwoRowLane.values.map((lane) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 10),
-                              child: _DragArrangeLane(
-                                label: lane.title,
-                                modules: _modulesForLane(_modules, lane),
-                                lane: lane,
-                                onMoveWithin: (source, target) => _moveToLane(source, lane, beforeId: target),
-                                onAcceptToLane: (source) => _moveToLane(source, lane),
-                              ),
-                            );
-                          }).toList(),
-                        ),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 26),
+                  child: _LegacyArrangeBoard(
+                    mode: _mode,
+                    modules: _modules,
+                    onMoveSingle: _moveSingle,
+                    onMoveToLane: _moveToLane,
+                  ),
                 ),
               ),
             ],
@@ -610,75 +583,191 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
   }
 }
 
-class _DragArrangeLane extends StatelessWidget {
-  const _DragArrangeLane({
-    required this.label,
+class _LegacyArrangeBoard extends StatelessWidget {
+  const _LegacyArrangeBoard({
+    required this.mode,
     required this.modules,
-    required this.onMoveWithin,
-    this.lane,
-    this.onAcceptToLane,
+    required this.onMoveSingle,
+    required this.onMoveToLane,
   });
 
-  final String label;
+  final _StudioLayoutMode mode;
   final List<StatusbarBoardModuleState> modules;
-  final _TwoRowLane? lane;
+  final void Function(String source, String target) onMoveSingle;
+  final void Function(String sourceId, _TwoRowLane targetLane, {String? beforeId}) onMoveToLane;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        color: const Color(0xFF10151B).withValues(alpha: 0.98),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.72)),
+        boxShadow: <BoxShadow>[
+          BoxShadow(color: Colors.black.withValues(alpha: 0.28), blurRadius: 22, offset: const Offset(0, 10)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              const Expanded(
+                child: Text(
+                  'Mezo source position board',
+                  style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(99),
+                  color: const Color(0xFF142D4B),
+                  border: Border.all(color: const Color(0xFF6FAAFF).withValues(alpha: 0.36)),
+                ),
+                child: Text(
+                  mode == _StudioLayoutMode.singleRow ? 'single row' : 'two rows',
+                  style: const TextStyle(color: Color(0xFFBFDFFF), fontSize: 11, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Drag any old Mezo module. Preview and saved key update immediately after Save.',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.62), fontSize: 12, height: 1.25),
+          ),
+          const SizedBox(height: 14),
+          if (mode == _StudioLayoutMode.singleRow)
+            _BoardDropLane(
+              title: 'Single row order',
+              subtitle: 'All source modules visible in one board',
+              modules: _singleSortedModules(modules),
+              onMoveWithin: onMoveSingle,
+              onAcceptToLane: null,
+            )
+          else
+            Column(
+              children: <Widget>[
+                _BoardDropLane(
+                  title: 'Left side • row 1',
+                  subtitle: 'Old position codes 1–9',
+                  modules: _modulesForLane(modules, _TwoRowLane.leftTop),
+                  onMoveWithin: (source, target) => onMoveToLane(source, _TwoRowLane.leftTop, beforeId: target),
+                  onAcceptToLane: (source) => onMoveToLane(source, _TwoRowLane.leftTop),
+                ),
+                const SizedBox(height: 10),
+                _BoardDropLane(
+                  title: 'Left side • row 2',
+                  subtitle: 'Old position codes 11–19',
+                  modules: _modulesForLane(modules, _TwoRowLane.leftBottom),
+                  onMoveWithin: (source, target) => onMoveToLane(source, _TwoRowLane.leftBottom, beforeId: target),
+                  onAcceptToLane: (source) => onMoveToLane(source, _TwoRowLane.leftBottom),
+                ),
+                const SizedBox(height: 12),
+                Divider(color: Colors.white.withValues(alpha: 0.13), height: 1),
+                const SizedBox(height: 12),
+                _BoardDropLane(
+                  title: 'Right side • row 1',
+                  subtitle: 'Old position codes 21–29',
+                  modules: _modulesForLane(modules, _TwoRowLane.rightTop),
+                  onMoveWithin: (source, target) => onMoveToLane(source, _TwoRowLane.rightTop, beforeId: target),
+                  onAcceptToLane: (source) => onMoveToLane(source, _TwoRowLane.rightTop),
+                ),
+                const SizedBox(height: 10),
+                _BoardDropLane(
+                  title: 'Right side • row 2',
+                  subtitle: 'Old position codes 31–39',
+                  modules: _modulesForLane(modules, _TwoRowLane.rightBottom),
+                  onMoveWithin: (source, target) => onMoveToLane(source, _TwoRowLane.rightBottom, beforeId: target),
+                  onAcceptToLane: (source) => onMoveToLane(source, _TwoRowLane.rightBottom),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BoardDropLane extends StatelessWidget {
+  const _BoardDropLane({
+    required this.title,
+    required this.subtitle,
+    required this.modules,
+    required this.onMoveWithin,
+    required this.onAcceptToLane,
+  });
+
+  final String title;
+  final String subtitle;
+  final List<StatusbarBoardModuleState> modules;
   final void Function(String source, String target) onMoveWithin;
   final void Function(String source)? onAcceptToLane;
 
   @override
   Widget build(BuildContext context) {
     return DragTarget<String>(
-      onWillAcceptWithDetails: (_) => onAcceptToLane != null,
+      onWillAcceptWithDetails: (details) => onAcceptToLane != null && !modules.any((module) => module.id == details.data),
       onAcceptWithDetails: (details) => onAcceptToLane?.call(details.data),
       builder: (context, candidate, rejected) {
         final hovered = candidate.isNotEmpty;
-        return GlassCard(
-          child: AnimatedContainer(
-            duration: DesignTokens.motionFast,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: hovered ? const Color(0xFF8DE8FF) : Colors.transparent),
-            ),
-            padding: const EdgeInsets.all(2),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Expanded(child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800))),
-                    if (lane != null)
-                      Text('drop here', style: TextStyle(color: Colors.white.withValues(alpha: 0.42), fontSize: 11)),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: modules.map((module) {
-                    return DragTarget<String>(
-                      onWillAcceptWithDetails: (details) => details.data != module.id,
-                      onAcceptWithDetails: (details) => onMoveWithin(details.data, module.id),
-                      builder: (context, candidate, rejected) {
-                        final chipHovered = candidate.isNotEmpty;
-                        return Draggable<String>(
-                          data: module.id,
-                          feedback: Material(
-                            color: Colors.transparent,
+        return AnimatedContainer(
+          duration: DesignTokens.motionFast,
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            color: hovered ? const Color(0xFF102B4D) : const Color(0xFF07101D),
+            border: Border.all(color: hovered ? const Color(0xFF8DE8FF) : const Color(0xFF355F8C).withValues(alpha: 0.58)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900))),
+                  Text(
+                    hovered ? 'release to drop' : 'drop here',
+                    style: TextStyle(color: Colors.white.withValues(alpha: hovered ? 0.78 : 0.36), fontSize: 11),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(subtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.48), fontSize: 11)),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: modules.map((module) {
+                  return DragTarget<String>(
+                    onWillAcceptWithDetails: (details) => details.data != module.id,
+                    onAcceptWithDetails: (details) => onMoveWithin(details.data, module.id),
+                    builder: (context, itemCandidate, rejected) {
+                      final chipHovered = itemCandidate.isNotEmpty;
+                      return Draggable<String>(
+                        data: module.id,
+                        feedback: Material(
+                          color: Colors.transparent,
+                          child: Transform.scale(
+                            scale: 1.06,
                             child: _ArrangeChip(module: module, highlighted: true),
                           ),
-                          childWhenDragging: Opacity(opacity: 0.28, child: _ArrangeChip(module: module)),
-                          child: _ArrangeChip(module: module, highlighted: chipHovered),
-                        );
-                      },
-                    );
-                  }).toList(),
-                ),
-                if (modules.isEmpty) ...<Widget>[
-                  const SizedBox(height: 8),
-                  Text('Drop an element here', style: TextStyle(color: Colors.white.withValues(alpha: 0.55))),
-                ],
+                        ),
+                        childWhenDragging: Opacity(opacity: 0.18, child: _ArrangeChip(module: module)),
+                        child: _ArrangeChip(module: module, highlighted: chipHovered),
+                      );
+                    },
+                  );
+                }).toList(),
+              ),
+              if (modules.isEmpty) ...<Widget>[
+                const SizedBox(height: 8),
+                Text('Drop a module here', style: TextStyle(color: Colors.white.withValues(alpha: 0.55))),
               ],
-            ),
+            ],
           ),
         );
       },
@@ -699,29 +788,29 @@ class _ArrangeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: DesignTokens.motionFast,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(15),
         color: highlighted ? const Color(0xFF1B4777) : const Color(0xFF10273F),
-        border: Border.all(color: module.module.color.withValues(alpha: highlighted ? 0.9 : 0.5)),
+        border: Border.all(color: module.module.color.withValues(alpha: highlighted ? 0.95 : 0.56)),
         boxShadow: highlighted
-            ? <BoxShadow>[BoxShadow(color: module.module.color.withValues(alpha: 0.22), blurRadius: 14, offset: const Offset(0, 5))]
+            ? <BoxShadow>[BoxShadow(color: module.module.color.withValues(alpha: 0.24), blurRadius: 16, offset: const Offset(0, 5))]
             : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           SizedBox(
-            width: 16,
-            height: 16,
+            width: 18,
+            height: 18,
             child: Image.asset(
               module.asset,
               fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => Icon(module.module.icon, size: 16, color: Colors.white),
+              errorBuilder: (context, error, stackTrace) => Icon(module.module.icon, size: 18, color: Colors.white),
             ),
           ),
           const SizedBox(width: 7),
-          Text(module.module.title, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+          Text(module.module.title, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
         ],
       ),
     );
@@ -805,17 +894,30 @@ class _FullSectionRow extends StatelessWidget {
 }
 
 
+StatusbarBoardState _boardStateFromSerialized(String serialized) {
+  final parsed = StatusbarBoardService.parseSerializedLayout(serialized);
+  final defaults = StatusbarBoardService.defaultModules();
+  final defaultsById = {for (final module in defaults) module.id: module};
+  final modules = <StatusbarBoardModuleState>[];
+  for (final defaultModule in defaults) {
+    modules.add(parsed[defaultModule.id] ?? defaultsById[defaultModule.id]!);
+  }
+  return StatusbarBoardState(modules: modules, leftClusterOffset: 0, rightClusterOffset: 0);
+}
+
 enum _StudioLayoutMode { singleRow, twoRows }
 
 enum _TwoRowLane {
-  leftTop('Left Row 1', 1),
-  leftBottom('Left Row 2', 11),
-  rightTop('Right Row 1', 21),
-  rightBottom('Right Row 2', 31);
+  leftTop('Left Row 1', 'L1', 1, false),
+  leftBottom('Left Row 2', 'L2', 11, false),
+  rightTop('Right Row 1', 'R1', 21, true),
+  rightBottom('Right Row 2', 'R2', 31, true);
 
-  const _TwoRowLane(this.title, this.baseCode);
+  const _TwoRowLane(this.title, this.previewTitle, this.baseCode, this.isRight);
   final String title;
+  final String previewTitle;
   final int baseCode;
+  final bool isRight;
 }
 
 @immutable
