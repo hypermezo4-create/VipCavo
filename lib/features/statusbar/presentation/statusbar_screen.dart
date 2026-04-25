@@ -13,7 +13,6 @@ import 'package:deadzon/features/statusbar/statusbar_detail_content.dart';
 import 'package:deadzon/features/statusbar/statusbar_mapper.dart';
 import 'package:deadzon/features/statusbar/statusbar_models.dart';
 import 'package:deadzon/features/statusbar/statusbar_section_configs.dart';
-import 'package:deadzon/features/statusbar/statusbar_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -75,7 +74,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
       child: SafeArea(
         child: ListView(
           physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-          padding: const EdgeInsets.fromLTRB(18, 14, 18, 180),
+          padding: const EdgeInsets.fromLTRB(18, 14, 18, 300),
           children: <Widget>[
             const PremiumTopBar(
               title: 'Statusbar adjustment',
@@ -121,13 +120,13 @@ class _StatusControlBoard extends StatefulWidget {
 }
 
 class _StatusControlBoardState extends State<_StatusControlBoard> {
-  static const double _boardHeight = 268;
-  static const double _boardHorizontalPadding = 8;
+  static const double _boardHeight = 302;
+  static const double _boardHorizontalPadding = 10;
   static const double _boardTopInset = 62;
-  static const double _boardActiveTopHeight = 112;
-  static const double _boardLowerStartY = 168;
-  static const double _minTileSize = 24;
-  static const double _maxTileSize = 40;
+  static const double _boardActiveTopHeight = 86;
+  static const double _boardLowerStartY = 202;
+  static const double _minTileSize = 28;
+  static const double _maxTileSize = 34;
   static const double _tileGap = 4;
 
   final GlobalKey _boardKey = GlobalKey();
@@ -205,7 +204,7 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
   List<_Slot> _slots(double width) {
     final centerX = width / 2;
     final topRowOneY = _boardTopInset;
-    final topRowTwoY = _boardTopInset + 40;
+    final topRowTwoY = _boardTopInset + 46;
     final bottomRowY = _boardLowerStartY;
 
     return <_Slot>[
@@ -219,16 +218,19 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
   }
 
   double _tileSizeForSlots(List<_Slot> slots) {
-    var maxCount = 1;
+    var size = _maxTileSize;
     for (final slot in slots) {
       final count = _workingState.modules.where((m) => _sectorBase(m.currentPositionCode) == slot.sectorBase && m.visible).length;
-      if (count > maxCount) {
-        maxCount = count;
+      if (count <= 1) {
+        continue;
+      }
+      final slotWidth = slot.right - slot.left;
+      final calculated = (slotWidth - (_tileGap * (count - 1))) / count;
+      if (calculated < size) {
+        size = calculated;
       }
     }
-    final topSlotWidth = slots.first.right - slots.first.left;
-    final calculated = (topSlotWidth - (_tileGap * (maxCount - 1))) / maxCount;
-    return calculated.clamp(_minTileSize, _maxTileSize).toDouble();
+    return size.clamp(_minTileSize, _maxTileSize).toDouble();
   }
 
   Widget _moduleWidget(StatusbarBoardModuleState module, List<_Slot> slots, double tileSize) {
@@ -410,31 +412,85 @@ class _BoardGuides extends StatelessWidget {
     final rightTop = slots.firstWhere((slot) => slot.sectorBase == 30);
     final center = (leftTop.right + rightTop.left) / 2;
 
-    return Stack(children: [
-      Positioned(
-        left: center - 1,
-        top: 24,
-        bottom: 24,
-        child: Container(width: 2, color: Colors.white.withValues(alpha: 0.34)),
-      ),
-      Positioned(
-        left: 18,
-        right: 18,
-        top: 132,
-        child: Container(height: 2, color: Colors.white.withValues(alpha: 0.18)),
-      ),
-      Positioned(
-        left: 18,
-        right: 18,
-        top: 186,
-        child: Container(height: 2, color: Colors.white.withValues(alpha: 0.10)),
-      ),
-      Positioned(left: 18, top: 18, child: Text('Left side', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.w600))),
-      Positioned(right: 18, top: 18, child: Text('Right side', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.w600))),
-      Positioned(left: 18, top: 46, child: Text('Top row A (20/30)', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11))),
-      Positioned(left: 18, top: 86, child: Text('Top row B (0/10)', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11))),
-      Positioned(left: 18, top: 150, child: Text('Lower area (40/50)', style: TextStyle(color: Colors.white.withValues(alpha: 0.42), fontSize: 11))),
-    ]);
+    return Stack(
+      children: <Widget>[
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: <Color>[Color(0xFF05090D), Color(0xFF080B13), Color(0xFF020407)],
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          left: center - 1,
+          top: 22,
+          bottom: 22,
+          child: Container(
+            width: 2,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.62),
+              borderRadius: BorderRadius.circular(99),
+              boxShadow: <BoxShadow>[
+                BoxShadow(color: Colors.white.withValues(alpha: 0.14), blurRadius: 12),
+              ],
+            ),
+          ),
+        ),
+        Positioned(
+          left: 18,
+          right: 18,
+          top: 148,
+          child: Container(
+            height: 7,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.24),
+              borderRadius: BorderRadius.circular(99),
+            ),
+          ),
+        ),
+        Positioned(
+          left: 18,
+          right: 18,
+          top: 206,
+          child: Container(
+            height: 2,
+            decoration: BoxDecoration(
+              color: const Color(0xFF8D67FF).withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(99),
+            ),
+          ),
+        ),
+        Positioned(
+          left: 18,
+          top: 18,
+          child: Text(
+            'Left side',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.72), fontSize: 13, fontWeight: FontWeight.w700),
+          ),
+        ),
+        Positioned(
+          left: center - 30,
+          top: 18,
+          child: Text(
+            'Center',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.62), fontSize: 13, fontWeight: FontWeight.w700),
+          ),
+        ),
+        Positioned(
+          right: 18,
+          top: 18,
+          child: Text(
+            'Right side',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.72), fontSize: 13, fontWeight: FontWeight.w700),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -460,7 +516,7 @@ class _StatusbarSectionGrid extends StatelessWidget {
             crossAxisCount: compact ? 2 : 3,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            mainAxisExtent: compact ? 196 : 188,
+            mainAxisExtent: compact ? 152 : 148,
           ),
           itemBuilder: (context, index) {
             final card = cards[index];
@@ -502,24 +558,26 @@ class _StatusSectionCard extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 _MezoDrawableImage(
                   path: source.drawableAssetPath,
-                  width: 62,
-                  height: 32,
+                  width: 58,
+                  height: 28,
                   fallbackIcon: Icons.widgets_rounded,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 Text(
                   source.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: Colors.white,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                        height: 1.05,
+                        fontWeight: FontWeight.w800,
                       ),
                 ),
                 const SizedBox(height: 6),
@@ -527,9 +585,9 @@ class _StatusSectionCard extends StatelessWidget {
                   source.summary,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.74),
-                        height: 1.25,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.72),
+                        height: 1.16,
                       ),
                 ),
               ],
@@ -585,8 +643,8 @@ class _BoardModuleBadge extends StatelessWidget {
               borderRadius: BorderRadius.circular(size * 0.2),
               child: Image.asset(
                 module.asset,
-                width: size * 0.8,
-                height: size * 0.8,
+                width: size * 0.92,
+                height: size * 0.92,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) {
                   return Icon(
