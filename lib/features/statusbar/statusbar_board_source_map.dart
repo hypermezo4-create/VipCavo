@@ -118,7 +118,7 @@ class MezoStatusbarBoardSourceMap {
       drawable: 'elem_iback_card',
       titleResId: 'iback_elite_st_0',
       summaryResId: 'iback_elite_st_1',
-      title: 'Background of statubar icons',
+      title: 'Background of statusbar icons',
       summary: 'Configure background of statusbar icons',
       fragment: 'com.android.settings.MyIconBackMezo',
       sectionId: 'background',
