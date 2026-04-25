@@ -356,7 +356,7 @@ class _BottomActionBar extends StatelessWidget {
               dense: true,
               contentPadding: const EdgeInsets.symmetric(horizontal: 6),
               activeThumbColor: accentColor,
-              title: const Text('Live apply to DeadZon', style: TextStyle(fontSize: 13.5)),
+              title: const Text('Live apply to DeadZone', style: TextStyle(fontSize: 13.5)),
               value: liveApplyEnabled,
               onChanged: onLiveApplyChanged,
             ),

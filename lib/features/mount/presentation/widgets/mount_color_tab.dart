@@ -73,7 +73,7 @@ class _MountColorTabState extends State<MountColorTab> {
         MountGlassCard(
           tint: color,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-            const Text('Internal DeadZon Monet Engine', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+            const Text('Internal DeadZone Monet Engine', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
             const SizedBox(height: 12),
             Row(children: <Widget>[
               Container(width: 44, height: 44, decoration: BoxDecoration(color: color, shape: BoxShape.circle, border: Border.all(color: Colors.white70))),

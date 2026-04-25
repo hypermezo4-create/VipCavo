@@ -29,7 +29,7 @@ class MountControlAppsTab extends StatelessWidget {
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Mount Plugin', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-            subtitle: Text('Prepare selected ROM apps for DeadZon bridge payload', style: TextStyle(color: Colors.white.withValues(alpha: 0.72))),
+            subtitle: Text('Prepare selected ROM apps for DeadZone bridge payload', style: TextStyle(color: Colors.white.withValues(alpha: 0.72))),
             value: pluginEnabled,
             onChanged: controller.setMonetEnabled,
           ),
@@ -217,7 +217,7 @@ class _RomTargetsSection extends StatelessWidget {
         const Text('ROM Targets', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
         const SizedBox(height: 6),
         Text(
-          'Targets are saved for the upcoming DeadZon ROM bridge. This phase only prepares payload/config and does not modify external system apps.',
+          'Targets are saved for the upcoming DeadZone ROM bridge. This phase only prepares payload/config and does not modify external system apps.',
           style: TextStyle(color: Colors.white.withValues(alpha: 0.74), fontSize: 12),
         ),
         const SizedBox(height: 8),
