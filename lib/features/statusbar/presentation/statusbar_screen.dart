@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
@@ -14,6 +15,7 @@ import 'package:deadzon/features/statusbar/statusbar_mapper.dart';
 import 'package:deadzon/features/statusbar/statusbar_models.dart';
 import 'package:deadzon/features/statusbar/statusbar_section_configs.dart';
 import 'package:deadzon/features/statusbar/statusbar_strings.dart';
+import 'package:deadzon/features/statusbar/services/statusbar_rom_bridge_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -28,12 +30,23 @@ class StatusbarScreen extends StatefulWidget {
 class _StatusbarScreenState extends State<StatusbarScreen> {
   late final List<MezoStatusbarCardSource> _cards;
   StatusbarBoardState? _boardState;
+  bool _romLiveApply = false;
+  bool _checkingRom = false;
+  StatusbarRomBridgeResult? _romStatus;
+  Timer? _romWriteDebounce;
 
   @override
   void initState() {
     super.initState();
     _cards = MezoStatusbarBoardSourceMap.cards;
     _loadBoard();
+    _loadRomBridge();
+  }
+
+  @override
+  void dispose() {
+    _romWriteDebounce?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadBoard() async {
@@ -44,6 +57,92 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
     setState(() => _boardState = loaded);
   }
 
+
+  Future<void> _loadRomBridge() async {
+    final liveApply = await StatusbarRomBridgeService.readLiveApplyEnabled();
+    final status = await StatusbarRomBridgeService.checkRootStatus();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _romLiveApply = liveApply;
+      _romStatus = status;
+    });
+  }
+
+  Future<void> _setRomLiveApply(bool enabled) async {
+    await StatusbarRomBridgeService.setLiveApplyEnabled(enabled);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _romLiveApply = enabled);
+    if (enabled) {
+      await _checkRomBridge();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ROM Live Apply disabled. Preview remains local.')),
+      );
+    }
+  }
+
+  Future<void> _checkRomBridge() async {
+    if (_checkingRom) {
+      return;
+    }
+    setState(() => _checkingRom = true);
+    final status = await StatusbarRomBridgeService.checkRootStatus();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _checkingRom = false;
+      _romStatus = status;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(status.bridgeActive ? 'Root bridge active. ROM writes are available.' : 'Root bridge unavailable. Preview only.')),
+    );
+  }
+
+  Future<void> _applyCurrentToRom() async {
+    final current = _boardState;
+    if (current == null) {
+      return;
+    }
+    final result = await StatusbarRomBridgeService.writeCurrentModules(current.modules);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _romStatus = result);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(result.displayMessage)),
+    );
+  }
+
+  void _scheduleRomLiveWrite(StatusbarBoardState next) {
+    if (!_romLiveApply) {
+      return;
+    }
+    _romWriteDebounce?.cancel();
+    _romWriteDebounce = Timer(const Duration(milliseconds: 180), () async {
+      final result = await StatusbarRomBridgeService.writeCurrentModules(next.modules);
+      if (!mounted) {
+        return;
+      }
+      setState(() => _romStatus = result);
+    });
+  }
+
+  Future<void> _writeToRomIfEnabled(StatusbarBoardState next) async {
+    if (!_romLiveApply) {
+      return;
+    }
+    final result = await StatusbarRomBridgeService.writeCurrentModules(next.modules);
+    if (!mounted) {
+      return;
+    }
+    setState(() => _romStatus = result);
+  }
+
   Future<void> _updateBoard(StatusbarBoardState next) async {
     setState(() => _boardState = next);
     await StatusbarBoardService.writeModules(next.modules);
@@ -51,6 +150,8 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
       left: next.leftClusterOffset,
       right: next.rightClusterOffset,
     );
+    _romWriteDebounce?.cancel();
+    await _writeToRomIfEnabled(next);
   }
 
   void _openSection(String sectionId) {
@@ -75,13 +176,22 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
       child: SafeArea(
         child: ListView(
           physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-          padding: const EdgeInsets.fromLTRB(18, 14, 18, 300),
+          padding: const EdgeInsets.fromLTRB(18, 14, 18, 260),
           children: <Widget>[
             const PremiumTopBar(
               title: 'Statusbar adjustment',
               subtitle: 'Customize status bar layout and icon positions',
             ),
             const SizedBox(height: 18),
+            _RomLiveApplyCard(
+              enabled: _romLiveApply,
+              checking: _checkingRom,
+              status: _romStatus,
+              onChanged: _setRomLiveApply,
+              onCheck: _checkRomBridge,
+              onApply: _applyCurrentToRom,
+            ),
+            const SizedBox(height: 14),
             if (_boardState == null)
               const GlassCard(
                 child: Padding(
@@ -93,7 +203,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
               _StatusControlBoard(
                 boardState: _boardState!,
                 onChanged: _updateBoard,
-                onOpenSection: _openSection,
+                onLivePreviewChanged: _scheduleRomLiveWrite,
               ),
             const SizedBox(height: 18),
             _StatusbarSectionGrid(cards: _cards, onOpenSection: _openSection),
@@ -105,29 +215,154 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
 }
 
 
+
+class _RomLiveApplyCard extends StatelessWidget {
+  const _RomLiveApplyCard({
+    required this.enabled,
+    required this.checking,
+    required this.status,
+    required this.onChanged,
+    required this.onCheck,
+    required this.onApply,
+  });
+
+  final bool enabled;
+  final bool checking;
+  final StatusbarRomBridgeResult? status;
+  final ValueChanged<bool> onChanged;
+  final VoidCallback onCheck;
+  final VoidCallback onApply;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = status?.bridgeActive ?? false;
+    final accent = active ? const Color(0xFF54F6C8) : const Color(0xFFFFC66B);
+    final statusText = status?.displayMessage ?? 'Checking ROM bridge...';
+
+    return GlassCard(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  color: accent.withValues(alpha: 0.13),
+                  border: Border.all(color: accent.withValues(alpha: 0.65)),
+                ),
+                child: Icon(active ? Icons.bolt_rounded : Icons.lock_outline_rounded, color: accent, size: 21),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'ROM Live Apply',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      statusText,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white.withValues(alpha: 0.68), height: 1.25),
+                    ),
+                  ],
+                ),
+              ),
+              Switch.adaptive(value: enabled, activeColor: const Color(0xFF54F6C8), onChanged: onChanged),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: <Widget>[
+              _RomStatusChip(label: active ? 'Root active' : 'Root unavailable', color: accent),
+              _RomStatusChip(label: StatusbarRomBridgeService.positionKey, color: const Color(0xFF8D67FF)),
+              if (status?.confirmed ?? false) const _RomStatusChip(label: 'Write confirmed', color: Color(0xFF54F6C8)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: checking ? null : onCheck,
+                  icon: checking
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.verified_rounded),
+                  label: const Text('Check Bridge'),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: onApply,
+                  icon: const Icon(Icons.system_update_alt_rounded),
+                  label: const Text('Apply to ROM'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RomStatusChip extends StatelessWidget {
+  const _RomStatusChip({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(999),
+        color: color.withValues(alpha: 0.12),
+        border: Border.all(color: color.withValues(alpha: 0.48)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white.withValues(alpha: 0.86), fontWeight: FontWeight.w700),
+      ),
+    );
+  }
+}
+
 class _StatusControlBoard extends StatefulWidget {
   const _StatusControlBoard({
     required this.boardState,
     required this.onChanged,
-    required this.onOpenSection,
+    required this.onLivePreviewChanged,
   });
 
   final StatusbarBoardState boardState;
   final ValueChanged<StatusbarBoardState> onChanged;
-  final ValueChanged<String> onOpenSection;
+  final ValueChanged<StatusbarBoardState> onLivePreviewChanged;
 
   @override
   State<_StatusControlBoard> createState() => _StatusControlBoardState();
 }
 
 class _StatusControlBoardState extends State<_StatusControlBoard> {
-  static const double _boardHeight = 302;
-  static const double _boardHorizontalPadding = 10;
+  static const double _boardHeight = 268;
+  static const double _boardHorizontalPadding = 8;
   static const double _boardTopInset = 62;
-  static const double _boardActiveTopHeight = 86;
-  static const double _boardLowerStartY = 202;
-  static const double _minTileSize = 28;
-  static const double _maxTileSize = 34;
+  static const double _boardActiveTopHeight = 112;
+  static const double _boardLowerStartY = 168;
+  static const double _minTileSize = 24;
+  static const double _maxTileSize = 40;
   static const double _tileGap = 4;
 
   final GlobalKey _boardKey = GlobalKey();
@@ -205,7 +440,7 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
   List<_Slot> _slots(double width) {
     final centerX = width / 2;
     final topRowOneY = _boardTopInset;
-    final topRowTwoY = _boardTopInset + 46;
+    final topRowTwoY = _boardTopInset + 40;
     final bottomRowY = _boardLowerStartY;
 
     return <_Slot>[
@@ -219,19 +454,16 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
   }
 
   double _tileSizeForSlots(List<_Slot> slots) {
-    var size = _maxTileSize;
+    var maxCount = 1;
     for (final slot in slots) {
       final count = _workingState.modules.where((m) => _sectorBase(m.currentPositionCode) == slot.sectorBase && m.visible).length;
-      if (count <= 1) {
-        continue;
-      }
-      final slotWidth = slot.right - slot.left;
-      final calculated = (slotWidth - (_tileGap * (count - 1))) / count;
-      if (calculated < size) {
-        size = calculated;
+      if (count > maxCount) {
+        maxCount = count;
       }
     }
-    return size.clamp(_minTileSize, _maxTileSize).toDouble();
+    final topSlotWidth = slots.first.right - slots.first.left;
+    final calculated = (topSlotWidth - (_tileGap * (maxCount - 1))) / maxCount;
+    return calculated.clamp(_minTileSize, _maxTileSize).toDouble();
   }
 
   Widget _moduleWidget(StatusbarBoardModuleState module, List<_Slot> slots, double tileSize) {
@@ -335,9 +567,11 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
     final nextCode = _nearestCodeFor(pos, slots, tileSize, occupied, moduleId);
     final moved = _workingState.modules.firstWhere((m) => m.id == moduleId).copyWith(currentPositionCode: nextCode, visible: true, enabled: true);
     final updated = <StatusbarBoardModuleState>[..._workingState.modules.where((m) => m.id != moduleId), moved];
+    final nextState = _workingState.copyWith(modules: updated);
     setState(() {
-      _workingState = _workingState.copyWith(modules: updated);
+      _workingState = nextState;
     });
+    widget.onLivePreviewChanged(nextState);
   }
 
   Future<void> _resetBoard() async {
@@ -413,85 +647,28 @@ class _BoardGuides extends StatelessWidget {
     final rightTop = slots.firstWhere((slot) => slot.sectorBase == 30);
     final center = (leftTop.right + rightTop.left) / 2;
 
-    return Stack(
-      children: <Widget>[
-        Positioned.fill(
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(30),
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: <Color>[Color(0xFF05090D), Color(0xFF080B13), Color(0xFF020407)],
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          left: center - 1,
-          top: 22,
-          bottom: 22,
-          child: Container(
-            width: 2,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.62),
-              borderRadius: BorderRadius.circular(99),
-              boxShadow: <BoxShadow>[
-                BoxShadow(color: Colors.white.withValues(alpha: 0.14), blurRadius: 12),
-              ],
-            ),
-          ),
-        ),
-        Positioned(
-          left: 18,
-          right: 18,
-          top: 148,
-          child: Container(
-            height: 7,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.24),
-              borderRadius: BorderRadius.circular(99),
-            ),
-          ),
-        ),
-        Positioned(
-          left: 18,
-          right: 18,
-          top: 206,
-          child: Container(
-            height: 2,
-            decoration: BoxDecoration(
-              color: const Color(0xFF8D67FF).withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(99),
-            ),
-          ),
-        ),
-        Positioned(
-          left: 18,
-          top: 18,
-          child: Text(
-            'Left side',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.72), fontSize: 13, fontWeight: FontWeight.w700),
-          ),
-        ),
-        Positioned(
-          left: center - 30,
-          top: 18,
-          child: Text(
-            'Center',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.62), fontSize: 13, fontWeight: FontWeight.w700),
-          ),
-        ),
-        Positioned(
-          right: 18,
-          top: 18,
-          child: Text(
-            'Right side',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.72), fontSize: 13, fontWeight: FontWeight.w700),
-          ),
-        ),
-      ],
-    );
+    return Stack(children: [
+      Positioned(
+        left: center - 1,
+        top: 24,
+        bottom: 24,
+        child: Container(width: 2, color: Colors.white.withValues(alpha: 0.34)),
+      ),
+      Positioned(
+        left: 18,
+        right: 18,
+        top: 132,
+        child: Container(height: 2, color: Colors.white.withValues(alpha: 0.18)),
+      ),
+      Positioned(
+        left: 18,
+        right: 18,
+        top: 186,
+        child: Container(height: 2, color: Colors.white.withValues(alpha: 0.10)),
+      ),
+      Positioned(left: 18, top: 18, child: Text('Left side', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.w600))),
+      Positioned(right: 18, top: 18, child: Text('Right side', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.w600))),
+    ]);
   }
 }
 
@@ -517,7 +694,7 @@ class _StatusbarSectionGrid extends StatelessWidget {
             crossAxisCount: compact ? 2 : 3,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            mainAxisExtent: compact ? 152 : 148,
+            mainAxisExtent: compact ? 196 : 188,
           ),
           itemBuilder: (context, index) {
             final card = cards[index];
@@ -559,26 +736,24 @@ class _StatusSectionCard extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 _MezoDrawableImage(
                   path: source.drawableAssetPath,
-                  width: 58,
-                  height: 28,
+                  width: 62,
+                  height: 32,
                   fallbackIcon: Icons.widgets_rounded,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
                 Text(
                   source.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: Colors.white,
-                        fontSize: 18,
-                        height: 1.05,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                       ),
                 ),
                 const SizedBox(height: 6),
@@ -586,9 +761,9 @@ class _StatusSectionCard extends StatelessWidget {
                   source.summary,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.72),
-                        height: 1.16,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.74),
+                        height: 1.25,
                       ),
                 ),
               ],
@@ -644,8 +819,8 @@ class _BoardModuleBadge extends StatelessWidget {
               borderRadius: BorderRadius.circular(size * 0.2),
               child: Image.asset(
                 module.asset,
-                width: size * 0.92,
-                height: size * 0.92,
+                width: size * 0.8,
+                height: size * 0.8,
                 fit: BoxFit.contain,
                 errorBuilder: (context, error, stackTrace) {
                   return Icon(
