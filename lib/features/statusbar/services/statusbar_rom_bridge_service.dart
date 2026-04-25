@@ -155,16 +155,16 @@ class StatusbarRomBridgeResult {
     }
 
     return StatusbarRomBridgeResult(
-      success: map['success'] as? bool ?? false,
-      rootAvailable: map['rootAvailable'] as? bool ?? false,
-      confirmed: map['confirmed'] as? bool ?? false,
+      success: map['success'] as bool? ?? false,
+      rootAvailable: map['rootAvailable'] as bool? ?? false,
+      confirmed: map['confirmed'] as bool? ?? false,
       key: map['key']?.toString() ?? fallbackKey,
       writtenValue: map['writtenValue']?.toString(),
       readback: map['readback']?.toString(),
       message: map['message']?.toString(),
       stdout: map['stdout']?.toString(),
       stderr: map['stderr']?.toString(),
-      exitCode: map['exitCode'] as? int,
+      exitCode: map['exitCode'] is int ? map['exitCode'] as int : int.tryParse(map['exitCode']?.toString() ?? ''),
     );
   }
 }
