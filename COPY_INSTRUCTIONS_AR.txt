@@ -1,0 +1,14 @@
+DeadZon V1 Lite Hotfix — Changed Files Only (Code/Config)
+
+انسخ محتويات هذا الباكدج فوق نفس المسارات داخل مشروع VipCavo/DeadZon.
+
+مهم:
+- الباكدج لا يحتوي صور PNG/WebP لتجنب مشكلة binary files.
+- ارفع/انسخ ملفات البراندينج يدويًا داخل: assets/branding/deadzon/
+- بعدها شغل GitHub Actions أو الأوامر:
+  flutter clean
+  flutter pub get
+  flutter analyze
+  flutter build apk --release --split-per-abi
+
+الملفات الموجودة هنا هي ملفات الكود/الإعدادات المتغيرة فقط، وليست المشروع كاملًا.

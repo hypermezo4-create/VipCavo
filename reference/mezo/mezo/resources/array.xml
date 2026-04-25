@@ -1,0 +1,383 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<resources offset16="true">
+        <string-array name="anim_expand_name" public="false">
+        <item>Bounce (right)</item>
+        <item>Rotate (right)</item>
+        <item>Rotate (left)</item>
+        <item>Expand (horizontal)</item>
+        <item>Expand (vertical)</item>
+        <item>Expand (down)</item>
+        <item>Expand (up)</item>
+    </string-array>
+    <string-array name="anim_expand_name2" public="false">
+        <item>Bounce (right)</item>
+        <item>Rotate (right)</item>
+        <item>Rotate (left)</item>
+        <item>Expand (horizontal)</item>
+        <item>Expand (vertical)</item>
+        <item>Expand (down)</item>
+        <item>Expand (up)</item>
+    </string-array>
+    <string-array name="anim_expand_style" public="false">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>7</item>
+        <item>0</item>
+    </string-array>
+    <string-array name="anim_expand_style2" public="false">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>7</item>
+        <item>0</item>
+    </string-array>
+    <string-array name="battery_bar_style_entries" public="false">
+        <item>Edge</item>
+        <item>Center</item>
+    </string-array>
+    <string-array name="battery_bar_style_values" public="false">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+    <string-array name="battery_icon_entries" public="false">
+        <item>Android (Rectangle)</item>
+        <item>MIUI (Oval)</item>
+    </string-array>
+    <string-array name="battery_icon_values" public="false">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+    <string-array name="battery_indicator_style_entries2" public="false">
+        <item>Graphical</item>
+        <item>Percentage (center) and graphical</item>
+        <item>Percentages (right) and graphical</item>
+        <item>Percentages (left) and graphical</item>
+        <item>Percent only</item>
+        <item>Do not show</item>
+    </string-array>
+    <array name="battery_indicator_style_icons2" public="false">
+        <reference>@drawable/battery_indicator_graphic</reference>
+        <reference>@drawable/battery_indicator_percent_in</reference>
+        <reference>@drawable/battery_indicator_percent_out_right</reference>
+        <reference>@drawable/battery_indicator_percent_out_left</reference>
+        <reference>@drawable/battery_indicator_percent_only</reference>
+        <reference>@drawable/battery_indicator_off</reference>
+    </array>
+    <string-array name="battery_indicator_style_values2" public="false">
+        <item>0</item>
+        <item>1</item>
+        <item>3</item>
+        <item>6</item>
+        <item>5</item>
+        <item>4</item>
+    </string-array>
+    <string-array name="bg_interval_entries" public="false">
+        <item>5 seconds</item>
+        <item>3 seconds</item>
+        <item>2 seconds</item>
+        <item>1 second</item>
+    </string-array>
+    <string-array name="bg_interval_values" public="false">
+        <item>5000</item>
+        <item>3000</item>
+        <item>2000</item>
+        <item>1000</item>
+    </string-array>
+    <string-array name="cc_style_entries" public="false">
+        <item>Default</item>
+        <item>Style 1</item>
+        <item>Style 2</item>
+        <item>Style 3</item>
+        <item>Style 4</item>
+        <item>Style 5</item>
+        <item>Style 6</item>
+    </string-array>
+    <string-array name="cc_style_values" public="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>7</item>
+    </string-array>
+    <string-array name="charge_animation_style_entries" public="false">
+        <item>@string/charge_animation_style_none</item>
+        <item>@string/charge_animation_style_lollipop</item>
+        <item>@string/charge_animation_style_wave</item>
+    </string-array>
+    <string-array name="charge_animation_style_values" public="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <string-array name="clock_anim_time" public="false">
+        <item>No animation</item>
+        <item>Move down</item>
+        <item>Jump right</item>
+        <item>Rotate X</item>
+        <item>Rotate Y</item>
+    </string-array>
+    <string-array name="clock_anim_time_values" public="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+    <string-array name="clock_style_entries" public="false">
+        <item>Normal</item>
+        <item>Bold</item>
+        <item>Italic</item>
+        <item>Bold Italic</item>
+    </string-array>
+    <string-array name="clock_style_entries_values" public="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+    <string-array name="disable_unlock_elite_animation_ent" public="false">
+        <item>@string/launcher_elite_6</item>
+        <item>@string/launcher_elite_7</item>
+        <item>@string/launcher_elite_8</item>
+    </string-array>
+    <string-array name="disable_unlock_elite_animation_val" public="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <string-array name="elite_development_settings_index_entries" public="false">
+        <item>One</item>
+        <item>Two</item>
+        <item>Three</item>
+    </string-array>
+    <array name="elite_development_settings_index_icons" public="false">
+        <reference>@drawable/style_menu_1</reference>
+        <reference>@drawable/style_menu_2</reference>
+        <reference>@drawable/style_menu_3</reference>
+    </array>
+    <string-array name="elite_development_settings_index_values" public="false">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+    <string-array name="extra_big_tiles_entries" public="false">
+        <item>Default HyperOS</item>
+        <item>Default HyperOS (inverted)</item>
+        <item>Bluetooth + flashlight</item>
+        <item>Bluetooth + flashlight (inverted 1)</item>
+        <item>Bluetooth + flashlight (inverted 2)</item>
+        <item>Bluetooth + hotspot</item>
+        <item>Bluetooth + hotspot (inverted 1)</item>
+        <item>Bluetooth + hotspot (inverted 2)</item>
+        <item>Hotspot + airplane</item>
+        <item>Hotspot + airplane (inverted 1)</item>
+        <item>Hotspot + airplane (inverted 2)</item>
+    </string-array>
+    <string-array name="extra_big_tiles_values" public="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
+    </string-array>
+    <string-array name="gms_cert_chain_entries" public="false">
+        <item>Block key attestation</item>
+        <item>Allow GMS to get certs</item>
+        <item>Disabled/Stock behavior</item>
+    </string-array>
+    <string-array name="gms_cert_chain_values" public="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <array name="icon_date_menu" public="false">
+        <reference>@drawable/date_style1</reference>
+        <reference>@drawable/date_style2</reference>
+        <reference>@drawable/date_style3</reference>
+        <reference>@drawable/date_style4</reference>
+        <reference>@drawable/date_style5</reference>
+        <reference>@drawable/date_style6</reference>
+        <reference>@drawable/date_style7</reference>
+        <reference>@drawable/date_style8</reference>
+        <reference>@drawable/date_style9</reference>
+    </array>
+    <string-array name="loopanim_name" public="false">
+        <item>Always (no pop-ups)</item>
+        <item>Always (with pop-ups)</item>
+        <item>On notification once</item>
+        <item>When notification panel opened</item>
+    </string-array>
+    <string-array name="loopanim_name2" public="false">
+        <item>Always (with pop-ups)</item>
+        <item>Only in pop-up</item>
+        <item>When notification panel opened</item>
+    </string-array>
+    <string-array name="loopanim_values" public="false">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+    <string-array name="loopanim_values2" public="false">
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+    <string-array name="net_speed_entries" public="false">
+        <item>Do not show</item>
+        <item>One line</item>
+        <item>Two lines</item>
+        <item>Default</item>
+    </string-array>
+    <string-array name="net_speed_values" public="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+    <string-array name="notch_battery_indicator_style_entries2" public="false">
+        <item>Graphical</item>
+        <item>Percentage (center) and graphical</item>
+        <item>Percentages (right) and graphical</item>
+        <item>Percentages (left) and graphical</item>
+        <item>Top bar</item>
+        <item>Percent only</item>
+        <item>Do not show</item>
+    </string-array>
+    <array name="notch_battery_indicator_style_icons2" public="false">
+        <reference>@drawable/battery_indicator_graphic</reference>
+        <reference>@drawable/battery_indicator_percent_in</reference>
+        <reference>@drawable/battery_indicator_percent_out_right</reference>
+        <reference>@drawable/battery_indicator_percent_out_left</reference>
+        <reference>@drawable/battery_indicator_top</reference>
+        <reference>@drawable/battery_indicator_percent_only</reference>
+        <reference>@drawable/battery_indicator_off</reference>
+    </array>
+    <string-array name="notch_battery_indicator_style_values2" public="false">
+        <item>0</item>
+        <item>1</item>
+        <item>3</item>
+        <item>6</item>
+        <item>2</item>
+        <item>5</item>
+        <item>4</item>
+    </string-array>
+    <string-array name="notif_interpolator_entries" public="false">
+        <item>Linear</item>
+        <item>Accelerate</item>
+        <item>Decelerate</item>
+        <item>Accelerate decelerate</item>
+        <item>Bounce</item>
+        <item>Overshoot</item>
+    </string-array>
+    <string-array name="notif_interpolator_values" public="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+    </string-array>
+    <string-array name="statusbar_cutout_center_entries" public="false">
+        <item>Top line</item>
+        <item>Center</item>
+        <item>Bottom line</item>
+    </string-array>
+    <string-array name="statusbar_cutout_center_values" public="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <string-array name="statusbar_cutout_left_entries" public="false">
+        <item>Both elements on the left</item>
+        <item>Top left element</item>
+        <item>Bottom left element</item>
+        <item>Both elements on the right</item>
+    </string-array>
+    <string-array name="statusbar_cutout_left_not_calculate_entries" public="false">
+        <item>From top line</item>
+        <item>From bottom line</item>
+        <item>Dont remove</item>
+    </string-array>
+    <string-array name="statusbar_cutout_left_not_calculate_values" public="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <string-array name="statusbar_cutout_left_values" public="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+    <string-array name="statusbar_cutout_type_entries" public="false">
+        <item>No camera hole</item>
+        <item>Center of the screen</item>
+        <item>Left of the screen</item>
+    </string-array>
+    <string-array name="statusbar_cutout_type_values" public="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+    <string-array name="statusbar_date_format_entries" public="false">
+        <item>Thu May 7</item>
+        <item>May 7</item>
+        <item>Thu 7</item>
+        <item>7</item>
+        <item>May 2022</item>
+        <item>7.07.2022</item>
+        <item>7.07.22</item>
+        <item>07.22</item>
+        <item>Thursday</item>
+    </string-array>
+    <string-array name="statusbar_date_format_values" public="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+    </string-array>
+    <string-array name="theme_server_elite_entries" public="false">
+        <item>Global</item>
+        <item>China</item>
+        <item>India</item>
+        <item>Russia</item>
+        <item>Turkey</item>
+        <item>Germany</item>
+    </string-array>
+    <string-array name="theme_server_elite_values" public="false">
+        <item>ID</item>
+        <item>CN</item>
+        <item>IN</item>
+        <item>RU</item>
+        <item>TR</item>
+        <item>DE</item>
+    </string-array>
+    <string-array name="wide_notch_battery_indicator_style_entries2" public="false">
+        <item>Graphical</item>
+        <item>Percentage (center) and graphical</item>
+        <item>Percentages (right) and graphical</item>
+        <item>Percentages (left) and graphical</item>
+        <item>Top bar</item>
+        <item>Percent only</item>
+        <item>Do not show</item>
+    </string-array>
+    </resources>

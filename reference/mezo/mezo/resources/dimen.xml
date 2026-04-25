@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<resources offset16="true">
+    <dimen name="card_bg_radius" public="false">16.0dp</dimen>
+    <dimen name="card_drawable_padding" public="false">5.0dp</dimen>
+    <dimen name="card_icon_height" public="false">20.0dp</dimen>
+    <dimen name="card_icon_width" public="false">150.0dp</dimen>
+    <dimen name="card_info_display_number_text_size" public="false">12.659973sp</dimen>
+    <dimen name="card_info_margin" public="false">17.0dp</dimen>
+    <dimen name="card_info_title_margin_top" public="false">8.0dp</dimen>
+    <dimen name="card_title_text_size" public="false">16.659973sp</dimen>
+    <dimen name="shape_radius" public="false">32.0dp</dimen>
+</resources>

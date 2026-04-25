@@ -1,0 +1,55 @@
+{
+  "default_layout_mode": "single_row",
+  "single_row_order": [
+    "time_status_time",
+    "notification_call",
+    "speed_gauge",
+    "clock",
+    "prompt_plug",
+    "netspeed_moon",
+    "temperature",
+    "date_day",
+    "bluetooth",
+    "sim_1",
+    "sim_2",
+    "wifi",
+    "battery",
+    "weather",
+    "date_31_12",
+    "alarm",
+    "network_blue",
+    "network_red",
+    "wifi_secondary",
+    "charging"
+  ],
+  "two_rows_optional_default": {
+    "left_row_1": [
+      "time_status_time",
+      "notification_call",
+      "speed_gauge"
+    ],
+    "left_row_2": [
+      "clock",
+      "prompt_plug",
+      "netspeed_moon"
+    ],
+    "right_row_1": [
+      "temperature",
+      "date_day_10",
+      "bluetooth",
+      "sim_1",
+      "sim_2",
+      "wifi",
+      "battery"
+    ],
+    "right_row_2": [
+      "weather",
+      "date_31_12",
+      "alarm",
+      "network_blue",
+      "network_red",
+      "wifi_secondary",
+      "charging"
+    ]
+  }
+}

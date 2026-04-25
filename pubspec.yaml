@@ -1,0 +1,35 @@
+name: deadzon
+description: DeadZon premium standalone ROM feature hub.
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  provider: ^6.1.2
+  go_router: ^17.2.2
+  google_fonts: ^8.0.2
+  flutter_animate: ^4.5.2
+  shared_preferences: ^2.5.3
+  material_color_utilities: ^0.13.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/branding/deadzon/webp_for_app/deadzon_app_icon_1024.webp
+    - assets/branding/deadzon/webp_for_app/deadzon_splash_logo_2048.webp
+    - assets/branding/deadzon/webp_for_app/deadzon_logo_mark_2048.webp
+    - assets/branding/deadzon/webp_for_app/deadzon_header_banner_3000x1200.webp
+    - assets/branding/deadzon/webp_for_app/deadzon_brand_lockup_2048x1400.webp
+    - reference/mezo/mezo/res/drawable-xxhdpi/
+    - reference/mezo/mezo/res/drawable-xxxhdpi/

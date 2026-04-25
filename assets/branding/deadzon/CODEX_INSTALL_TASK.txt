@@ -1,0 +1,25 @@
+Implement DeadZon branding assets.
+
+Use this branding package.
+
+Files to place:
+- deadzon_app_icon_1024.png -> launcher icon source
+- deadzon_splash_logo_2048.png or webp_for_app/deadzon_splash_logo_2048.webp -> splash screen logo
+- deadzon_logo_mark_2048.png or webp_for_app/deadzon_logo_mark_2048.webp -> Home/Settings/About mark
+- deadzon_header_banner_3000x1200.png or WebP version -> About/header banner
+
+Requirements:
+1. Replace Flutter default launcher icon with DeadZon app icon.
+2. Update Android app label to DeadZon.
+3. Add splash screen using the splash logo.
+4. Use the logo mark in Home identity card and Settings/About section.
+5. Prefer WebP inside Flutter assets where possible to reduce APK size.
+6. Keep PNG only for launcher icon generation if needed.
+7. Do not package the full 3072 brand image inside the APK unless needed.
+8. Update pubspec.yaml assets cleanly.
+9. Run flutter analyze and flutter build apk --release --split-per-abi.
+10. Update mezo.md with installed branding assets and file locations.
+
+Final result:
+DeadZon should no longer show Flutter default icon.
+Branding should use the new DeadZon fox/DZ logo consistently.

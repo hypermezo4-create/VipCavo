@@ -1,0 +1,90 @@
+{
+  "created_for": "DeadZone / VipCavo Statusbar Full UI Redesign",
+  "created_at": "2026-04-25T16:30:30.998669Z",
+  "old_working_screenshots": 74,
+  "new_main_references": [
+    "01_STATUSBAR_STUDIO_MAIN_SCREEN.png",
+    "02_ARRANGE_LAYOUT_SINGLE_ROW_SHEET.png",
+    "03_ARRANGE_LAYOUT_TWO_ROWS_SHEET.png",
+    "04_BATTERY_FULL_SETTINGS_REDESIGN.png",
+    "05_CLOCK_FULL_SETTINGS_REDESIGN.png",
+    "06_NETWORK_FULL_SETTINGS_REDESIGN.png",
+    "07_DATE_WEATHER_FULL_SETTINGS_REDESIGN.png",
+    "08_ICONS_FULL_SETTINGS_REDESIGN.png",
+    "09_PROMPT_BACKGROUND_FULL_SETTINGS_REDESIGN.png",
+    "10_BACKGROUND_ADVANCED_FULL_SETTINGS_REDESIGN.png"
+  ],
+  "extra_backup_visuals": 31,
+  "codex_entry_file": "03_CODEX_READ_THIS_FIRST/01_MASTER_CODEX_PROMPT.md",
+  "must_preserve": [
+    "package name",
+    "applicationId",
+    "signing configs",
+    "release keys",
+    "google-services.json",
+    "Firebase config",
+    "Gradle namespace",
+    "GitHub Actions",
+    "AndroidManifest app/package configuration",
+    "existing XML android:key values",
+    "existing android:id values referenced by Smali",
+    "existing Smali method signatures",
+    "existing preference keys",
+    "existing internal apply/root/ROM logic"
+  ],
+  "layout_rules": {
+    "default_layout_mode": "single_row",
+    "single_row_order": [
+      "time_status_time",
+      "notification_call",
+      "speed_gauge",
+      "clock",
+      "prompt_plug",
+      "netspeed_moon",
+      "temperature",
+      "date_day",
+      "bluetooth",
+      "sim_1",
+      "sim_2",
+      "wifi",
+      "battery",
+      "weather",
+      "date_31_12",
+      "alarm",
+      "network_blue",
+      "network_red",
+      "wifi_secondary",
+      "charging"
+    ],
+    "two_rows_optional_default": {
+      "left_row_1": [
+        "time_status_time",
+        "notification_call",
+        "speed_gauge"
+      ],
+      "left_row_2": [
+        "clock",
+        "prompt_plug",
+        "netspeed_moon"
+      ],
+      "right_row_1": [
+        "temperature",
+        "date_day_10",
+        "bluetooth",
+        "sim_1",
+        "sim_2",
+        "wifi",
+        "battery"
+      ],
+      "right_row_2": [
+        "weather",
+        "date_31_12",
+        "alarm",
+        "network_blue",
+        "network_red",
+        "wifi_secondary",
+        "charging"
+      ]
+    }
+  }
+}
