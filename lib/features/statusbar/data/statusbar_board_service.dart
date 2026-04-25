@@ -9,9 +9,10 @@ class StatusbarBoardService {
 
   static Future<StatusbarBoardState> load() async {
     final sourcePlacements = _decodeSerializedPlacements(statusbarBoardSourceDefaultLayout);
+    final oneRowPlacements = _buildOneRowPlacements();
     final modules = <StatusbarBoardModuleState>[];
     for (final module in statusbarBoardModules) {
-      final sourcePlacement = sourcePlacements[module.id];
+      final sourcePlacement = oneRowPlacements[module.id] ?? sourcePlacements[module.id];
       final visible = await _readVisible(module);
       final sideValue = await _readInt(module.sideKey, (sourcePlacement?.side ?? module.defaultSide) == StatusbarBoardSide.right ? 1 : 0);
       final row = await _readInt(module.rowKey ?? 'status_bar_element_${module.id}_row', sourcePlacement?.row ?? module.defaultRow);
@@ -69,12 +70,13 @@ class StatusbarBoardService {
 
   static List<StatusbarBoardModuleState> defaultModules() {
     final sourcePlacements = _decodeSerializedPlacements(statusbarBoardSourceDefaultLayout);
+    final oneRowPlacements = _buildOneRowPlacements();
     return _normalize(statusbarBoardModules.map((module) {
-      final sourcePlacement = sourcePlacements[module.id];
+      final sourcePlacement = oneRowPlacements[module.id] ?? sourcePlacements[module.id];
       return StatusbarBoardModuleState(
         module: module,
         side: sourcePlacement?.side ?? module.defaultSide,
-        row: sourcePlacement?.row ?? 1,
+        row: 1,
         orderIndex: sourcePlacement?.orderIndex ?? module.defaultOrderIndex,
         visible: module.defaultVisible,
         enabled: module.defaultEnabled,
@@ -109,6 +111,22 @@ class StatusbarBoardService {
       final index = orderCounters[key] ?? 0;
       orderCounters[key] = index + 1;
       placements[item.id] = _SourcePlacement(side: item.side, row: item.row, orderIndex: index);
+    }
+    return placements;
+  }
+
+  static Map<String, _SourcePlacement> _buildOneRowPlacements() {
+    final placements = <String, _SourcePlacement>{};
+    var leftOrder = 0;
+    var rightOrder = 0;
+    for (final module in statusbarBoardModules) {
+      final side = module.defaultSide == StatusbarBoardSide.right ? StatusbarBoardSide.right : StatusbarBoardSide.left;
+      final orderIndex = side == StatusbarBoardSide.left ? leftOrder++ : rightOrder++;
+      placements[module.id] = _SourcePlacement(
+        side: side,
+        row: 1,
+        orderIndex: orderIndex,
+      );
     }
     return placements;
   }

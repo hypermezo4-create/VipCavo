@@ -122,11 +122,13 @@ class _StatusControlBoard extends StatefulWidget {
 }
 
 class _StatusControlBoardState extends State<_StatusControlBoard> {
-  static const double _boardHeight = 288;
-  static const double _tileSize = 48;
-  static const double _padding = 14;
-  static const double _rowGap = 74;
-  static const double _boardTopInset = 70;
+  static const double _boardHeight = 268;
+  static const double _boardHorizontalPadding = 8;
+  static const double _boardTopInset = 62;
+  static const double _minTileSize = 24;
+  static const double _maxTileSize = 40;
+  static const double _tileGap = 4;
+  static const double _rowSnapThreshold = 14;
 
   final GlobalKey _boardKey = GlobalKey();
   late StatusbarBoardState _workingState;
@@ -152,7 +154,7 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
   @override
   Widget build(BuildContext context) {
     return GlassCard(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
+      padding: const EdgeInsets.fromLTRB(10, 10, 10, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -175,6 +177,7 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
           LayoutBuilder(
             builder: (context, constraints) {
               final zones = _zones(constraints.maxWidth);
+              final tileSize = _tileSizeForZones(zones);
               return SizedBox(
                 height: _boardHeight,
                 child: DecoratedBox(
@@ -187,7 +190,7 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
                   child: Stack(
                     children: <Widget>[
                       Positioned.fill(child: _BoardGuides(zones: zones)),
-                      ..._workingState.modules.where((m) => m.visible).map((module) => _moduleWidget(module, zones)),
+                      ..._workingState.modules.where((m) => m.visible).map((module) => _moduleWidget(module, zones, tileSize)),
                     ],
                   ),
                 ),
@@ -202,20 +205,33 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
   List<_Zone> _zones(double width) {
     final centerX = width / 2;
     final row1Y = _boardTopInset;
-    final row2Y = _boardTopInset + _rowGap;
+    final row2Y = _boardTopInset + 80;
     return <_Zone>[
-      _Zone(side: StatusbarBoardSide.left, row: 1, left: _padding, right: centerX - 10, top: row1Y, bottom: row1Y + _tileSize),
-      _Zone(side: StatusbarBoardSide.left, row: 2, left: _padding, right: centerX - 10, top: row2Y, bottom: row2Y + _tileSize),
-      _Zone(side: StatusbarBoardSide.right, row: 1, left: centerX + 10, right: width - _padding, top: row1Y, bottom: row1Y + _tileSize),
-      _Zone(side: StatusbarBoardSide.right, row: 2, left: centerX + 10, right: width - _padding, top: row2Y, bottom: row2Y + _tileSize),
+      _Zone(side: StatusbarBoardSide.left, row: 1, left: _boardHorizontalPadding, right: centerX - 6, top: row1Y, bottom: row1Y + _maxTileSize),
+      _Zone(side: StatusbarBoardSide.left, row: 2, left: _boardHorizontalPadding, right: centerX - 6, top: row2Y, bottom: row2Y + _maxTileSize),
+      _Zone(side: StatusbarBoardSide.right, row: 1, left: centerX + 6, right: width - _boardHorizontalPadding, top: row1Y, bottom: row1Y + _maxTileSize),
+      _Zone(side: StatusbarBoardSide.right, row: 2, left: centerX + 6, right: width - _boardHorizontalPadding, top: row2Y, bottom: row2Y + _maxTileSize),
     ];
   }
 
-  Widget _moduleWidget(StatusbarBoardModuleState module, List<_Zone> zones) {
+  double _tileSizeForZones(List<_Zone> zones) {
+    var maxCount = 1;
+    for (final zone in zones) {
+      final count = _workingState.modules.where((m) => m.side == zone.side && m.row == zone.row && m.visible).length;
+      if (count > maxCount) {
+        maxCount = count;
+      }
+    }
+    final zoneWidth = zones[0].right - zones[0].left;
+    final calculated = (zoneWidth - (_tileGap * (maxCount - 1))) / maxCount;
+    return calculated.clamp(_minTileSize, _maxTileSize).toDouble();
+  }
+
+  Widget _moduleWidget(StatusbarBoardModuleState module, List<_Zone> zones, double tileSize) {
     final zone = zones.firstWhere((z) => z.side == module.side && z.row == module.row);
     final group = _workingState.modules.where((m) => m.side == module.side && m.row == module.row && m.visible).toList()..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
     final index = group.indexWhere((m) => m.id == module.id).clamp(0, 99);
-    final left = zone.left + (index * (_tileSize + 8)) + (module.side == StatusbarBoardSide.left ? _workingState.leftClusterOffset : _workingState.rightClusterOffset);
+    final left = zone.left + (index * (tileSize + _tileGap)) + (module.side == StatusbarBoardSide.left ? _workingState.leftClusterOffset : _workingState.rightClusterOffset);
     final top = zone.top + module.offsetY;
     final dragging = _draggingId == module.id;
     final pos = dragging ? _dragOffset : Offset(left, top);
@@ -244,15 +260,16 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
           final local = boardBox.globalToLocal(event.position);
           final nextTopLeft = local - _pointerAnchor;
           setState(() => _dragOffset = nextTopLeft);
-          _liveRelayout(module.id, nextTopLeft, zones);
+          _liveRelayout(module.id, nextTopLeft, zones, tileSize);
         },
         onPointerUp: (event) => _endDrag(event.pointer),
         onPointerCancel: (event) => _endDrag(event.pointer),
         child: SizedBox(
-          width: _tileSize,
-          height: _tileSize,
+          width: tileSize,
+          height: tileSize,
           child: _BoardModuleBadge(
             module: module,
+            size: tileSize,
             isDragging: dragging,
             onTap: () => _showModuleSheet(context, module),
           ),
@@ -261,17 +278,22 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
     );
   }
 
-  void _liveRelayout(String moduleId, Offset pos, List<_Zone> zones) {
+  void _liveRelayout(String moduleId, Offset pos, List<_Zone> zones, double tileSize) {
     final centerThreshold = zones[2].left - 10;
     final crossing = zones.firstWhere(
-      (z) => pos.dx + (_tileSize / 2) >= z.left && pos.dx + (_tileSize / 2) <= z.right,
+      (z) => pos.dx + (tileSize / 2) >= z.left && pos.dx + (tileSize / 2) <= z.right,
       orElse: () => pos.dx < centerThreshold ? zones.first : zones[2],
     );
     final rowThreshold = (zones.first.bottom + zones[1].top) / 2;
-    final row = (pos.dy + (_tileSize / 2)) > rowThreshold ? 2 : 1;
+    final moduleCenterY = pos.dy + (tileSize / 2);
+    final row = moduleCenterY > (rowThreshold + _rowSnapThreshold)
+        ? 2
+        : moduleCenterY < (rowThreshold - _rowSnapThreshold)
+            ? 1
+            : _workingState.modules.firstWhere((m) => m.id == moduleId).row;
     final side = crossing.side;
     final inGroup = _workingState.modules.where((m) => m.id != moduleId && m.side == side && m.row == row && m.visible).toList()..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-    final index = (((pos.dx - crossing.left) / (_tileSize + 8)).round()).clamp(0, inGroup.length);
+    final index = (((pos.dx - crossing.left) / (tileSize + _tileGap)).round()).clamp(0, inGroup.length);
     final moved = _workingState.modules.firstWhere((m) => m.id == moduleId).copyWith(side: side, row: row, orderIndex: index, visible: true, enabled: true);
     final updated = <StatusbarBoardModuleState>[..._workingState.modules.where((m) => m.id != moduleId), moved];
     setState(() {
@@ -283,7 +305,7 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
     final out = <StatusbarBoardModuleState>[];
     for (final side in <StatusbarBoardSide>[StatusbarBoardSide.left, StatusbarBoardSide.right]) {
       for (var row = 1; row <= 2; row++) {
-        final group = modules.where((m) => m.side == side && m.row == row).toList()..sort((a,b)=>a.orderIndex.compareTo(b.orderIndex));
+        final group = modules.where((m) => m.side == side && m.row == row).toList()..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
         for (var i = 0; i < group.length; i++) {
           out.add(group[i].copyWith(orderIndex: i));
         }
@@ -493,11 +515,13 @@ class _StatusSectionCard extends StatelessWidget {
 class _BoardModuleBadge extends StatelessWidget {
   const _BoardModuleBadge({
     required this.module,
+    required this.size,
     required this.isDragging,
     required this.onTap,
   });
 
   final StatusbarBoardModuleState module;
+  final double size;
   final bool isDragging;
   final VoidCallback onTap;
 
@@ -519,7 +543,7 @@ class _BoardModuleBadge extends StatelessWidget {
             curve: DesignTokens.motionCurve,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(size * 0.24),
               color: const Color(0xFF10272E),
               border: Border.all(color: module.module.color.withValues(alpha: isDragging ? 0.9 : 0.5), width: isDragging ? 1.6 : 1.1),
               boxShadow: isDragging
@@ -528,10 +552,21 @@ class _BoardModuleBadge extends StatelessWidget {
                     ]
                   : const <BoxShadow>[],
             ),
-            child: Icon(
-              module.module.icon,
-              color: Colors.white,
-              size: 22,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(size * 0.2),
+              child: Image.asset(
+                module.module.iconAsset,
+                width: size * 0.8,
+                height: size * 0.8,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return Icon(
+                    module.module.icon,
+                    color: Colors.white,
+                    size: (size * 0.58).clamp(14, 24).toDouble(),
+                  );
+                },
+              ),
             ),
           ),
         ),
