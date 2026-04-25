@@ -1,6 +1,7 @@
 import 'package:deadzon/features/statusbar/data/resize_statusbar_service.dart';
 import 'package:deadzon/features/statusbar/data/statusbar_board_model.dart';
 import 'package:deadzon/features/statusbar/statusbar_board_config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class StatusbarBoardService {
   StatusbarBoardService._();
@@ -8,10 +9,7 @@ class StatusbarBoardService {
   static const String _refreshIntent = 'my.intent.action.REFRESH_STATUSBAR';
 
   static Future<StatusbarBoardState> load() async {
-    final serialized = await ResizeStatusbarService.readString(
-      key: statusbarBoardSerializedKey,
-      fallback: statusbarBoardSourceDefaultLayout,
-    );
+    final serialized = await _readString(statusbarBoardSerializedKey, statusbarBoardSourceDefaultLayout);
     final parsed = parseSerializedLayout(serialized);
     final modules = <StatusbarBoardModuleState>[];
 
@@ -69,15 +67,19 @@ class StatusbarBoardService {
       ]);
     }
 
-    await ResizeStatusbarService.writeString(
-      key: statusbarBoardSerializedKey,
-      value: encodeSerializedLayout(normalized),
-    );
-    await _sendRefreshIntent();
+    await _writeString(statusbarBoardSerializedKey, encodeSerializedLayout(normalized));
+    try {
+      await _sendRefreshIntent();
+    } catch (_) {
+      // The preview/local save remains active when the native bridge cannot refresh SystemUI.
+    }
   }
 
   static Future<void> writeClusterOffsets({required double left, required double right}) async {
-    return;
+    await Future.wait(<Future<void>>[
+      _writeInt('status_bar_left_cluster_offset', left.round()),
+      _writeInt('status_bar_right_cluster_offset', right.round()),
+    ]);
   }
 
   static List<StatusbarBoardModuleState> defaultModules() {
@@ -194,9 +196,74 @@ class StatusbarBoardService {
     await _writeBool(moduleState.module.visibilityKey, moduleState.visible);
   }
 
-  static Future<int> _readInt(String key, int fallback) => ResizeStatusbarService.readInt(key: key, fallback: fallback);
-  static Future<bool> _readBool(String key, bool fallback) => ResizeStatusbarService.readBool(key: key, fallback: fallback);
-  static Future<void> _writeInt(String key, int value) => ResizeStatusbarService.writeInt(key: key, value: value);
-  static Future<void> _writeBool(String key, bool value) => ResizeStatusbarService.writeBool(key: key, value: value);
+  static Future<int> _readInt(String key, int fallback) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.get(key);
+    if (raw is num) {
+      return raw.round();
+    }
+    try {
+      return await ResizeStatusbarService.readInt(key: key, fallback: fallback);
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  static Future<bool> _readBool(String key, bool fallback) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.get(key);
+    if (raw is bool) {
+      return raw;
+    }
+    try {
+      return await ResizeStatusbarService.readBool(key: key, fallback: fallback);
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  static Future<String> _readString(String key, String fallback) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.get(key);
+    if (raw is String) {
+      return raw;
+    }
+    try {
+      return await ResizeStatusbarService.readString(key: key, fallback: fallback);
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  static Future<void> _writeInt(String key, int value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(key, value);
+    try {
+      await ResizeStatusbarService.writeInt(key: key, value: value);
+    } catch (_) {
+      // Old key is still saved locally when WRITE_SETTINGS/native permission is unavailable.
+    }
+  }
+
+  static Future<void> _writeBool(String key, bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(key, value);
+    try {
+      await ResizeStatusbarService.writeBool(key: key, value: value);
+    } catch (_) {
+      // Old key is still saved locally when WRITE_SETTINGS/native permission is unavailable.
+    }
+  }
+
+  static Future<void> _writeString(String key, String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(key, value);
+    try {
+      await ResizeStatusbarService.writeString(key: key, value: value);
+    } catch (_) {
+      // Old key is still saved locally when WRITE_SETTINGS/native permission is unavailable.
+    }
+  }
+
   static Future<void> _sendRefreshIntent() => ResizeStatusbarService.sendBroadcastIntent(_refreshIntent);
 }
