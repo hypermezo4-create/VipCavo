@@ -60,20 +60,34 @@ class StatusbarBoardService {
     final normalized = _ensureUniqueSlotOrdering(modules);
 
     for (final module in normalized) {
-      await Future.wait(<Future<void>>[
-        _writeVisible(module),
-        _writeBool(module.module.enabledKey ?? 'status_bar_element_${module.id}_enabled', module.enabled),
-        _writeInt(module.module.offsetKey, module.offsetX.round()),
-        _writeInt(module.module.sizeKey ?? 'status_bar_element_${module.id}_size', (module.size * 100).round()),
-        _writeInt(module.module.offsetYKey ?? 'status_bar_element_${module.id}_offset_y', module.offsetY.round()),
-      ]);
+      try {
+        await Future.wait(<Future<void>>[
+          _writeVisible(module),
+          _writeBool(module.module.enabledKey ?? 'status_bar_element_${module.id}_enabled', module.enabled),
+          _writeInt(module.module.offsetKey, module.offsetX.round()),
+          _writeInt(module.module.sizeKey ?? 'status_bar_element_${module.id}_size', (module.size * 100).round()),
+          _writeInt(module.module.offsetYKey ?? 'status_bar_element_${module.id}_offset_y', module.offsetY.round()),
+        ]);
+      } catch (_) {
+        // Keep the preview responsive even when direct Settings.System writes are blocked.
+        // The root ROM bridge will still attempt the important status_bar_elem_position write.
+      }
     }
 
-    await ResizeStatusbarService.writeString(
-      key: statusbarBoardSerializedKey,
-      value: encodeSerializedLayout(normalized),
-    );
-    await _sendRefreshIntent();
+    try {
+      await ResizeStatusbarService.writeString(
+        key: statusbarBoardSerializedKey,
+        value: encodeSerializedLayout(normalized),
+      );
+    } catch (_) {
+      // Root Live Apply handles the real ROM write when enabled.
+    }
+
+    try {
+      await _sendRefreshIntent();
+    } catch (_) {
+      // Some ROMs block the refresh broadcast from normal APK context.
+    }
   }
 
   static Future<void> writeClusterOffsets({required double left, required double right}) async {
