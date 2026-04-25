@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
@@ -30,23 +29,16 @@ class StatusbarScreen extends StatefulWidget {
 class _StatusbarScreenState extends State<StatusbarScreen> {
   late final List<MezoStatusbarCardSource> _cards;
   StatusbarBoardState? _boardState;
-  bool _romLiveApply = false;
-  bool _checkingRom = false;
-  StatusbarRomBridgeResult? _romStatus;
-  Timer? _romWriteDebounce;
+  bool _romLiveApply = true;
+  bool _romBusy = false;
+  StatusbarRomBridgeResult? _romResult;
 
   @override
   void initState() {
     super.initState();
     _cards = MezoStatusbarBoardSourceMap.cards;
     _loadBoard();
-    _loadRomBridge();
-  }
-
-  @override
-  void dispose() {
-    _romWriteDebounce?.cancel();
-    super.dispose();
+    _checkBridge();
   }
 
   Future<void> _loadBoard() async {
@@ -57,92 +49,6 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
     setState(() => _boardState = loaded);
   }
 
-
-  Future<void> _loadRomBridge() async {
-    final liveApply = await StatusbarRomBridgeService.readLiveApplyEnabled();
-    final status = await StatusbarRomBridgeService.checkRootStatus();
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      _romLiveApply = liveApply;
-      _romStatus = status;
-    });
-  }
-
-  Future<void> _setRomLiveApply(bool enabled) async {
-    await StatusbarRomBridgeService.setLiveApplyEnabled(enabled);
-    if (!mounted) {
-      return;
-    }
-    setState(() => _romLiveApply = enabled);
-    if (enabled) {
-      await _checkRomBridge();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ROM Live Apply disabled. Preview remains local.')),
-      );
-    }
-  }
-
-  Future<void> _checkRomBridge() async {
-    if (_checkingRom) {
-      return;
-    }
-    setState(() => _checkingRom = true);
-    final status = await StatusbarRomBridgeService.checkRootStatus();
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      _checkingRom = false;
-      _romStatus = status;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(status.bridgeActive ? 'Root bridge active. ROM writes are available.' : 'Root bridge unavailable. Preview only.')),
-    );
-  }
-
-  Future<void> _applyCurrentToRom() async {
-    final current = _boardState;
-    if (current == null) {
-      return;
-    }
-    final result = await StatusbarRomBridgeService.writeCurrentModules(current.modules);
-    if (!mounted) {
-      return;
-    }
-    setState(() => _romStatus = result);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(result.displayMessage)),
-    );
-  }
-
-  void _scheduleRomLiveWrite(StatusbarBoardState next) {
-    if (!_romLiveApply) {
-      return;
-    }
-    _romWriteDebounce?.cancel();
-    _romWriteDebounce = Timer(const Duration(milliseconds: 180), () async {
-      final result = await StatusbarRomBridgeService.writeCurrentModules(next.modules);
-      if (!mounted) {
-        return;
-      }
-      setState(() => _romStatus = result);
-    });
-  }
-
-  Future<void> _writeToRomIfEnabled(StatusbarBoardState next) async {
-    if (!_romLiveApply) {
-      return;
-    }
-    final result = await StatusbarRomBridgeService.writeCurrentModules(next.modules);
-    if (!mounted) {
-      return;
-    }
-    setState(() => _romStatus = result);
-  }
-
   Future<void> _updateBoard(StatusbarBoardState next) async {
     setState(() => _boardState = next);
     await StatusbarBoardService.writeModules(next.modules);
@@ -150,8 +56,152 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
       left: next.leftClusterOffset,
       right: next.rightClusterOffset,
     );
-    _romWriteDebounce?.cancel();
-    await _writeToRomIfEnabled(next);
+    if (_romLiveApply) {
+      await _writeBoardToRom(next, quiet: true);
+    }
+  }
+
+  Future<void> _checkBridge() async {
+    setState(() => _romBusy = true);
+    final result = await StatusbarRomBridgeService.checkBridge();
+    if (!mounted) return;
+    setState(() {
+      _romResult = result;
+      _romBusy = false;
+    });
+    _showSnack(result.message);
+  }
+
+  Future<void> _readRomValue() async {
+    setState(() => _romBusy = true);
+    final value = await StatusbarRomBridgeService.readRomValue();
+    if (!mounted) return;
+    setState(() {
+      _romResult = StatusbarRomBridgeResult(
+        success: value.isNotEmpty,
+        rootAvailable: _romResult?.rootAvailable ?? value.isNotEmpty,
+        key: StatusbarRomBridgeService.key,
+        writtenValue: _romResult?.writtenValue ?? '',
+        readValue: value,
+        message: value.isEmpty ? 'ROM value is empty or unavailable.' : 'Current ROM value loaded.',
+      );
+      _romBusy = false;
+    });
+    _showSnack(_romResult!.message);
+  }
+
+  Future<void> _applyCurrentToRom() async {
+    final board = _boardState;
+    if (board == null) return;
+    await _writeBoardToRom(board, quiet: false);
+  }
+
+  Future<void> _writeBoardToRom(StatusbarBoardState board, {required bool quiet}) async {
+    final value = StatusbarBoardService.encodeSerializedLayout(board.modules);
+    setState(() => _romBusy = true);
+    final result = await StatusbarRomBridgeService.writePosition(value);
+    if (!mounted) return;
+    setState(() {
+      _romResult = result;
+      _romBusy = false;
+    });
+    if (!quiet) {
+      _showSnack(result.message);
+    }
+  }
+
+  Future<void> _restoreMezoDefault() async {
+    final defaults = StatusbarBoardService.defaultModules();
+    final next = (_boardState ?? StatusbarBoardState(modules: defaults, leftClusterOffset: 0, rightClusterOffset: 0)).copyWith(modules: defaults);
+    await _updateBoard(next);
+    setState(() => _romBusy = true);
+    final result = await StatusbarRomBridgeService.restoreDefault();
+    if (!mounted) return;
+    setState(() {
+      _romResult = result;
+      _romBusy = false;
+    });
+    _showSnack(result.message);
+  }
+
+  Future<void> _openPositionSheet() async {
+    final board = _boardState;
+    if (board == null) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.82,
+          minChildSize: 0.55,
+          maxChildSize: 0.94,
+          builder: (context, controller) {
+            return Container(
+              margin: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF101923),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(color: const Color(0xFF8D67FF).withValues(alpha: 0.45)),
+                boxShadow: const <BoxShadow>[BoxShadow(color: Color(0x66000000), blurRadius: 28, offset: Offset(0, 14))],
+              ),
+              child: ListView(
+                controller: controller,
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Text(
+                          'Arrange status bar items',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(sheetContext).pop(),
+                        icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                  Text('Drag icons to change ROM positions, then save/apply.', style: TextStyle(color: Colors.white.withValues(alpha: 0.65))),
+                  const SizedBox(height: 12),
+                  _StatusControlBoard(
+                    boardState: _boardState ?? board,
+                    onChanged: _updateBoard,
+                    onOpenSection: _openSection,
+                    embedded: true,
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: <Widget>[
+                      TextButton.icon(
+                        onPressed: _restoreMezoDefault,
+                        icon: const Icon(Icons.restart_alt_rounded),
+                        label: const Text('Reset'),
+                      ),
+                      const Spacer(),
+                      FilledButton.icon(
+                        onPressed: () async {
+                          await _applyCurrentToRom();
+                          Navigator.of(sheetContext).pop();
+                        },
+                        icon: const Icon(Icons.check_circle_outline_rounded),
+                        label: const Text('Save layout'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showSnack(String message) {
+    if (!mounted || message.isEmpty) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _openSection(String sectionId) {
@@ -184,14 +234,17 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
             ),
             const SizedBox(height: 18),
             _RomLiveApplyCard(
-              enabled: _romLiveApply,
-              checking: _checkingRom,
-              status: _romStatus,
-              onChanged: _setRomLiveApply,
-              onCheck: _checkRomBridge,
+              liveApply: _romLiveApply,
+              busy: _romBusy,
+              result: _romResult,
+              onToggle: (value) => setState(() => _romLiveApply = value),
+              onCheck: _checkBridge,
+              onRead: _readRomValue,
+              onChoosePositions: _openPositionSheet,
+              onRestoreDefault: _restoreMezoDefault,
               onApply: _applyCurrentToRom,
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 18),
             if (_boardState == null)
               const GlassCard(
                 child: Padding(
@@ -203,7 +256,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
               _StatusControlBoard(
                 boardState: _boardState!,
                 onChanged: _updateBoard,
-                onLivePreviewChanged: _scheduleRomLiveWrite,
+                onOpenSection: _openSection,
               ),
             const SizedBox(height: 18),
             _StatusbarSectionGrid(cards: _cards, onOpenSection: _openSection),
@@ -218,96 +271,131 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
 
 class _RomLiveApplyCard extends StatelessWidget {
   const _RomLiveApplyCard({
-    required this.enabled,
-    required this.checking,
-    required this.status,
-    required this.onChanged,
+    required this.liveApply,
+    required this.busy,
+    required this.result,
+    required this.onToggle,
     required this.onCheck,
+    required this.onRead,
+    required this.onChoosePositions,
+    required this.onRestoreDefault,
     required this.onApply,
   });
 
-  final bool enabled;
-  final bool checking;
-  final StatusbarRomBridgeResult? status;
-  final ValueChanged<bool> onChanged;
+  final bool liveApply;
+  final bool busy;
+  final StatusbarRomBridgeResult? result;
+  final ValueChanged<bool> onToggle;
   final VoidCallback onCheck;
+  final VoidCallback onRead;
+  final VoidCallback onChoosePositions;
+  final VoidCallback onRestoreDefault;
   final VoidCallback onApply;
 
   @override
   Widget build(BuildContext context) {
-    final active = status?.bridgeActive ?? false;
-    final accent = active ? const Color(0xFF54F6C8) : const Color(0xFFFFC66B);
-    final statusText = status?.displayMessage ?? 'Checking ROM bridge...';
-
+    final rootActive = result?.rootAvailable ?? false;
+    final confirmed = result?.success ?? false;
+    final readValue = result?.readValue ?? '';
     return GlassCard(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Container(
-                width: 38,
-                height: 38,
+                width: 54,
+                height: 54,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  color: accent.withValues(alpha: 0.13),
-                  border: Border.all(color: accent.withValues(alpha: 0.65)),
+                  color: const Color(0xFF13342F),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFF2ED9A6).withValues(alpha: 0.72)),
                 ),
-                child: Icon(active ? Icons.bolt_rounded : Icons.lock_outline_rounded, color: accent, size: 21),
+                child: const Icon(Icons.flash_on_rounded, color: Color(0xFF2ED9A6)),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
                       'ROM Live Apply',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
-                      statusText,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white.withValues(alpha: 0.68), height: 1.25),
+                      rootActive ? 'Root bridge active. ROM writes are available.' : 'Root bridge unavailable. Preview still works.',
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.66), height: 1.25),
                     ),
                   ],
                 ),
               ),
-              Switch.adaptive(value: enabled, activeThumbColor: const Color(0xFF54F6C8), onChanged: onChanged),
+              Switch.adaptive(
+                value: liveApply,
+                activeThumbColor: const Color(0xFF7CF6D1),
+                onChanged: onToggle,
+              ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
             children: <Widget>[
-              _RomStatusChip(label: active ? 'Root active' : 'Root unavailable', color: accent),
-              _RomStatusChip(label: StatusbarRomBridgeService.positionKey, color: const Color(0xFF8D67FF)),
-              if (status?.confirmed ?? false) const _RomStatusChip(label: 'Write confirmed', color: Color(0xFF54F6C8)),
+              _RomStatusChip(label: rootActive ? 'Root active' : 'Preview only', active: rootActive),
+              _RomStatusChip(label: StatusbarRomBridgeService.key, active: true),
+              _RomStatusChip(label: confirmed ? 'Write confirmed' : 'Awaiting write', active: confirmed),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: checking ? null : onCheck,
-                  icon: checking
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.verified_rounded),
-                  label: const Text('Check Bridge'),
-                ),
+          if (readValue.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 10),
+            Text(
+              'Current ROM value: $readValue',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.56), fontSize: 12),
+            ),
+          ],
+          const SizedBox(height: 14),
+          if (busy)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: LinearProgressIndicator(
+                minHeight: 2,
+                color: const Color(0xFF2ED9A6),
+                backgroundColor: Colors.white.withValues(alpha: 0.08),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: onApply,
-                  icon: const Icon(Icons.system_update_alt_rounded),
-                  label: const Text('Apply to ROM'),
-                ),
+            ),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: <Widget>[
+              OutlinedButton.icon(
+                onPressed: busy ? null : onCheck,
+                icon: const Icon(Icons.verified_rounded),
+                label: const Text('Check Bridge'),
+              ),
+              OutlinedButton.icon(
+                onPressed: busy ? null : onRead,
+                icon: const Icon(Icons.visibility_rounded),
+                label: const Text('Read ROM'),
+              ),
+              FilledButton.icon(
+                onPressed: busy ? null : onChoosePositions,
+                icon: const Icon(Icons.dashboard_customize_rounded),
+                label: const Text('Choose positions'),
+              ),
+              FilledButton.icon(
+                onPressed: busy ? null : onApply,
+                icon: const Icon(Icons.system_update_alt_rounded),
+                label: const Text('Apply to ROM'),
+              ),
+              TextButton.icon(
+                onPressed: busy ? null : onRestoreDefault,
+                icon: const Icon(Icons.restart_alt_rounded),
+                label: const Text('Restore Mezo default'),
               ),
             ],
           ),
@@ -318,24 +406,22 @@ class _RomLiveApplyCard extends StatelessWidget {
 }
 
 class _RomStatusChip extends StatelessWidget {
-  const _RomStatusChip({required this.label, required this.color});
+  const _RomStatusChip({required this.label, required this.active});
 
   final String label;
-  final Color color;
+  final bool active;
 
   @override
   Widget build(BuildContext context) {
+    final color = active ? const Color(0xFF7CF6D1) : Colors.white70;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
-        color: color.withValues(alpha: 0.12),
-        border: Border.all(color: color.withValues(alpha: 0.48)),
+        border: Border.all(color: color.withValues(alpha: active ? 0.52 : 0.28)),
+        color: color.withValues(alpha: active ? 0.12 : 0.06),
       ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white.withValues(alpha: 0.86), fontWeight: FontWeight.w700),
-      ),
+      child: Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 12)),
     );
   }
 }
@@ -344,12 +430,14 @@ class _StatusControlBoard extends StatefulWidget {
   const _StatusControlBoard({
     required this.boardState,
     required this.onChanged,
-    required this.onLivePreviewChanged,
+    required this.onOpenSection,
+    this.embedded = false,
   });
 
   final StatusbarBoardState boardState;
   final ValueChanged<StatusbarBoardState> onChanged;
-  final ValueChanged<StatusbarBoardState> onLivePreviewChanged;
+  final ValueChanged<String> onOpenSection;
+  final bool embedded;
 
   @override
   State<_StatusControlBoard> createState() => _StatusControlBoardState();
@@ -393,22 +481,24 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  'Statusbar adjustment',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
+          if (!widget.embedded) ...<Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    'Statusbar adjustment',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
+                  ),
                 ),
-              ),
-              TextButton.icon(
-                onPressed: _resetBoard,
-                icon: const Icon(Icons.restart_alt_rounded),
-                label: const Text('Reset'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
+                TextButton.icon(
+                  onPressed: _resetBoard,
+                  icon: const Icon(Icons.restart_alt_rounded),
+                  label: const Text('Reset'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
           LayoutBuilder(
             builder: (context, constraints) {
               final slots = _slots(constraints.maxWidth);
@@ -567,11 +657,9 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
     final nextCode = _nearestCodeFor(pos, slots, tileSize, occupied, moduleId);
     final moved = _workingState.modules.firstWhere((m) => m.id == moduleId).copyWith(currentPositionCode: nextCode, visible: true, enabled: true);
     final updated = <StatusbarBoardModuleState>[..._workingState.modules.where((m) => m.id != moduleId), moved];
-    final nextState = _workingState.copyWith(modules: updated);
     setState(() {
-      _workingState = nextState;
+      _workingState = _workingState.copyWith(modules: updated);
     });
-    widget.onLivePreviewChanged(nextState);
   }
 
   Future<void> _resetBoard() async {
@@ -668,6 +756,7 @@ class _BoardGuides extends StatelessWidget {
       ),
       Positioned(left: 18, top: 18, child: Text('Left side', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.w600))),
       Positioned(right: 18, top: 18, child: Text('Right side', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.w600))),
+      Positioned(left: center - 22, top: 18, child: Text('Center', style: TextStyle(color: Colors.white.withValues(alpha: 0.62), fontSize: 12, fontWeight: FontWeight.w600))),
     ]);
   }
 }
@@ -694,7 +783,7 @@ class _StatusbarSectionGrid extends StatelessWidget {
             crossAxisCount: compact ? 2 : 3,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            mainAxisExtent: compact ? 196 : 188,
+            mainAxisExtent: compact ? 176 : 176,
           ),
           itemBuilder: (context, index) {
             final card = cards[index];
