@@ -7,7 +7,6 @@ import 'package:deadzon/features/statusbar/data/resize_statusbar_service.dart';
 import 'package:deadzon/features/statusbar/data/statusbar_board_model.dart';
 import 'package:deadzon/features/statusbar/data/statusbar_board_service.dart';
 import 'package:deadzon/features/statusbar/presentation/mezo_controls.dart';
-import 'package:deadzon/features/statusbar/statusbar_board_config.dart';
 import 'package:deadzon/features/statusbar/statusbar_board_source_map.dart';
 import 'package:deadzon/features/statusbar/mezo_port_map.dart';
 import 'package:deadzon/features/statusbar/statusbar_detail_content.dart';
