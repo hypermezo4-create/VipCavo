@@ -24,10 +24,12 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
 
   static const List<_StyleOption> _styles = <_StyleOption>[
     _StyleOption(0, 'Default'),
-    _StyleOption(1, 'Compact'),
-    _StyleOption(2, 'Rounded'),
-    _StyleOption(3, 'iOS Glass'),
-    _StyleOption(4, 'Minimal'),
+    _StyleOption(1, 'Style 1'),
+    _StyleOption(2, 'Style 2'),
+    _StyleOption(3, 'Style 3'),
+    _StyleOption(4, 'Style 4'),
+    _StyleOption(5, 'Style 5'),
+    _StyleOption(7, 'Style 6'),
   ];
 
   static const List<_TileOption> _availableTiles = <_TileOption>[
@@ -81,8 +83,8 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
                 padding: DesignTokens.pagePadding.copyWith(bottom: 132),
                 children: <Widget>[
                   const PremiumTopBar(
-                    title: 'Control Center',
-                    subtitle: 'Quick toggles, tile shape, style and blur tuning',
+                    title: 'Control Center 13',
+                    subtitle: 'CC big tiles customizations',
                   ),
                   const SizedBox(height: 16),
                   GlassCard(
@@ -91,7 +93,7 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
                       icon: Icons.restart_alt_rounded,
                       iconColor: accent,
                       title: 'Restart SystemUI',
-                      subtitle: 'Refresh system interface after changes',
+                      subtitle: 'Click it to apply some changes',
                       trailing: const Icon(Icons.chevron_right_rounded),
                     ),
                   ),
@@ -101,8 +103,8 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
                       children: <Widget>[
                         _SwitchPreferenceRow(
                           icon: Icons.crop_square_rounded,
-                          title: 'Square Tiles',
-                          subtitle: _config.squareMezoTiles ? 'Enabled • square_mezo_tiles' : 'Disabled • square_mezo_tiles',
+                          title: 'Square shaped toggles',
+                          subtitle: _config.squareMezoTiles ? 'Enabled' : 'Disabled',
                           value: _config.squareMezoTiles,
                           accent: accent,
                           onChanged: _setSquareTiles,
@@ -111,8 +113,8 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
                         _PreferenceActionRow(
                           icon: Icons.style_rounded,
                           iconColor: accent,
-                          title: 'Control Center Style',
-                          subtitle: 'swap_tiles_1 • ${_selectedStyleLabel()}',
+                          title: 'Control Center style',
+                          subtitle: _selectedStyleLabel(),
                           trailing: const Icon(Icons.chevron_right_rounded),
                           onTap: _showStylePicker,
                         ),
@@ -155,7 +157,7 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Saved locally now. Real Control Center application requires the future ROM bridge.',
+                    'Uses the original Mezo keys and refresh actions for the Control Center module.',
                     style: TextStyle(color: textColor.withValues(alpha: 0.62), fontSize: 12, height: 1.35),
                   ),
                 ],
@@ -247,7 +249,7 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Restart SystemUI'),
-        content: const Text('Request a SystemUI refresh now? This sends a safe broadcast only.'),
+        content: const Text('Apply the current Control Center changes now?'),
         actions: <Widget>[
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Refresh')),
@@ -258,13 +260,14 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
     if (confirmed != true) return;
     await _service.requestSystemUiRefresh();
     if (!mounted) return;
-    _showMessage('SystemUI refresh requested.');
+    _showMessage('Refresh requested.');
   }
 
   Future<void> _applyConfig() async {
     await _service.saveConfig(_config);
+    await _service.requestStatusbarRefresh();
     if (!mounted) return;
-    _showMessage('Control Center config saved for ROM bridge.');
+    _showMessage('Control Center changes saved.');
   }
 
   Future<void> _confirmReset() async {
@@ -407,7 +410,7 @@ class _ExtraTilesSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 3),
-        Text('extra_two_mezo_tiles • ${selectedIds.join(',')}', style: TextStyle(color: textColor.withValues(alpha: 0.68))),
+        Text('Selected: ${selectedIds.join(', ')}', style: TextStyle(color: textColor.withValues(alpha: 0.68))),
         const SizedBox(height: 12),
         GridView.builder(
           itemCount: allTiles.length,
@@ -491,7 +494,7 @@ class _BlurSeekbarRow extends StatelessWidget {
                 children: <Widget>[
                   Text('Control Center Blur', style: TextStyle(color: textColor, fontWeight: FontWeight.w800, fontSize: 16)),
                   const SizedBox(height: 3),
-                  Text('cc_blur_ratio', style: TextStyle(color: textColor.withValues(alpha: 0.68))),
+                  Text('Blur ratio on control center', style: TextStyle(color: textColor.withValues(alpha: 0.68))),
                 ],
               ),
             ),
