@@ -109,142 +109,16 @@ class MainActivity : FlutterActivity() {
                     val config = args?.get("config")
                     result.success(writeMountBridgeConfig(config))
                 }
-                "checkSuAvailable" -> result.success(checkSuAvailable())
+
                 "runRootCommandSafe" -> {
                     val command = args?.get("command") as? String
-                    val timeoutMs = ((args?.get("timeoutMs") as? Number)?.toLong()) ?: 2500L
-                    if (command.isNullOrBlank()) {
-                        result.error("invalid_args", "Missing command", null)
-                        return@setMethodCallHandler
-                    }
+                    val timeoutMs = (args?.get("timeoutMs") as? Int) ?: 1800
                     result.success(runRootCommandSafe(command, timeoutMs))
-                }
-                "readSystemStringWithRoot" -> {
-                    val targetKey = args?.get("key") as? String
-                    val fallback = (args?.get("fallback") as? String) ?: ""
-                    if (targetKey.isNullOrBlank()) {
-                        result.error("invalid_args", "Missing key", null)
-                        return@setMethodCallHandler
-                    }
-                    result.success(readSystemStringWithRoot(targetKey, fallback))
-                }
-                "writeSystemStringWithRoot" -> {
-                    val targetKey = args?.get("key") as? String
-                    val value = (args?.get("value") as? String) ?: ""
-                    if (targetKey.isNullOrBlank()) {
-                        result.error("invalid_args", "Missing key", null)
-                        return@setMethodCallHandler
-                    }
-                    result.success(writeSystemStringWithRoot(targetKey, value))
                 }
                 else -> result.notImplemented()
             }
         }
     }
-
-    private fun checkSuAvailable(): Boolean {
-        val result = runRootCommandSafe("id", 1500L)
-        val stdout = result["stdout"]?.toString() ?: ""
-        val exitCode = result["exitCode"] as? Int ?: -1
-        return exitCode == 0 && stdout.contains("uid=0")
-    }
-
-    private fun readSystemStringWithRoot(key: String, fallback: String): Map<String, Any?> {
-        val command = "settings get system ${shellQuote(key)}"
-        val shell = runRootCommandSafe(command, 2500L)
-        val exitCode = shell["exitCode"] as? Int ?: -1
-        val stdout = shell["stdout"]?.toString()?.trim().orEmpty()
-        val rootAvailable = exitCode == 0 || checkSuAvailable()
-        val value = if (exitCode == 0 && stdout.isNotBlank() && stdout != "null") stdout.lines().last().trim() else fallback
-        return mapOf(
-            "success" to (exitCode == 0),
-            "rootAvailable" to rootAvailable,
-            "confirmed" to (exitCode == 0),
-            "key" to key,
-            "readback" to value,
-            "stdout" to shell["stdout"],
-            "stderr" to shell["stderr"],
-            "exitCode" to exitCode,
-            "message" to if (exitCode == 0) "ROM key read through root." else "Root bridge unavailable. Preview only."
-        )
-    }
-
-    private fun writeSystemStringWithRoot(key: String, value: String): Map<String, Any?> {
-        val rootAvailable = checkSuAvailable()
-        if (!rootAvailable) {
-            return mapOf(
-                "success" to false,
-                "rootAvailable" to false,
-                "confirmed" to false,
-                "key" to key,
-                "writtenValue" to value,
-                "message" to "Root bridge unavailable. Preview saved only."
-            )
-        }
-
-        val command = "settings put system ${shellQuote(key)} ${shellQuote(value)} && settings get system ${shellQuote(key)}"
-        val shell = runRootCommandSafe(command, 3000L)
-        val exitCode = shell["exitCode"] as? Int ?: -1
-        val stdout = shell["stdout"]?.toString()?.trim().orEmpty()
-        val readback = if (stdout.isNotBlank()) stdout.lines().last().trim() else ""
-        val confirmed = exitCode == 0 && readback == value
-        return mapOf(
-            "success" to (exitCode == 0),
-            "rootAvailable" to true,
-            "confirmed" to confirmed,
-            "key" to key,
-            "writtenValue" to value,
-            "readback" to readback,
-            "stdout" to shell["stdout"],
-            "stderr" to shell["stderr"],
-            "exitCode" to exitCode,
-            "message" to when {
-                confirmed -> "Statusbar layout written to ROM."
-                exitCode == 0 -> "ROM key write was not confirmed."
-                else -> "Root bridge failed. Preview saved only."
-            }
-        )
-    }
-
-    private fun runRootCommandSafe(command: String, timeoutMs: Long = 2500L): Map<String, Any?> {
-        return try {
-            val process = ProcessBuilder("su", "-c", command).start()
-            val finished = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
-            if (!finished) {
-                process.destroyForcibly()
-                return mapOf(
-                    "success" to false,
-                    "exitCode" to -1,
-                    "stdout" to "",
-                    "stderr" to "Root command timed out.",
-                    "command" to command,
-                )
-            }
-            val stdout = process.inputStream.bufferedReader().readText().trim()
-            val stderr = process.errorStream.bufferedReader().readText().trim()
-            val exitCode = process.exitValue()
-            mapOf(
-                "success" to (exitCode == 0),
-                "exitCode" to exitCode,
-                "stdout" to stdout,
-                "stderr" to stderr,
-                "command" to command,
-            )
-        } catch (error: Exception) {
-            mapOf(
-                "success" to false,
-                "exitCode" to -1,
-                "stdout" to "",
-                "stderr" to (error.message ?: error.toString()),
-                "command" to command,
-            )
-        }
-    }
-
-    private fun shellQuote(raw: String): String {
-        return "'" + raw.replace("'", "'\\''") + "'"
-    }
-
 
     private fun getInstalledPackages(): List<Map<String, Any>> {
         return try {
@@ -316,6 +190,42 @@ class MainActivity : FlutterActivity() {
             true
         } catch (_: Exception) {
             false
+        }
+    }
+
+    private fun runRootCommandSafe(command: String?, timeoutMs: Int): Map<String, Any> {
+        if (command.isNullOrBlank()) {
+            return mapOf(
+                "exitCode" to -1,
+                "stdout" to "",
+                "stderr" to "Missing root command",
+            )
+        }
+
+        return try {
+            val process = ProcessBuilder("su", "-c", command)
+                .redirectErrorStream(false)
+                .start()
+            val completed = process.waitFor(timeoutMs.toLong().coerceAtLeast(500L), TimeUnit.MILLISECONDS)
+            if (!completed) {
+                process.destroy()
+                return mapOf(
+                    "exitCode" to -1,
+                    "stdout" to "",
+                    "stderr" to "Root command timed out",
+                )
+            }
+            mapOf(
+                "exitCode" to process.exitValue(),
+                "stdout" to process.inputStream.bufferedReader().readText(),
+                "stderr" to process.errorStream.bufferedReader().readText(),
+            )
+        } catch (e: Exception) {
+            mapOf(
+                "exitCode" to -1,
+                "stdout" to "",
+                "stderr" to (e.message ?: e.toString()),
+            )
         }
     }
 
