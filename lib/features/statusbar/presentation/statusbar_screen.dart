@@ -6,6 +6,7 @@ import 'package:deadzon/core/widgets/premium_top_bar.dart';
 import 'package:deadzon/core/widgets/section_header.dart';
 import 'package:deadzon/core/widgets/settings_row.dart';
 import 'package:deadzon/features/statusbar/data/resize_statusbar_service.dart';
+import 'package:deadzon/features/statusbar/data/statusbar_settings_repository.dart';
 import 'package:deadzon/features/statusbar/mezo_port_map.dart';
 import 'package:deadzon/features/statusbar/presentation/mezo_controls.dart';
 import 'package:deadzon/features/statusbar/statusbar_detail_content.dart';
@@ -164,49 +165,6 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
     );
   }
 
-  Future<void> _openQuickSection(_QuickSection section) async {
-    if (section.children.isEmpty) {
-      _openSection(section.sectionId!);
-      return;
-    }
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: const Color(0xFF0A1B2F),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-      builder: (_) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              const SizedBox(height: 8),
-              Container(
-                width: 42,
-                height: 5,
-                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.24), borderRadius: BorderRadius.circular(100)),
-              ),
-              const SizedBox(height: 14),
-              Text(section.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
-              const SizedBox(height: 8),
-              ...section.children.map((child) {
-                return ListTile(
-                  leading: Icon(child.icon, color: const Color(0xFF8DE8FF)),
-                  title: Text(child.title, style: const TextStyle(color: Colors.white)),
-                  subtitle: Text(child.subtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.66))),
-                  trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.white70),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    _openSection(child.sectionId);
-                  },
-                );
-              }),
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -283,22 +241,23 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
                       ),
                     ),
                     const SizedBox(height: 18),
-                    const SectionHeader(title: 'Quick Sections', subtitle: 'Jump to focused controls'),
+                    const SectionHeader(
+                      title: 'Full statusbar settings',
+                      subtitle: 'Complete old Mezo section tree with preserved behavior keys',
+                    ),
                     const SizedBox(height: 10),
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _quickSections.length,
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        mainAxisExtent: 120,
+                    GlassCard(
+                      child: Column(
+                        children: <Widget>[
+                          for (var i = 0; i < StatusbarSectionConfigs.values.length; i++) ...<Widget>[
+                            _FullSectionRow(
+                              section: StatusbarSectionConfigs.values[i],
+                              onTap: () => _openSection(StatusbarSectionConfigs.values[i].id),
+                            ),
+                            if (i != StatusbarSectionConfigs.values.length - 1) const Divider(height: 20),
+                          ],
+                        ],
                       ),
-                      itemBuilder: (context, index) {
-                        final section = _quickSections[index];
-                        return _QuickSectionCard(section: section, onTap: () => _openQuickSection(section));
-                      },
                     ),
                   ],
                 ),
@@ -646,13 +605,13 @@ class _StudioActionButton extends StatelessWidget {
   }
 }
 
-class _QuickSectionCard extends StatelessWidget {
-  const _QuickSectionCard({
+class _FullSectionRow extends StatelessWidget {
+  const _FullSectionRow({
     required this.section,
     required this.onTap,
   });
 
-  final _QuickSection section;
+  final StatusBarSectionDefinition section;
   final VoidCallback onTap;
 
   @override
@@ -664,19 +623,31 @@ class _QuickSectionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         child: Ink(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
-            color: const Color(0xFF112339).withValues(alpha: 0.84),
-            border: Border.all(color: section.color.withValues(alpha: 0.42)),
+            borderRadius: BorderRadius.circular(18),
+            color: const Color(0xFF112339).withValues(alpha: 0.64),
+            border: Border.all(color: section.accentColor.withValues(alpha: 0.42)),
           ),
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
             children: <Widget>[
               Icon(section.icon, color: Colors.white),
-              const Spacer(),
-              Text(section.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 2),
-              Text(section.subtitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white.withValues(alpha: 0.72), fontSize: 12)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(section.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 2),
+                    Text(
+                      section.subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.72), fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.white70),
             ],
           ),
         ),
@@ -725,39 +696,6 @@ class _StudioItem {
   final Color color;
 }
 
-@immutable
-class _QuickSection {
-  const _QuickSection({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.color,
-    this.sectionId,
-    this.children = const <_QuickSectionChild>[],
-  });
-
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final Color color;
-  final String? sectionId;
-  final List<_QuickSectionChild> children;
-}
-
-@immutable
-class _QuickSectionChild {
-  const _QuickSectionChild({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.sectionId,
-  });
-
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final String sectionId;
-}
 
 const List<_StudioItem> _studioItems = <_StudioItem>[
   _StudioItem(id: 'time_status_time', shortLabel: 'Time', icon: Icons.access_time_rounded, color: Color(0xFF7DDCFF)),
@@ -783,42 +721,6 @@ const List<_StudioItem> _studioItems = <_StudioItem>[
 ];
 
 final Map<String, _StudioItem> _studioItemById = {for (final item in _studioItems) item.id: item};
-
-const List<_QuickSection> _quickSections = <_QuickSection>[
-  _QuickSection(title: 'Battery', subtitle: 'Style, percent and charging', icon: Icons.battery_6_bar_rounded, color: Color(0xFF8BF3AE), sectionId: 'battery'),
-  _QuickSection(title: 'Clock', subtitle: 'Time format and spacing', icon: Icons.access_time_rounded, color: Color(0xFF8DD0FF), sectionId: 'clock'),
-  _QuickSection(title: 'Network', subtitle: 'Wi-Fi and SIM indicators', icon: Icons.signal_cellular_alt_rounded, color: Color(0xFF9AB2FF), sectionId: 'network'),
-  _QuickSection(
-    title: 'Date & Weather',
-    subtitle: 'Date and weather cards',
-    icon: Icons.calendar_month_rounded,
-    color: Color(0xFFB7C6FF),
-    children: <_QuickSectionChild>[
-      _QuickSectionChild(title: 'Date', subtitle: 'Date format and layout', icon: Icons.calendar_month_rounded, sectionId: 'date'),
-      _QuickSectionChild(title: 'Weather', subtitle: 'Weather icon and temperature', icon: Icons.cloud_rounded, sectionId: 'weather'),
-    ],
-  ),
-  _QuickSection(
-    title: 'Icons',
-    subtitle: 'Status and notifications',
-    icon: Icons.widgets_rounded,
-    color: Color(0xFFA9F4E0),
-    children: <_QuickSectionChild>[
-      _QuickSectionChild(title: 'Status icons', subtitle: 'Utility icons visibility', icon: Icons.widgets_rounded, sectionId: 'status_icons'),
-      _QuickSectionChild(title: 'Notification icons', subtitle: 'Notification icon layout', icon: Icons.notifications_rounded, sectionId: 'notification_icons'),
-    ],
-  ),
-  _QuickSection(
-    title: 'Prompt & Background',
-    subtitle: 'Prompt and visual layer',
-    icon: Icons.format_paint_rounded,
-    color: Color(0xFF94E0D4),
-    children: <_QuickSectionChild>[
-      _QuickSectionChild(title: 'Prompt icon', subtitle: 'Prompt icon behavior', icon: Icons.chat_bubble_outline_rounded, sectionId: 'prompt_icon'),
-      _QuickSectionChild(title: 'Background', subtitle: 'Background blur and glow', icon: Icons.format_paint_rounded, sectionId: 'background'),
-    ],
-  ),
-];
 
 List<String> _defaultSingleRowOrder() => const <String>[
       'time_status_time',
@@ -863,6 +765,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
   late final List<StatusBarSettingItem> _settings;
   final Map<String, Object?> _values = <String, Object?>{};
   bool _isLoadingResize = false;
+  bool _isLoadingStoredValues = false;
 
   @override
   void initState() {
@@ -871,6 +774,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     for (final setting in _settings) {
       _values[setting.legacyKey] = setting.defaultValue;
     }
+    _loadStoredValues();
     if (widget.section.id == 'background') {
       for (final target in MezoPortMap.backgroundTargets) {
         for (final key in target.colorKeys) {
@@ -905,8 +809,28 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     }
   }
 
+  Future<void> _loadStoredValues() async {
+    setState(() => _isLoadingStoredValues = true);
+    try {
+      final loaded = await StatusbarSettingsRepository.readAll(_settings);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _values.addAll(loaded);
+      });
+    } catch (_) {
+      // Use source defaults if local persistence is not available.
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingStoredValues = false);
+      }
+    }
+  }
+
   void _handleSettingChanged(StatusBarSettingItem setting, Object? value) {
     setState(() => _values[setting.legacyKey] = value);
+    StatusbarSettingsRepository.write(setting, value);
     if (widget.section.id == 'resize_statusbar') {
       ResizeStatusbarService.write(setting.legacyKey, value);
     }
@@ -927,7 +851,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
         padding: const EdgeInsets.fromLTRB(18, 8, 18, 28),
         physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         children: <Widget>[
-          if (_isLoadingResize)
+          if (_isLoadingResize || _isLoadingStoredValues)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: LinearProgressIndicator(
