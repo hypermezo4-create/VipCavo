@@ -275,7 +275,7 @@ class _RomLiveApplyCard extends StatelessWidget {
                   ],
                 ),
               ),
-              Switch.adaptive(value: enabled, activeColor: const Color(0xFF54F6C8), onChanged: onChanged),
+              Switch.adaptive(value: enabled, activeThumbColor: const Color(0xFF54F6C8), onChanged: onChanged),
             ],
           ),
           const SizedBox(height: 12),
