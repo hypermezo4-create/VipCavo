@@ -1,11 +1,11 @@
-import 'dart:convert';
-
 import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
 import 'package:deadzon/core/widgets/section_header.dart';
 import 'package:deadzon/core/widgets/settings_row.dart';
 import 'package:deadzon/features/statusbar/data/resize_statusbar_service.dart';
+import 'package:deadzon/features/statusbar/data/statusbar_board_model.dart';
+import 'package:deadzon/features/statusbar/data/statusbar_board_service.dart';
 import 'package:deadzon/features/statusbar/data/statusbar_settings_repository.dart';
 import 'package:deadzon/features/statusbar/mezo_port_map.dart';
 import 'package:deadzon/features/statusbar/presentation/mezo_controls.dart';
@@ -27,66 +27,49 @@ class StatusbarScreen extends StatefulWidget {
 
 class _StatusbarScreenState extends State<StatusbarScreen> {
   static const String _prefsModeKey = 'statusbar_studio_layout_mode';
-  static const String _prefsSingleOrderKey = 'statusbar_studio_single_order';
-  static const String _prefsTwoRowOrderKey = 'statusbar_studio_two_row_order';
 
-  late List<String> _singleRowOrder;
-  late Map<_TwoRowLane, List<String>> _twoRowOrder;
+  late StatusbarBoardState _boardState;
   _StudioLayoutMode _layoutMode = _StudioLayoutMode.singleRow;
   bool _isHydrating = true;
 
   @override
   void initState() {
     super.initState();
-    _singleRowOrder = _defaultSingleRowOrder();
-    _twoRowOrder = _defaultTwoRowsOrder();
+    _boardState = StatusbarBoardState(
+      modules: StatusbarBoardService.defaultModules(),
+      leftClusterOffset: 0,
+      rightClusterOffset: 0,
+    );
     _hydrateStudioLayout();
   }
 
   Future<void> _hydrateStudioLayout() async {
     final prefs = await SharedPreferences.getInstance();
     final mode = prefs.getString(_prefsModeKey);
-    final singleRaw = prefs.getStringList(_prefsSingleOrderKey);
-    final twoRowsRaw = prefs.getString(_prefsTwoRowOrderKey);
+    StatusbarBoardState boardState;
+    try {
+      boardState = await StatusbarBoardService.load();
+    } catch (_) {
+      boardState = StatusbarBoardState(
+        modules: StatusbarBoardService.defaultModules(),
+        leftClusterOffset: 0,
+        rightClusterOffset: 0,
+      );
+    }
     if (!mounted) {
       return;
     }
     setState(() {
       _layoutMode = mode == _StudioLayoutMode.twoRows.name ? _StudioLayoutMode.twoRows : _StudioLayoutMode.singleRow;
-      if (singleRaw != null && singleRaw.length == _studioItems.length) {
-        _singleRowOrder = _normalizeOrder(singleRaw);
-      }
-      if (twoRowsRaw != null) {
-        final decoded = _decodeTwoRowOrder(twoRowsRaw);
-        if (decoded != null) {
-          _twoRowOrder = decoded;
-        }
-      }
+      _boardState = boardState;
       _isHydrating = false;
     });
-  }
-
-  List<String> _normalizeOrder(List<String> candidate) {
-    final allowed = _studioItems.map((item) => item.id).toSet();
-    final next = <String>[];
-    for (final id in candidate) {
-      if (allowed.contains(id) && !next.contains(id)) {
-        next.add(id);
-      }
-    }
-    for (final item in _studioItems) {
-      if (!next.contains(item.id)) {
-        next.add(item.id);
-      }
-    }
-    return next;
   }
 
   Future<void> _restoreDefaultLayout() async {
     setState(() {
       _layoutMode = _StudioLayoutMode.singleRow;
-      _singleRowOrder = _defaultSingleRowOrder();
-      _twoRowOrder = _defaultTwoRowsOrder();
+      _boardState = _boardState.copyWith(modules: StatusbarBoardService.defaultModules());
     });
     await _persistStudioLayout();
     _showMessage('Default layout restored');
@@ -95,28 +78,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
   Future<void> _persistStudioLayout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefsModeKey, _layoutMode.name);
-    await prefs.setStringList(_prefsSingleOrderKey, _singleRowOrder);
-    await prefs.setString(_prefsTwoRowOrderKey, jsonEncode(_twoRowOrder.map((k, v) => MapEntry(k.name, v))));
-  }
-
-  Map<_TwoRowLane, List<String>>? _decodeTwoRowOrder(String raw) {
-    try {
-      final decoded = jsonDecode(raw);
-      if (decoded is! Map<String, dynamic>) {
-        return null;
-      }
-      final next = <_TwoRowLane, List<String>>{};
-      for (final lane in _TwoRowLane.values) {
-        final current = decoded[lane.name];
-        if (current is! List) {
-          return null;
-        }
-        next[lane] = current.map((item) => item.toString()).toList(growable: false);
-      }
-      return next;
-    } catch (_) {
-      return null;
-    }
+    await StatusbarBoardService.writeModules(_boardState.modules);
   }
 
   void _openSection(String sectionId) {
@@ -135,8 +97,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
       isScrollControlled: true,
       builder: (_) => _ArrangeLayoutSheet(
         mode: _layoutMode,
-        singleRowOrder: _singleRowOrder,
-        twoRowsOrder: _twoRowOrder,
+        boardState: _boardState,
       ),
     );
     if (result == null || !mounted) {
@@ -144,8 +105,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
     }
     setState(() {
       _layoutMode = result.mode;
-      _singleRowOrder = result.singleRowOrder;
-      _twoRowOrder = result.twoRowsOrder;
+      _boardState = _boardState.copyWith(modules: result.modules);
     });
     await _persistStudioLayout();
     _showMessage('Layout saved');
@@ -234,8 +194,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
                           const SizedBox(height: 10),
                           _StatusbarLivePreview(
                             mode: _layoutMode,
-                            singleRowOrder: _singleRowOrder,
-                            twoRowsOrder: _twoRowOrder,
+                            modules: _boardState.modules,
                           ),
                         ],
                       ),
@@ -243,7 +202,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
                     const SizedBox(height: 18),
                     const SectionHeader(
                       title: 'Full statusbar settings',
-                      subtitle: 'Complete old Mezo section tree with preserved behavior keys',
+                      subtitle: 'Complete old Mezo section tree with preserved behavior',
                     ),
                     const SizedBox(height: 10),
                     GlassCard(
@@ -267,75 +226,194 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
   }
 }
 
+
 class _StatusbarLivePreview extends StatelessWidget {
   const _StatusbarLivePreview({
     required this.mode,
-    required this.singleRowOrder,
-    required this.twoRowsOrder,
+    required this.modules,
   });
 
   final _StudioLayoutMode mode;
-  final List<String> singleRowOrder;
-  final Map<_TwoRowLane, List<String>> twoRowsOrder;
+  final List<StatusbarBoardModuleState> modules;
 
   @override
   Widget build(BuildContext context) {
+    final visibleModules = modules.where((module) => module.visible && module.enabled).toList(growable: false);
     return AnimatedContainer(
       duration: DesignTokens.motionFast,
       curve: DesignTokens.motionCurve,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: const Color(0xFF081224).withValues(alpha: 0.9),
+        color: const Color(0xFF06101F).withValues(alpha: 0.92),
         border: Border.all(color: const Color(0xFF6FAAFF).withValues(alpha: 0.42)),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: const Color(0xFF1B7DFF).withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: mode == _StudioLayoutMode.singleRow
-          ? _PreviewIconWrap(order: singleRowOrder)
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                _PreviewIconWrap(order: twoRowsOrder[_TwoRowLane.leftTop]!),
-                const SizedBox(height: 6),
-                _PreviewIconWrap(order: twoRowsOrder[_TwoRowLane.leftBottom]!),
-                const SizedBox(height: 10),
-                _PreviewIconWrap(order: twoRowsOrder[_TwoRowLane.rightTop]!),
-                const SizedBox(height: 6),
-                _PreviewIconWrap(order: twoRowsOrder[_TwoRowLane.rightBottom]!),
-              ],
-            ),
+          ? _SourceSingleRowPreview(modules: _singleSortedModules(visibleModules))
+          : _SourceTwoRowPreview(modules: visibleModules),
     );
   }
 }
 
-class _PreviewIconWrap extends StatelessWidget {
-  const _PreviewIconWrap({required this.order});
+class _SourceSingleRowPreview extends StatelessWidget {
+  const _SourceSingleRowPreview({required this.modules});
 
-  final List<String> order;
+  final List<StatusbarBoardModuleState> modules;
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 6,
-      runSpacing: 6,
-      children: order.map((id) {
-        final item = _studioItemById[id]!;
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+    return Container(
+      minHeight: 46,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.black.withValues(alpha: 0.68),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: modules
+                    .map((module) => Padding(
+                          padding: const EdgeInsets.only(right: 10),
+                          child: _PreviewModule(module: module, dense: true),
+                        ))
+                    .toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SourceTwoRowPreview extends StatelessWidget {
+  const _SourceTwoRowPreview({required this.modules});
+
+  final List<StatusbarBoardModuleState> modules;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: Colors.black.withValues(alpha: 0.62),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          Expanded(child: _PreviewLaneColumn(lanes: const [_TwoRowLane.leftTop, _TwoRowLane.leftBottom], modules: modules)),
+          Container(width: 1, height: 46, color: Colors.white.withValues(alpha: 0.08)),
+          const SizedBox(width: 10),
+          Expanded(child: _PreviewLaneColumn(lanes: const [_TwoRowLane.rightTop, _TwoRowLane.rightBottom], modules: modules, alignEnd: true)),
+        ],
+      ),
+    );
+  }
+}
+
+class _PreviewLaneColumn extends StatelessWidget {
+  const _PreviewLaneColumn({required this.lanes, required this.modules, this.alignEnd = false});
+
+  final List<_TwoRowLane> lanes;
+  final List<StatusbarBoardModuleState> modules;
+  final bool alignEnd;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: lanes
+          .map(
+            (lane) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                reverse: alignEnd,
+                child: Row(
+                  mainAxisAlignment: alignEnd ? MainAxisAlignment.end : MainAxisAlignment.start,
+                  children: _modulesForLane(modules, lane)
+                      .map((module) => Padding(
+                            padding: const EdgeInsetsDirectional.only(end: 8),
+                            child: _PreviewModule(module: module, dense: true),
+                          ))
+                      .toList(),
+                ),
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+}
+
+class _PreviewModule extends StatelessWidget {
+  const _PreviewModule({required this.module, this.dense = false});
+
+  final StatusbarBoardModuleState module;
+  final bool dense;
+
+  @override
+  Widget build(BuildContext context) {
+    final width = dense ? 24.0 : 34.0;
+    final height = dense ? 22.0 : 34.0;
+    final label = module.module.previewLabel;
+    final showText = label.length <= 5 || module.module.id == 'elem_speed' || module.module.id == 'elem_clock' || module.module.id == 'elem_date';
+    return AnimatedOpacity(
+      duration: DesignTokens.motionFast,
+      opacity: module.visible && module.enabled ? 1 : 0.32,
+      child: Transform.scale(
+        scale: module.size.clamp(0.72, 1.35).toDouble(),
+        child: Container(
+          constraints: BoxConstraints(minWidth: width, minHeight: height),
+          padding: EdgeInsets.symmetric(horizontal: dense ? 5 : 8, vertical: dense ? 3 : 6),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            color: const Color(0xFF17314F).withValues(alpha: 0.8),
-            border: Border.all(color: item.color.withValues(alpha: 0.42)),
+            color: module.module.color.withValues(alpha: 0.10),
+            border: Border.all(color: module.module.color.withValues(alpha: 0.24)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(item.icon, size: 14, color: Colors.white),
-              const SizedBox(width: 5),
-              Text(item.shortLabel, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
+              SizedBox(
+                width: dense ? 14 : 18,
+                height: dense ? 14 : 18,
+                child: Image.asset(
+                  module.asset,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => Icon(module.module.icon, color: Colors.white, size: dense ? 14 : 18),
+                ),
+              ),
+              if (showText) ...<Widget>[
+                SizedBox(width: dense ? 4 : 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: dense ? 10 : 12,
+                    fontWeight: FontWeight.w800,
+                    height: 1,
+                  ),
+                ),
+              ],
             ],
           ),
-        );
-      }).toList(),
+        ),
+      ),
     );
   }
 }
@@ -343,13 +421,11 @@ class _PreviewIconWrap extends StatelessWidget {
 class _ArrangeLayoutSheet extends StatefulWidget {
   const _ArrangeLayoutSheet({
     required this.mode,
-    required this.singleRowOrder,
-    required this.twoRowsOrder,
+    required this.boardState,
   });
 
   final _StudioLayoutMode mode;
-  final List<String> singleRowOrder;
-  final Map<_TwoRowLane, List<String>> twoRowsOrder;
+  final StatusbarBoardState boardState;
 
   @override
   State<_ArrangeLayoutSheet> createState() => _ArrangeLayoutSheetState();
@@ -357,71 +433,103 @@ class _ArrangeLayoutSheet extends StatefulWidget {
 
 class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
   late _StudioLayoutMode _mode;
-  late List<String> _singleOrder;
-  late Map<_TwoRowLane, List<String>> _twoRows;
+  late List<StatusbarBoardModuleState> _modules;
 
   @override
   void initState() {
     super.initState();
     _mode = widget.mode;
-    _singleOrder = List<String>.from(widget.singleRowOrder);
-    _twoRows = <_TwoRowLane, List<String>>{
-      for (final lane in _TwoRowLane.values) lane: List<String>.from(widget.twoRowsOrder[lane]!),
-    };
-  }
-
-  void _swapSingle(String source, String target) {
-    final sourceIndex = _singleOrder.indexOf(source);
-    final targetIndex = _singleOrder.indexOf(target);
-    if (sourceIndex == -1 || targetIndex == -1 || sourceIndex == targetIndex) {
-      return;
-    }
-    setState(() {
-      final hold = _singleOrder[sourceIndex];
-      _singleOrder[sourceIndex] = _singleOrder[targetIndex];
-      _singleOrder[targetIndex] = hold;
-    });
-  }
-
-  void _swapTwoRows(_TwoRowLane lane, String source, String target) {
-    final items = _twoRows[lane]!;
-    final sourceIndex = items.indexOf(source);
-    final targetIndex = items.indexOf(target);
-    if (sourceIndex == -1 || targetIndex == -1 || sourceIndex == targetIndex) {
-      return;
-    }
-    setState(() {
-      final hold = items[sourceIndex];
-      items[sourceIndex] = items[targetIndex];
-      items[targetIndex] = hold;
-    });
+    _modules = List<StatusbarBoardModuleState>.from(widget.boardState.modules);
   }
 
   void _resetToDefault() {
     setState(() {
       _mode = _StudioLayoutMode.singleRow;
-      _singleOrder = _defaultSingleRowOrder();
-      _twoRows = _defaultTwoRowsOrder();
+      _modules = StatusbarBoardService.defaultModules();
     });
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Default layout restored')));
+  }
+
+  void _moveSingle(String sourceId, String targetId) {
+    final ordered = _singleSortedModules(_modules);
+    final sourceIndex = ordered.indexWhere((item) => item.id == sourceId);
+    final targetIndex = ordered.indexWhere((item) => item.id == targetId);
+    if (sourceIndex == -1 || targetIndex == -1 || sourceIndex == targetIndex) {
+      return;
+    }
+    final moved = ordered.removeAt(sourceIndex);
+    final insertIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
+    ordered.insert(insertIndex, moved);
+    _rewriteModulesFromSingleOrder(ordered);
+  }
+
+  void _moveToLane(String sourceId, _TwoRowLane targetLane, {String? beforeId}) {
+    final lanes = <_TwoRowLane, List<StatusbarBoardModuleState>>{
+      for (final lane in _TwoRowLane.values) lane: _modulesForLane(_modules, lane).toList(),
+    };
+    StatusbarBoardModuleState? moving;
+    for (final lane in _TwoRowLane.values) {
+      final index = lanes[lane]!.indexWhere((item) => item.id == sourceId);
+      if (index != -1) {
+        moving = lanes[lane]!.removeAt(index);
+        break;
+      }
+    }
+    if (moving == null) {
+      return;
+    }
+    final target = lanes[targetLane]!;
+    final insertIndex = beforeId == null ? target.length : target.indexWhere((item) => item.id == beforeId);
+    target.insert(insertIndex < 0 ? target.length : insertIndex, moving);
+    _rewriteModulesFromLanes(lanes);
+  }
+
+  void _rewriteModulesFromSingleOrder(List<StatusbarBoardModuleState> ordered) {
+    final next = <StatusbarBoardModuleState>[];
+    for (var i = 0; i < ordered.length; i++) {
+      final slotIndex = i < _singleSlotCodes.length ? i : _singleSlotCodes.length - 1;
+      final code = _singleSlotCodes[slotIndex];
+      next.add(ordered[i].copyWith(currentPositionCode: code));
+    }
+    setState(() => _modules = _mergeWithMissing(next));
+  }
+
+  void _rewriteModulesFromLanes(Map<_TwoRowLane, List<StatusbarBoardModuleState>> lanes) {
+    final next = <StatusbarBoardModuleState>[];
+    for (final lane in _TwoRowLane.values) {
+      final laneItems = lanes[lane]!;
+      for (var i = 0; i < laneItems.length; i++) {
+        next.add(laneItems[i].copyWith(currentPositionCode: lane.baseCode + i));
+      }
+    }
+    setState(() => _modules = _mergeWithMissing(next));
+  }
+
+  List<StatusbarBoardModuleState> _mergeWithMissing(List<StatusbarBoardModuleState> next) {
+    final included = next.map((item) => item.id).toSet();
+    final missing = _modules.where((item) => !included.contains(item.id));
+    return <StatusbarBoardModuleState>[...next, ...missing];
   }
 
   @override
   Widget build(BuildContext context) {
     return FractionallySizedBox(
-      heightFactor: 0.9,
+      heightFactor: 0.92,
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF071121),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
           border: Border.all(color: const Color(0xFF5BA6FF).withValues(alpha: 0.22)),
+          boxShadow: <BoxShadow>[
+            BoxShadow(color: Colors.black.withValues(alpha: 0.35), blurRadius: 22, offset: const Offset(0, -8)),
+          ],
         ),
         child: SafeArea(
           top: false,
           child: Column(
             children: <Widget>[
               const SizedBox(height: 10),
-              Container(width: 44, height: 5, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(100))),
+              Container(width: 48, height: 5, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(100))),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 12, 0),
                 child: Row(
@@ -431,7 +539,7 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
                       child: Text(
                         'Arrange Layout',
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
                       ),
                     ),
                     TextButton(
@@ -439,8 +547,7 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
                         Navigator.of(context).pop(
                           _ArrangeLayoutResult(
                             mode: _mode,
-                            singleRowOrder: _singleOrder,
-                            twoRowsOrder: _twoRows,
+                            modules: _modules,
                           ),
                         );
                       },
@@ -467,7 +574,7 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _StatusbarLivePreview(mode: _mode, singleRowOrder: _singleOrder, twoRowsOrder: _twoRows),
+                child: _StatusbarLivePreview(mode: _mode, modules: _modules),
               ),
               const SizedBox(height: 10),
               Expanded(
@@ -475,9 +582,9 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
                   padding: const EdgeInsets.fromLTRB(16, 2, 16, 24),
                   child: _mode == _StudioLayoutMode.singleRow
                       ? _DragArrangeLane(
-                          label: 'Single row icons',
-                          order: _singleOrder,
-                          onSwap: _swapSingle,
+                          label: 'Single row source order',
+                          modules: _singleSortedModules(_modules),
+                          onMoveWithin: _moveSingle,
                         )
                       : Column(
                           children: _TwoRowLane.values.map((lane) {
@@ -485,8 +592,10 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
                               padding: const EdgeInsets.only(bottom: 10),
                               child: _DragArrangeLane(
                                 label: lane.title,
-                                order: _twoRows[lane]!,
-                                onSwap: (source, target) => _swapTwoRows(lane, source, target),
+                                modules: _modulesForLane(_modules, lane),
+                                lane: lane,
+                                onMoveWithin: (source, target) => _moveToLane(source, lane, beforeId: target),
+                                onAcceptToLane: (source) => _moveToLane(source, lane),
                               ),
                             );
                           }).toList(),
@@ -504,58 +613,86 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
 class _DragArrangeLane extends StatelessWidget {
   const _DragArrangeLane({
     required this.label,
-    required this.order,
-    required this.onSwap,
+    required this.modules,
+    required this.onMoveWithin,
+    this.lane,
+    this.onAcceptToLane,
   });
 
   final String label;
-  final List<String> order;
-  final void Function(String source, String target) onSwap;
+  final List<StatusbarBoardModuleState> modules;
+  final _TwoRowLane? lane;
+  final void Function(String source, String target) onMoveWithin;
+  final void Function(String source)? onAcceptToLane;
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: order.map((id) {
-              final item = _studioItemById[id]!;
-              return DragTarget<String>(
-                onWillAcceptWithDetails: (details) => details.data != id,
-                onAcceptWithDetails: (details) => onSwap(details.data, id),
-                builder: (context, candidate, rejected) {
-                  final hovered = candidate.isNotEmpty;
-                  return Draggable<String>(
-                    data: id,
-                    feedback: Material(
-                      color: Colors.transparent,
-                      child: _ArrangeChip(item: item, highlighted: true),
-                    ),
-                    childWhenDragging: Opacity(opacity: 0.34, child: _ArrangeChip(item: item)),
-                    child: _ArrangeChip(item: item, highlighted: hovered),
-                  );
-                },
-              );
-            }).toList(),
+    return DragTarget<String>(
+      onWillAcceptWithDetails: (_) => onAcceptToLane != null,
+      onAcceptWithDetails: (details) => onAcceptToLane?.call(details.data),
+      builder: (context, candidate, rejected) {
+        final hovered = candidate.isNotEmpty;
+        return GlassCard(
+          child: AnimatedContainer(
+            duration: DesignTokens.motionFast,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: hovered ? const Color(0xFF8DE8FF) : Colors.transparent),
+            ),
+            padding: const EdgeInsets.all(2),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Expanded(child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800))),
+                    if (lane != null)
+                      Text('drop here', style: TextStyle(color: Colors.white.withValues(alpha: 0.42), fontSize: 11)),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: modules.map((module) {
+                    return DragTarget<String>(
+                      onWillAcceptWithDetails: (details) => details.data != module.id,
+                      onAcceptWithDetails: (details) => onMoveWithin(details.data, module.id),
+                      builder: (context, candidate, rejected) {
+                        final chipHovered = candidate.isNotEmpty;
+                        return Draggable<String>(
+                          data: module.id,
+                          feedback: Material(
+                            color: Colors.transparent,
+                            child: _ArrangeChip(module: module, highlighted: true),
+                          ),
+                          childWhenDragging: Opacity(opacity: 0.28, child: _ArrangeChip(module: module)),
+                          child: _ArrangeChip(module: module, highlighted: chipHovered),
+                        );
+                      },
+                    );
+                  }).toList(),
+                ),
+                if (modules.isEmpty) ...<Widget>[
+                  const SizedBox(height: 8),
+                  Text('Drop an element here', style: TextStyle(color: Colors.white.withValues(alpha: 0.55))),
+                ],
+              ],
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
 class _ArrangeChip extends StatelessWidget {
   const _ArrangeChip({
-    required this.item,
+    required this.module,
     this.highlighted = false,
   });
 
-  final _StudioItem item;
+  final StatusbarBoardModuleState module;
   final bool highlighted;
 
   @override
@@ -566,14 +703,25 @@ class _ArrangeChip extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         color: highlighted ? const Color(0xFF1B4777) : const Color(0xFF10273F),
-        border: Border.all(color: item.color.withValues(alpha: highlighted ? 0.9 : 0.5)),
+        border: Border.all(color: module.module.color.withValues(alpha: highlighted ? 0.9 : 0.5)),
+        boxShadow: highlighted
+            ? <BoxShadow>[BoxShadow(color: module.module.color.withValues(alpha: 0.22), blurRadius: 14, offset: const Offset(0, 5))]
+            : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(item.icon, size: 14, color: Colors.white),
-          const SizedBox(width: 6),
-          Text(item.shortLabel, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+          SizedBox(
+            width: 16,
+            height: 16,
+            child: Image.asset(
+              module.asset,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Icon(module.module.icon, size: 16, color: Colors.white),
+            ),
+          ),
+          const SizedBox(width: 7),
+          Text(module.module.title, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
         ],
       ),
     );
@@ -656,101 +804,63 @@ class _FullSectionRow extends StatelessWidget {
   }
 }
 
+
 enum _StudioLayoutMode { singleRow, twoRows }
 
 enum _TwoRowLane {
-  leftTop('Left Row 1'),
-  leftBottom('Left Row 2'),
-  rightTop('Right Row 1'),
-  rightBottom('Right Row 2');
+  leftTop('Left Row 1', 1),
+  leftBottom('Left Row 2', 11),
+  rightTop('Right Row 1', 21),
+  rightBottom('Right Row 2', 31);
 
-  const _TwoRowLane(this.title);
+  const _TwoRowLane(this.title, this.baseCode);
   final String title;
+  final int baseCode;
 }
 
 @immutable
 class _ArrangeLayoutResult {
   const _ArrangeLayoutResult({
     required this.mode,
-    required this.singleRowOrder,
-    required this.twoRowsOrder,
+    required this.modules,
   });
 
   final _StudioLayoutMode mode;
-  final List<String> singleRowOrder;
-  final Map<_TwoRowLane, List<String>> twoRowsOrder;
+  final List<StatusbarBoardModuleState> modules;
 }
 
-@immutable
-class _StudioItem {
-  const _StudioItem({
-    required this.id,
-    required this.shortLabel,
-    required this.icon,
-    required this.color,
+const List<int> _singleSlotCodes = <int>[1, 2, 3, 11, 12, 21, 22, 31, 32, 33];
+
+List<StatusbarBoardModuleState> _singleSortedModules(List<StatusbarBoardModuleState> modules) {
+  final sorted = modules.toList(growable: false);
+  sorted.sort((a, b) {
+    final aIndex = _singleSlotCodes.indexOf(a.currentPositionCode);
+    final bIndex = _singleSlotCodes.indexOf(b.currentPositionCode);
+    final safeA = aIndex == -1 ? 999 + a.module.legacyIndex : aIndex;
+    final safeB = bIndex == -1 ? 999 + b.module.legacyIndex : bIndex;
+    return safeA.compareTo(safeB);
   });
-
-  final String id;
-  final String shortLabel;
-  final IconData icon;
-  final Color color;
+  return sorted;
 }
 
+_TwoRowLane _laneForCode(int code) {
+  if (code >= 31) {
+    return _TwoRowLane.rightBottom;
+  }
+  if (code >= 21) {
+    return _TwoRowLane.rightTop;
+  }
+  if (code >= 11) {
+    return _TwoRowLane.leftBottom;
+  }
+  return _TwoRowLane.leftTop;
+}
 
-const List<_StudioItem> _studioItems = <_StudioItem>[
-  _StudioItem(id: 'time_status_time', shortLabel: 'Time', icon: Icons.access_time_rounded, color: Color(0xFF7DDCFF)),
-  _StudioItem(id: 'notification_call', shortLabel: 'Call', icon: Icons.call_rounded, color: Color(0xFFFFA1A1)),
-  _StudioItem(id: 'speed_gauge', shortLabel: 'Gauge', icon: Icons.speed_rounded, color: Color(0xFF7BC5FF)),
-  _StudioItem(id: 'clock', shortLabel: 'Clock', icon: Icons.schedule_rounded, color: Color(0xFF9CD9FF)),
-  _StudioItem(id: 'prompt_plug', shortLabel: 'Plug', icon: Icons.power_rounded, color: Color(0xFFBDE9FF)),
-  _StudioItem(id: 'netspeed_moon', shortLabel: 'Moon', icon: Icons.nightlight_round, color: Color(0xFFABC3FF)),
-  _StudioItem(id: 'temperature', shortLabel: 'Temp', icon: Icons.thermostat_rounded, color: Color(0xFFA8E7FF)),
-  _StudioItem(id: 'date_day', shortLabel: 'Day', icon: Icons.calendar_today_rounded, color: Color(0xFFD0DCFF)),
-  _StudioItem(id: 'bluetooth', shortLabel: 'BT', icon: Icons.bluetooth_rounded, color: Color(0xFF97C0FF)),
-  _StudioItem(id: 'sim_1', shortLabel: 'SIM1', icon: Icons.sim_card_rounded, color: Color(0xFF9FB7FF)),
-  _StudioItem(id: 'sim_2', shortLabel: 'SIM2', icon: Icons.sim_card_rounded, color: Color(0xFFA8C1FF)),
-  _StudioItem(id: 'wifi', shortLabel: 'Wi-Fi', icon: Icons.wifi_rounded, color: Color(0xFF89DFFF)),
-  _StudioItem(id: 'battery', shortLabel: 'Battery', icon: Icons.battery_5_bar_rounded, color: Color(0xFF95FFBA)),
-  _StudioItem(id: 'weather', shortLabel: 'Weather', icon: Icons.wb_sunny_rounded, color: Color(0xFF8EE6FF)),
-  _StudioItem(id: 'date_31_12', shortLabel: '31/12', icon: Icons.event_note_rounded, color: Color(0xFFC1CDFF)),
-  _StudioItem(id: 'alarm', shortLabel: 'Alarm', icon: Icons.alarm_rounded, color: Color(0xFFDED8FF)),
-  _StudioItem(id: 'network_blue', shortLabel: 'Net B', icon: Icons.network_cell_rounded, color: Color(0xFF81C9FF)),
-  _StudioItem(id: 'network_red', shortLabel: 'Net R', icon: Icons.network_cell_rounded, color: Color(0xFFFFACAC)),
-  _StudioItem(id: 'wifi_secondary', shortLabel: 'Wi-Fi2', icon: Icons.wifi_tethering_rounded, color: Color(0xFF89DBFF)),
-  _StudioItem(id: 'charging', shortLabel: 'Charge', icon: Icons.bolt_rounded, color: Color(0xFFB6FFB0)),
-];
-
-final Map<String, _StudioItem> _studioItemById = {for (final item in _studioItems) item.id: item};
-
-List<String> _defaultSingleRowOrder() => const <String>[
-      'time_status_time',
-      'notification_call',
-      'speed_gauge',
-      'clock',
-      'prompt_plug',
-      'netspeed_moon',
-      'temperature',
-      'date_day',
-      'bluetooth',
-      'sim_1',
-      'sim_2',
-      'wifi',
-      'battery',
-      'weather',
-      'date_31_12',
-      'alarm',
-      'network_blue',
-      'network_red',
-      'wifi_secondary',
-      'charging',
-    ];
-
-Map<_TwoRowLane, List<String>> _defaultTwoRowsOrder() => <_TwoRowLane, List<String>>{
-      _TwoRowLane.leftTop: <String>['time_status_time', 'notification_call', 'speed_gauge'],
-      _TwoRowLane.leftBottom: <String>['clock', 'prompt_plug', 'netspeed_moon'],
-      _TwoRowLane.rightTop: <String>['temperature', 'date_day', 'bluetooth', 'sim_1', 'sim_2', 'wifi', 'battery'],
-      _TwoRowLane.rightBottom: <String>['weather', 'date_31_12', 'alarm', 'network_blue', 'network_red', 'wifi_secondary', 'charging'],
-    };
+List<StatusbarBoardModuleState> _modulesForLane(List<StatusbarBoardModuleState> modules, _TwoRowLane lane) {
+  final laneItems = modules.where((module) => _laneForCode(module.currentPositionCode) == lane).toList(growable: false);
+  laneItems.sort((a, b) => a.currentPositionCode.compareTo(b.currentPositionCode));
+  return laneItems;
+}
 
 class StatusbarDetailScreen extends StatefulWidget {
   const StatusbarDetailScreen({required this.section, super.key});
@@ -784,6 +894,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
           _values.putIfAbsent(key, () => key.endsWith('_stroke_width') ? 0.0 : key.contains('_corner') ? 35.0 : 0.0);
         }
       }
+      _loadBackgroundModuleValues();
     }
     if (widget.section.id == 'resize_statusbar') {
       _isLoadingResize = true;
@@ -827,6 +938,30 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
       }
     }
   }
+
+  Future<void> _loadBackgroundModuleValues() async {
+    final prefs = await SharedPreferences.getInstance();
+    final loaded = <String, Object?>{};
+    for (final target in MezoPortMap.backgroundTargets) {
+      for (final key in target.colorKeys) {
+        final value = prefs.getString(key);
+        if (value != null) {
+          loaded[key] = value;
+        }
+      }
+      for (final key in target.sliderKeys) {
+        final raw = prefs.get(key);
+        if (raw is num) {
+          loaded[key] = raw.toDouble();
+        }
+      }
+    }
+    if (!mounted || loaded.isEmpty) {
+      return;
+    }
+    setState(() => _values.addAll(loaded));
+  }
+
 
   void _handleSettingChanged(StatusBarSettingItem setting, Object? value) {
     setState(() => _values[setting.legacyKey] = value);
@@ -900,7 +1035,10 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
           if (widget.section.id == 'background') ...<Widget>[
             _BackgroundModuleEditor(
               values: _values,
-              onChanged: (key, value) => setState(() => _values[key] = value),
+              onChanged: (key, value) {
+                setState(() => _values[key] = value);
+                StatusbarSettingsRepository.writeRaw(key, value);
+              },
             ),
             const SizedBox(height: 12),
           ],
@@ -981,7 +1119,7 @@ class _BackgroundModuleEditor extends StatelessWidget {
         children: <Widget>[
           const SectionHeader(
             title: 'Background of statusbar icons',
-            subtitle: 'Source-backed editor from settings_iback + elem_bg_* references.',
+            subtitle: 'Every old background module is kept and saved with the same behavior.',
           ),
           const SizedBox(height: 10),
           ...MezoPortMap.backgroundTargets.map((target) {
@@ -990,14 +1128,14 @@ class _BackgroundModuleEditor extends StatelessWidget {
               collapsedIconColor: Colors.white70,
               iconColor: Colors.white,
               title: Text(target.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-              subtitle: Text(target.xmlSource, style: TextStyle(color: Colors.white.withValues(alpha: 0.56), fontSize: 11)),
+              subtitle: Text('Color, padding, corner, stroke, and margin controls', style: TextStyle(color: Colors.white.withValues(alpha: 0.56), fontSize: 11)),
               children: <Widget>[
                 for (final colorKey in target.colorKeys) ...<Widget>[
                   SettingsRow(
                     icon: Icons.palette_outlined,
                     iconColor: const Color(0xFF94E0D4),
                     title: _prettyKey(colorKey),
-                    subtitle: colorKey,
+                    subtitle: 'Color control preserved from the old module',
                     trailing: MezoColorChip(
                       hex: (values[colorKey] as String?) ?? '#00000000',
                       onTap: () => _showColorPicker(context, colorKey),
@@ -1010,7 +1148,7 @@ class _BackgroundModuleEditor extends StatelessWidget {
                     icon: Icons.tune_rounded,
                     iconColor: const Color(0xFF8FCBFF),
                     title: _prettyKey(sliderKey),
-                    subtitle: sliderKey,
+                    subtitle: 'Position and shape control preserved from the old module',
                     trailing: Text(((values[sliderKey] as num?) ?? 0).toStringAsFixed(0), style: const TextStyle(color: Colors.white70)),
                   ),
                   MezoStepSlider(
