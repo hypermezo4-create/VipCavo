@@ -69,25 +69,6 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
       _romResult = result;
       _romBusy = false;
     });
-    _showSnack(result.message);
-  }
-
-  Future<void> _readRomValue() async {
-    setState(() => _romBusy = true);
-    final value = await StatusbarRomBridgeService.readRomValue();
-    if (!mounted) return;
-    setState(() {
-      _romResult = StatusbarRomBridgeResult(
-        success: value.isNotEmpty,
-        rootAvailable: _romResult?.rootAvailable ?? value.isNotEmpty,
-        key: StatusbarRomBridgeService.key,
-        writtenValue: _romResult?.writtenValue ?? '',
-        readValue: value,
-        message: value.isEmpty ? 'ROM value is empty or unavailable.' : 'Current ROM value loaded.',
-      );
-      _romBusy = false;
-    });
-    _showSnack(_romResult!.message);
   }
 
   Future<void> _applyCurrentToRom() async {
@@ -106,8 +87,15 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
       _romBusy = false;
     });
     if (!quiet) {
-      _showSnack(result.message);
+      _showSnack(_friendlyLayoutMessage(result));
     }
+  }
+
+  String _friendlyLayoutMessage(StatusbarRomBridgeResult result) {
+    if (result.success) {
+      return 'Layout applied successfully.';
+    }
+    return 'Layout saved locally. Live sync is unavailable right now.';
   }
 
   Future<void> _restoreMezoDefault() async {
@@ -121,7 +109,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
       _romResult = result;
       _romBusy = false;
     });
-    _showSnack(result.message);
+    _showSnack(result.success ? 'Default layout restored.' : 'Default layout saved locally.');
   }
 
   Future<void> _openPositionSheet() async {
@@ -153,7 +141,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
                     children: <Widget>[
                       Expanded(
                         child: Text(
-                          'Arrange status bar items',
+                          'Arrange status bar layout',
                           style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
                         ),
                       ),
@@ -163,7 +151,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
                       ),
                     ],
                   ),
-                  Text('Drag icons to change ROM positions, then save/apply.', style: TextStyle(color: Colors.white.withValues(alpha: 0.65))),
+                  Text('Drag icons into the area you prefer, then save your layout.', style: TextStyle(color: Colors.white.withValues(alpha: 0.65))),
                   const SizedBox(height: 12),
                   _StatusControlBoard(
                     boardState: _boardState ?? board,
@@ -177,7 +165,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
                       TextButton.icon(
                         onPressed: _restoreMezoDefault,
                         icon: const Icon(Icons.restart_alt_rounded),
-                        label: const Text('Reset'),
+                        label: const Text('Restore default'),
                       ),
                       const Spacer(),
                       FilledButton.icon(
@@ -187,7 +175,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
                           Navigator.of(sheetContext).pop();
                         },
                         icon: const Icon(Icons.check_circle_outline_rounded),
-                        label: const Text('Save layout'),
+                        label: const Text('Save & apply'),
                       ),
                     ],
                   ),
@@ -239,8 +227,6 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
               busy: _romBusy,
               result: _romResult,
               onToggle: (value) => setState(() => _romLiveApply = value),
-              onCheck: _checkBridge,
-              onRead: _readRomValue,
               onChoosePositions: _openPositionSheet,
               onRestoreDefault: _restoreMezoDefault,
               onApply: _applyCurrentToRom,
@@ -276,8 +262,6 @@ class _RomLiveApplyCard extends StatelessWidget {
     required this.busy,
     required this.result,
     required this.onToggle,
-    required this.onCheck,
-    required this.onRead,
     required this.onChoosePositions,
     required this.onRestoreDefault,
     required this.onApply,
@@ -287,8 +271,6 @@ class _RomLiveApplyCard extends StatelessWidget {
   final bool busy;
   final StatusbarRomBridgeResult? result;
   final ValueChanged<bool> onToggle;
-  final VoidCallback onCheck;
-  final VoidCallback onRead;
   final VoidCallback onChoosePositions;
   final VoidCallback onRestoreDefault;
   final VoidCallback onApply;
@@ -297,7 +279,6 @@ class _RomLiveApplyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final rootActive = result?.rootAvailable ?? false;
     final confirmed = result?.success ?? false;
-    final readValue = result?.readValue ?? '';
     return GlassCard(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -322,12 +303,12 @@ class _RomLiveApplyCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
-                      'ROM Live Apply',
+                      'Layout Sync',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      rootActive ? 'Root bridge active. ROM writes are available.' : 'Root bridge unavailable. Preview still works.',
+                      rootActive ? 'Changes are applied in the background when available.' : 'You can arrange and save the layout locally.',
                       style: TextStyle(color: Colors.white.withValues(alpha: 0.66), height: 1.25),
                     ),
                   ],
@@ -345,20 +326,10 @@ class _RomLiveApplyCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: <Widget>[
-              _RomStatusChip(label: rootActive ? 'Root active' : 'Preview only', active: rootActive),
-              _RomStatusChip(label: StatusbarRomBridgeService.key, active: true),
-              _RomStatusChip(label: confirmed ? 'Write confirmed' : 'Awaiting write', active: confirmed),
+              _RomStatusChip(label: rootActive ? 'Ready' : 'Local mode', active: rootActive),
+              _RomStatusChip(label: confirmed ? 'Synced' : 'Saved locally', active: confirmed),
             ],
           ),
-          if (readValue.isNotEmpty) ...<Widget>[
-            const SizedBox(height: 10),
-            Text(
-              'Current ROM value: $readValue',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.56), fontSize: 12),
-            ),
-          ],
           const SizedBox(height: 14),
           if (busy)
             Padding(
@@ -373,30 +344,20 @@ class _RomLiveApplyCard extends StatelessWidget {
             spacing: 10,
             runSpacing: 10,
             children: <Widget>[
-              OutlinedButton.icon(
-                onPressed: busy ? null : onCheck,
-                icon: const Icon(Icons.verified_rounded),
-                label: const Text('Check Bridge'),
-              ),
-              OutlinedButton.icon(
-                onPressed: busy ? null : onRead,
-                icon: const Icon(Icons.visibility_rounded),
-                label: const Text('Read ROM'),
-              ),
               FilledButton.icon(
                 onPressed: busy ? null : onChoosePositions,
                 icon: const Icon(Icons.dashboard_customize_rounded),
-                label: const Text('Choose positions'),
+                label: const Text('Edit layout'),
               ),
               FilledButton.icon(
                 onPressed: busy ? null : onApply,
                 icon: const Icon(Icons.system_update_alt_rounded),
-                label: const Text('Apply to ROM'),
+                label: const Text('Apply layout'),
               ),
               TextButton.icon(
                 onPressed: busy ? null : onRestoreDefault,
                 icon: const Icon(Icons.restart_alt_rounded),
-                label: const Text('Restore Mezo default'),
+                label: const Text('Restore default'),
               ),
             ],
           ),
@@ -494,7 +455,7 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
                 TextButton.icon(
                   onPressed: _resetBoard,
                   icon: const Icon(Icons.restart_alt_rounded),
-                  label: const Text('Reset'),
+                  label: const Text('Restore default'),
                 ),
               ],
             ),
@@ -516,7 +477,7 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
                   child: Stack(
                     children: <Widget>[
                       Positioned.fill(child: _BoardGuides(slots: slots)),
-                      ..._workingState.modules.where((m) => m.visible).map((module) => _moduleWidget(module, slots, tileSize)),
+                      ..._workingState.modules.map((module) => _moduleWidget(module, slots, tileSize)),
                     ],
                   ),
                 ),
@@ -547,7 +508,7 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
   double _tileSizeForSlots(List<_Slot> slots) {
     var maxCount = 1;
     for (final slot in slots) {
-      final count = _workingState.modules.where((m) => _sectorBase(m.currentPositionCode) == slot.sectorBase && m.visible).length;
+      final count = _workingState.modules.where((m) => _sectorBase(m.currentPositionCode) == slot.sectorBase).length;
       if (count > maxCount) {
         maxCount = count;
       }
