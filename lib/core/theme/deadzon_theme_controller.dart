@@ -235,7 +235,7 @@ class DeadzonThemeController extends ChangeNotifier {
     selectedDarkBackgroundId = defaultDarkBackgroundId;
     _applyAppearanceToThemeFields();
     final prefs = await SharedPreferences.getInstance();
-    await prefs
+    prefs
       ..setString(_themeModeKey, 'system')
       ..setString(_accentColorKey, defaultAccentId)
       ..setString(_lightPaletteKey, defaultLightPaletteId)
