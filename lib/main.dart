@@ -33,7 +33,7 @@ class DeadzonApp extends StatelessWidget {
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      title: 'DeadZon',
+      title: 'DeadZone',
       theme: AppTheme.light(theme),
       darkTheme: AppTheme.dark(theme),
       themeMode: theme.themeMode,

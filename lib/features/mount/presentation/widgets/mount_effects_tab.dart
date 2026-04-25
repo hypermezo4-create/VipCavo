@@ -16,7 +16,7 @@ class MountEffectsTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           const Text(
-            'Controls DeadZon app glass, blur, glow and accent only.',
+            'Controls DeadZone app glass, blur, glow and accent only.',
             style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 10),

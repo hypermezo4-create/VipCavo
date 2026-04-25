@@ -38,7 +38,7 @@ class MountStudioController extends ChangeNotifier {
   bool loading = true;
   String controlAppsSearch = '';
   String selectedControlCategory = 'All';
-  String applyStatusMessage = 'Awaiting apply. DeadZon app theme and bridge payload are local only.';
+  String applyStatusMessage = 'Awaiting apply. DeadZone app theme and bridge payload are local only.';
   bool appThemeApplied = false;
   bool romConfigSaved = false;
   Timer? _persistTimer;

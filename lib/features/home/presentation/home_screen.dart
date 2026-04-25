@@ -41,7 +41,7 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 16),
             const _IdentityHero().animate().fadeIn(duration: 450.ms).slideY(begin: 0.06, end: 0),
             const SizedBox(height: 20),
-            const SectionHeader(title: 'Main hub', subtitle: 'Core destinations for the premium DeadZon experience'),
+            const SectionHeader(title: 'Main hub', subtitle: 'Core destinations for the premium DeadZone experience'),
             const SizedBox(height: 10),
             ..._entries.asMap().entries.map(
                   (entry) => Padding(
