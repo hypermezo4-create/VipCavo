@@ -270,7 +270,7 @@ class _SourceSingleRowPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      minHeight: 46,
+      constraints: const BoxConstraints(minHeight: 46),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
@@ -395,7 +395,7 @@ class _PreviewModule extends StatelessWidget {
                 child: Image.asset(
                   module.asset,
                   fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => Icon(module.module.icon, color: Colors.white, size: dense ? 14 : 18),
+                  errorBuilder: (context, error, stackTrace) => Icon(module.module.icon, color: Colors.white, size: dense ? 14 : 18),
                 ),
               ),
               if (showText) ...<Widget>[
@@ -717,7 +717,7 @@ class _ArrangeChip extends StatelessWidget {
             child: Image.asset(
               module.asset,
               fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => Icon(module.module.icon, size: 16, color: Colors.white),
+              errorBuilder: (context, error, stackTrace) => Icon(module.module.icon, size: 16, color: Colors.white),
             ),
           ),
           const SizedBox(width: 7),
