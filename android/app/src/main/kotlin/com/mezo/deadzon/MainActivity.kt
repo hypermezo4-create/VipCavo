@@ -60,6 +60,26 @@ class MainActivity : FlutterActivity() {
                     result.success(null)
                 }
 
+
+                "readString" -> {
+                    if (key == null) {
+                        result.error("invalid_args", "Missing key", null)
+                        return@setMethodCallHandler
+                    }
+                    val fallback = (args["defaultValue"] as? String) ?: ""
+                    result.success(readString(storeType, key, fallback))
+                }
+
+                "writeString" -> {
+                    if (key == null) {
+                        result.error("invalid_args", "Missing key", null)
+                        return@setMethodCallHandler
+                    }
+                    val value = (args["value"] as? String) ?: ""
+                    writeString(storeType, key, value)
+                    result.success(null)
+                }
+
                 "sendBroadcast" -> {
                     val action = args?.get("action") as? String
                     result.success(sendSafeBroadcast(action))
@@ -267,6 +287,25 @@ class MainActivity : FlutterActivity() {
             }
         } catch (_: Exception) {
             mapOf("available" to false, "message" to "Wallpaper colors are not available on this ROM.")
+        }
+    }
+
+
+    private fun readString(storeType: Int, key: String, fallback: String): String {
+        val resolver = applicationContext.contentResolver
+        return when (storeType) {
+            2 -> Settings.Global.getString(resolver, key) ?: fallback
+            1 -> Settings.Secure.getString(resolver, key) ?: fallback
+            else -> Settings.System.getString(resolver, key) ?: fallback
+        }
+    }
+
+    private fun writeString(storeType: Int, key: String, value: String) {
+        val resolver = applicationContext.contentResolver
+        when (storeType) {
+            2 -> Settings.Global.putString(resolver, key, value)
+            1 -> Settings.Secure.putString(resolver, key, value)
+            else -> Settings.System.putString(resolver, key, value)
         }
     }
 

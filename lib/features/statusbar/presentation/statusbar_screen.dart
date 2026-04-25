@@ -76,11 +76,11 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
       child: SafeArea(
         child: ListView(
           physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-          padding: const EdgeInsets.fromLTRB(18, 14, 18, 120),
+          padding: const EdgeInsets.fromLTRB(18, 14, 18, 180),
           children: <Widget>[
             const PremiumTopBar(
               title: 'Statusbar adjustment',
-              subtitle: 'Source-faithful Mezo board with real moving modules and original section cards',
+              subtitle: 'Customize status bar layout and icon positions',
             ),
             const SizedBox(height: 18),
             if (_boardState == null)
@@ -125,10 +125,11 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
   static const double _boardHeight = 268;
   static const double _boardHorizontalPadding = 8;
   static const double _boardTopInset = 62;
+  static const double _boardActiveTopHeight = 112;
+  static const double _boardLowerStartY = 168;
   static const double _minTileSize = 24;
   static const double _maxTileSize = 40;
   static const double _tileGap = 4;
-  static const double _rowSnapThreshold = 14;
 
   final GlobalKey _boardKey = GlobalKey();
   late StatusbarBoardState _workingState;
@@ -176,8 +177,8 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
           const SizedBox(height: 10),
           LayoutBuilder(
             builder: (context, constraints) {
-              final zones = _zones(constraints.maxWidth);
-              final tileSize = _tileSizeForZones(zones);
+              final slots = _slots(constraints.maxWidth);
+              final tileSize = _tileSizeForSlots(slots);
               return SizedBox(
                 height: _boardHeight,
                 child: DecoratedBox(
@@ -189,8 +190,8 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
                   ),
                   child: Stack(
                     children: <Widget>[
-                      Positioned.fill(child: _BoardGuides(zones: zones)),
-                      ..._workingState.modules.where((m) => m.visible).map((module) => _moduleWidget(module, zones, tileSize)),
+                      Positioned.fill(child: _BoardGuides(slots: slots)),
+                      ..._workingState.modules.where((m) => m.visible).map((module) => _moduleWidget(module, slots, tileSize)),
                     ],
                   ),
                 ),
@@ -202,37 +203,40 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
     );
   }
 
-  List<_Zone> _zones(double width) {
+  List<_Slot> _slots(double width) {
     final centerX = width / 2;
-    final row1Y = _boardTopInset;
-    final row2Y = _boardTopInset + 80;
-    return <_Zone>[
-      _Zone(side: StatusbarBoardSide.left, row: 1, left: _boardHorizontalPadding, right: centerX - 6, top: row1Y, bottom: row1Y + _maxTileSize),
-      _Zone(side: StatusbarBoardSide.left, row: 2, left: _boardHorizontalPadding, right: centerX - 6, top: row2Y, bottom: row2Y + _maxTileSize),
-      _Zone(side: StatusbarBoardSide.right, row: 1, left: centerX + 6, right: width - _boardHorizontalPadding, top: row1Y, bottom: row1Y + _maxTileSize),
-      _Zone(side: StatusbarBoardSide.right, row: 2, left: centerX + 6, right: width - _boardHorizontalPadding, top: row2Y, bottom: row2Y + _maxTileSize),
+    final topRowOneY = _boardTopInset;
+    final topRowTwoY = _boardTopInset + 40;
+    final bottomRowY = _boardLowerStartY;
+
+    return <_Slot>[
+      _Slot(sectorBase: 20, left: _boardHorizontalPadding, right: centerX - 6, y: topRowOneY),
+      _Slot(sectorBase: 30, left: centerX + 6, right: width - _boardHorizontalPadding, y: topRowOneY),
+      _Slot(sectorBase: 0, left: _boardHorizontalPadding, right: centerX - 6, y: topRowTwoY),
+      _Slot(sectorBase: 10, left: centerX + 6, right: width - _boardHorizontalPadding, y: topRowTwoY),
+      _Slot(sectorBase: 40, left: _boardHorizontalPadding, right: centerX - 6, y: bottomRowY),
+      _Slot(sectorBase: 50, left: centerX + 6, right: width - _boardHorizontalPadding, y: bottomRowY),
     ];
   }
 
-  double _tileSizeForZones(List<_Zone> zones) {
+  double _tileSizeForSlots(List<_Slot> slots) {
     var maxCount = 1;
-    for (final zone in zones) {
-      final count = _workingState.modules.where((m) => m.side == zone.side && m.row == zone.row && m.visible).length;
+    for (final slot in slots) {
+      final count = _workingState.modules.where((m) => _sectorBase(m.currentPositionCode) == slot.sectorBase && m.visible).length;
       if (count > maxCount) {
         maxCount = count;
       }
     }
-    final zoneWidth = zones[0].right - zones[0].left;
-    final calculated = (zoneWidth - (_tileGap * (maxCount - 1))) / maxCount;
+    final topSlotWidth = slots.first.right - slots.first.left;
+    final calculated = (topSlotWidth - (_tileGap * (maxCount - 1))) / maxCount;
     return calculated.clamp(_minTileSize, _maxTileSize).toDouble();
   }
 
-  Widget _moduleWidget(StatusbarBoardModuleState module, List<_Zone> zones, double tileSize) {
-    final zone = zones.firstWhere((z) => z.side == module.side && z.row == module.row);
-    final group = _workingState.modules.where((m) => m.side == module.side && m.row == module.row && m.visible).toList()..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-    final index = group.indexWhere((m) => m.id == module.id).clamp(0, 99);
-    final left = zone.left + (index * (tileSize + _tileGap)) + (module.side == StatusbarBoardSide.left ? _workingState.leftClusterOffset : _workingState.rightClusterOffset);
-    final top = zone.top + module.offsetY;
+  Widget _moduleWidget(StatusbarBoardModuleState module, List<_Slot> slots, double tileSize) {
+    final moduleSlot = slots.firstWhere((slot) => slot.sectorBase == _sectorBase(module.currentPositionCode), orElse: () => slots.first);
+    final positionInSlot = _positionInSlot(module.currentPositionCode);
+    final left = moduleSlot.left + ((positionInSlot - 1) * (tileSize + _tileGap));
+    final top = moduleSlot.y + module.offsetY;
     final dragging = _draggingId == module.id;
     final pos = dragging ? _dragOffset : Offset(left, top);
 
@@ -260,7 +264,7 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
           final local = boardBox.globalToLocal(event.position);
           final nextTopLeft = local - _pointerAnchor;
           setState(() => _dragOffset = nextTopLeft);
-          _liveRelayout(module.id, nextTopLeft, zones, tileSize);
+          _liveRelayout(module.id, nextTopLeft, slots, tileSize);
         },
         onPointerUp: (event) => _endDrag(event.pointer),
         onPointerCancel: (event) => _endDrag(event.pointer),
@@ -278,40 +282,60 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
     );
   }
 
-  void _liveRelayout(String moduleId, Offset pos, List<_Zone> zones, double tileSize) {
-    final centerThreshold = zones[2].left - 10;
-    final crossing = zones.firstWhere(
-      (z) => pos.dx + (tileSize / 2) >= z.left && pos.dx + (tileSize / 2) <= z.right,
-      orElse: () => pos.dx < centerThreshold ? zones.first : zones[2],
-    );
-    final rowThreshold = (zones.first.bottom + zones[1].top) / 2;
-    final moduleCenterY = pos.dy + (tileSize / 2);
-    final row = moduleCenterY > (rowThreshold + _rowSnapThreshold)
-        ? 2
-        : moduleCenterY < (rowThreshold - _rowSnapThreshold)
-            ? 1
-            : _workingState.modules.firstWhere((m) => m.id == moduleId).row;
-    final side = crossing.side;
-    final inGroup = _workingState.modules.where((m) => m.id != moduleId && m.side == side && m.row == row && m.visible).toList()..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-    final index = (((pos.dx - crossing.left) / (tileSize + _tileGap)).round()).clamp(0, inGroup.length);
-    final moved = _workingState.modules.firstWhere((m) => m.id == moduleId).copyWith(side: side, row: row, orderIndex: index, visible: true, enabled: true);
-    final updated = <StatusbarBoardModuleState>[..._workingState.modules.where((m) => m.id != moduleId), moved];
-    setState(() {
-      _workingState = _workingState.copyWith(modules: _normalize(updated));
-    });
+  int _sectorBase(int code) {
+    if (code >= 50) return 50;
+    if (code >= 40) return 40;
+    if (code >= 30) return 30;
+    if (code >= 20) return 20;
+    if (code >= 10) return 10;
+    return 0;
   }
 
-  List<StatusbarBoardModuleState> _normalize(List<StatusbarBoardModuleState> modules) {
-    final out = <StatusbarBoardModuleState>[];
-    for (final side in <StatusbarBoardSide>[StatusbarBoardSide.left, StatusbarBoardSide.right]) {
-      for (var row = 1; row <= 2; row++) {
-        final group = modules.where((m) => m.side == side && m.row == row).toList()..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
-        for (var i = 0; i < group.length; i++) {
-          out.add(group[i].copyWith(orderIndex: i));
-        }
+  int _positionInSlot(int code) {
+    final pos = code % 10;
+    return pos == 0 ? 1 : pos;
+  }
+
+  int _nearestCodeFor(Offset pos, List<_Slot> slots, double tileSize, Set<int> occupied, String moduleId) {
+    final centerY = pos.dy + (tileSize / 2);
+    final centerX = pos.dx + (tileSize / 2);
+
+    final isBelowDivider = centerY > (_boardTopInset + _boardActiveTopHeight);
+    final leftSide = centerX < (slots.first.right + slots[1].left) / 2;
+
+    final sector = switch ((isBelowDivider, leftSide)) {
+      (true, true) => 40,
+      (true, false) => 50,
+      (false, true) => centerY < (_boardTopInset + 28) ? 20 : 0,
+      (false, false) => centerY < (_boardTopInset + 28) ? 30 : 10,
+    };
+
+    final sectorSlot = slots.firstWhere((slot) => slot.sectorBase == sector);
+    final rawIndex = ((centerX - sectorSlot.left) / (tileSize + _tileGap)).round() + 1;
+    final clamped = rawIndex.clamp(1, 9);
+
+    var candidate = sector + clamped;
+    if (!occupied.contains(candidate)) {
+      return candidate;
+    }
+    for (var i = 1; i <= 9; i++) {
+      final alt = sector + i;
+      if (!occupied.contains(alt)) {
+        return alt;
       }
     }
-    return out;
+    final current = _workingState.modules.firstWhere((m) => m.id == moduleId).currentPositionCode;
+    return current;
+  }
+
+  void _liveRelayout(String moduleId, Offset pos, List<_Slot> slots, double tileSize) {
+    final occupied = _workingState.modules.where((m) => m.id != moduleId).map((m) => m.currentPositionCode).toSet();
+    final nextCode = _nearestCodeFor(pos, slots, tileSize, occupied, moduleId);
+    final moved = _workingState.modules.firstWhere((m) => m.id == moduleId).copyWith(currentPositionCode: nextCode, visible: true, enabled: true);
+    final updated = <StatusbarBoardModuleState>[..._workingState.modules.where((m) => m.id != moduleId), moved];
+    setState(() {
+      _workingState = _workingState.copyWith(modules: updated);
+    });
   }
 
   Future<void> _resetBoard() async {
@@ -349,7 +373,7 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
 
   void _updateSingle(StatusbarBoardModuleState next) {
     final updated = _workingState.modules.map((m) => m.id == next.id ? next : m).toList(growable: false);
-    final nextState = _workingState.copyWith(modules: _normalize(updated));
+    final nextState = _workingState.copyWith(modules: updated);
     setState(() => _workingState = nextState);
     widget.onChanged(nextState);
   }
@@ -358,7 +382,7 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
     if (_activePointer != pointer) {
       return;
     }
-    final nextState = _workingState.copyWith(modules: _normalize(_workingState.modules));
+    final nextState = _workingState.copyWith(modules: _workingState.modules);
     setState(() {
       _activePointer = null;
       _draggingId = null;
@@ -368,25 +392,25 @@ class _StatusControlBoardState extends State<_StatusControlBoard> {
   }
 }
 
-class _Zone {
-  const _Zone({required this.side, required this.row, required this.left, required this.right, required this.top, required this.bottom});
+class _Slot {
+  const _Slot({required this.sectorBase, required this.left, required this.right, required this.y});
 
-  final StatusbarBoardSide side;
-  final int row;
+  final int sectorBase;
   final double left;
   final double right;
-  final double top;
-  final double bottom;
+  final double y;
 }
 
 class _BoardGuides extends StatelessWidget {
-  const _BoardGuides({required this.zones});
-  final List<_Zone> zones;
+  const _BoardGuides({required this.slots});
+  final List<_Slot> slots;
 
   @override
   Widget build(BuildContext context) {
-    final center = (zones.first.right + zones[2].left) / 2;
-    final rowDivider = (zones.first.bottom + zones[1].top) / 2;
+    final leftTop = slots.firstWhere((slot) => slot.sectorBase == 20);
+    final rightTop = slots.firstWhere((slot) => slot.sectorBase == 30);
+    final center = (leftTop.right + rightTop.left) / 2;
+
     return Stack(children: [
       Positioned(
         left: center - 1,
@@ -397,14 +421,20 @@ class _BoardGuides extends StatelessWidget {
       Positioned(
         left: 18,
         right: 18,
-        top: rowDivider,
+        top: 132,
         child: Container(height: 2, color: Colors.white.withValues(alpha: 0.18)),
+      ),
+      Positioned(
+        left: 18,
+        right: 18,
+        top: 186,
+        child: Container(height: 2, color: Colors.white.withValues(alpha: 0.10)),
       ),
       Positioned(left: 18, top: 18, child: Text('Left side', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.w600))),
       Positioned(right: 18, top: 18, child: Text('Right side', style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 12, fontWeight: FontWeight.w600))),
-      Positioned(left: center - 24, top: 18, child: Text('Center', style: TextStyle(color: Colors.white.withValues(alpha: 0.66), fontSize: 12, fontWeight: FontWeight.w600))),
-      Positioned(left: 18, top: zones.first.top - 18, child: Text('Row 1', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12))),
-      Positioned(left: 18, top: zones[1].top - 18, child: Text('Row 2', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12))),
+      Positioned(left: 18, top: 46, child: Text('Top row A (20/30)', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11))),
+      Positioned(left: 18, top: 86, child: Text('Top row B (0/10)', style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11))),
+      Positioned(left: 18, top: 150, child: Text('Lower area (40/50)', style: TextStyle(color: Colors.white.withValues(alpha: 0.42), fontSize: 11))),
     ]);
   }
 }
@@ -555,7 +585,7 @@ class _BoardModuleBadge extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(size * 0.2),
               child: Image.asset(
-                module.module.iconAsset,
+                module.asset,
                 width: size * 0.8,
                 height: size * 0.8,
                 fit: BoxFit.contain,

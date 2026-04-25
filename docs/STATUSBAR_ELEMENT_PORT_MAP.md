@@ -1,114 +1,40 @@
 # STATUSBAR_ELEMENT_PORT_MAP
 
-Source root: `reference/mezo/mezo/smali/com/android/settings/statusbarelement`
+## Source of truth
+- Smali class: `reference/mezo/mezo/smali/com/android/settings/statusbarelement/PositionsElementsStatusbarDouble.smali`
+- Preference key: `status_bar_elem_position`
+- Exact default serialized layout:
+  - `elem_status.33;elem_clock.21;elem_bat.31;elem_net1.1;elem_net2.11;elem_wifi.2;elem_notif.22;elem_speed.3;elem_weather.32;elem_date.12;`
 
-## Port summary
-- Source of truth class for board interaction is `PositionsElementsStatusbarDouble` (+ nested classes).
-- Mezo default serialized layout string: `elem_status.33;elem_clock.21;elem_bat.31;elem_net1.1;elem_net2.11;elem_wifi.2;elem_notif.22;elem_speed.3;elem_weather.32;elem_date.12;` read/write via `status_bar_elem_position`.
-- Flutter port targets: `lib/features/statusbar/data/statusbar_board_model.dart`, `lib/features/statusbar/statusbar_board_config.dart`, `lib/features/statusbar/data/statusbar_board_service.dart`, `lib/features/statusbar/presentation/statusbar_screen.dart`.
-- Resource references inspected via `res/xml/*.smali` and `res/drawable-xxxhdpi/*` (cards/icons), especially `settings_iback_elite.smali`, `my_clock_settings.smali`, `settings_date_elite.smali`.
+## Legacy position code parser / encoder
+- Serialized entry format: `<element_id>.<positionCode>;`
+- Parser rules:
+  - split by `;`
+  - split each token by `.`
+  - `element_id` must map to `nameElement[]`
+  - `positionCode` is parsed as integer and stored directly
+- Encoder rules:
+  - always outputs in original `nameElement[]` order
+  - each module writes exact form: `elem_name.positionCode;`
+- Sector logic derived from original methods:
+  - `sectorOfdX`: sectors are `0`, `10`, `20`, `30` (plus reserved lower-area sectors used in Flutter board interaction)
+  - `getEmptyPozition`, `upPosition`, `downPosition`: movement resolves to nearest free slot inside current sector
 
-## File-by-file mapping
+## Elements and assets (all rendered, all draggable)
+| Element id | Original default code | Asset used | Rendered | Draggable |
+|---|---:|---|---|---|
+| elem_status | 33 | `reference/mezo/mezo/res/drawable-xxxhdpi/elem_status.png` | Yes | Yes |
+| elem_clock | 21 | `reference/mezo/mezo/res/drawable-xxxhdpi/elem_clock.png` | Yes | Yes |
+| elem_bat | 31 | `reference/mezo/mezo/res/drawable-xxxhdpi/elem_bat.png` | Yes | Yes |
+| elem_net1 | 1 | `reference/mezo/mezo/res/drawable-xxxhdpi/elem_net1.png` | Yes | Yes |
+| elem_net2 | 11 | `reference/mezo/mezo/res/drawable-xxxhdpi/elem_net2.png` | Yes | Yes |
+| elem_wifi | 2 | `reference/mezo/mezo/res/drawable-xxxhdpi/elem_wifi.png` | Yes | Yes |
+| elem_notif | 22 | `reference/mezo/mezo/res/drawable-xxxhdpi/elem_notif.png` | Yes | Yes |
+| elem_speed | 3 | `reference/mezo/mezo/res/drawable-xxxhdpi/elem_speed.png` | Yes | Yes |
+| elem_weather | 32 | `reference/mezo/mezo/res/drawable-xxxhdpi/elem_weather.png` | Yes | Yes |
+| elem_date | 12 | `reference/mezo/mezo/res/drawable-xxxhdpi/elem_date.png` | Yes | Yes |
 
-### PositionsElementsStatusbarDouble.smali
-- Purpose: Core double-row element editor; creates icons, handles decode/encode, drag position and persistence.
-- Important methods/fields: `init`, `decodePosition`, `codePosition`, `codePositionAfterEvent`, `downPosition`, `upPosition`, `getEmptyPozition`, `sectorOfdX`, `sendMovePosition`, `nameElement[]`, `defSettings`, `status_bar_elem_position`.
-- Resources/prefs: drawable/id lookup by element name; settings key `status_bar_elem_position`.
-- Flutter port: `statusbar_screen.dart` board + drag zones; `statusbar_board_service.dart` load/write; `statusbar_board_config.dart` module map.
-- Implemented: immediate drag, row threshold switching, side crossing, horizontal re-order, save/restore, reset to one-row.
-- Deferred: exact Mezo numeric position code parser (`33/21/...`) kept as documented source, not mirrored bit-for-bit.
-
-### PositionsElementsStatusbarDouble$ElementView.smali
-- Purpose: Per-icon view/touch logic and animated movement.
-- Methods: `onTouch`, `moveElement`, `moveToPosition`, `onMovePosition`, `eventUp`, `moveWithAnim`, `setPosition`.
-- Resources/prefs: vibration feedback, x/y coordinate handling.
-- Flutter port: `GestureDetector onPanStart/onPanUpdate/onPanEnd` in `_StatusControlBoardState`.
-- Implemented: direct touch drag with live layout updates.
-- Deferred: vibration timing parity and Android handler animation message cadence.
-
-### PositionsElementsStatusbarDouble$ElementView$Coordinate.smali
-- Purpose: coordinate queue object (`mX/mY/needX/needY`).
-- Flutter port: transient drag `Offset` state (`_dragOffset`).
-- Deferred: explicit queued coordinate object not needed in Flutter gesture stream.
-
-### PositionsElementsStatusbarDouble$ElementView$ElementHadler.smali
-- Purpose: per-element handler for delayed move/up animation events.
-- Flutter port: direct widget state updates each pan frame.
-- Deferred: message constants/timed queue semantics not required.
-
-### PositionsElementsStatusbarDouble$H.smali
-- Purpose: parent handler for delayed `codePositionAfterEvent` writes.
-- Flutter port: immediate write through `StatusbarBoardService.writeModules` on board change.
-- Deferred: delayed 100ms batching; current writes are immediate.
-
-### PositionsElementsStatusbarDouble$1.smali
-- Purpose: synthetic/anonymous helper class generated by compiler.
-- Flutter port: not applicable directly; behavior covered by widget closures.
-
-### StatusBarElementBase.smali
-- Purpose: base preference fragment dialog forwarding.
-- Methods: `onDisplayPreferenceDialog`.
-- Flutter port: detail screens and setting controls in `statusbar_screen.dart`/`statusbar_detail_content.dart`.
-- Deferred: Android preference fragment dialog internals.
-
-### StatusBarElementBat.smali
-- Purpose: loads `elem_bg_bat` preference xml.
-- Resources/prefs: `res/xml/elem_bg_bat.smali`.
-- Flutter port: battery card + mapped settings section (`battery`).
-
-### StatusBarElementClock.smali
-- Purpose: loads `elem_bg_clock` xml.
-- Resources/prefs: `res/xml/elem_bg_clock.smali`, plus main settings in `my_clock_settings.smali` (`elem_clock_element_visible`, `status_clock_division`, zoom/color/typeface keys).
-- Flutter port: clock board element + clock section card/detail.
-
-### StatusBarElementDate.smali
-- Purpose: loads `elem_bg_date` xml.
-- Resources/prefs: `settings_date_elite.smali` keys like `elem_date_element_visible`, `status_date_division`, `statusbar_date_format`.
-- Flutter port: date board element + date card/detail.
-
-### StatusBarElementNetOne.smali
-- Purpose: loads `elem_bg_net1` xml for first network element.
-- Flutter port: `network_1` module model entry.
-
-### StatusBarElementNetTwo.smali
-- Purpose: loads `elem_bg_net2` xml for second network element.
-- Flutter port: `network_2` module model entry.
-
-### StatusBarElementNotif.smali
-- Purpose: loads `elem_bg_fullscreen_notification` xml.
-- Resources/prefs: notification visibility/spacing keys.
-- Flutter port: `notification_icons` element + section card.
-
-### StatusBarElementPrompt.smali
-- Purpose: loads `elem_bg_prompt` xml.
-- Flutter port: prompt card retained in section grid.
-- Deferred: prompt icon not in editor default serialized package list; kept as section-only for now.
-
-### StatusBarElementSpeed.smali
-- Purpose: loads `elem_bg_speed` xml.
-- Resources/prefs: `status_bar_show_network_speed`, `net_speed_division`.
-- Flutter port: `netspeed` element model + board/detail.
-
-### StatusBarElementStatus.smali
-- Purpose: loads `elem_bg_status` xml.
-- Resources/prefs: `elem_status_element_visible`, `status_icon_division`.
-- Flutter port: `status_icons` element model + board/detail.
-
-### StatusBarElementWeather.smali
-- Purpose: loads `elem_bg_weather` xml.
-- Resources/prefs: `elem_weather_element_visible`, `status_weather_division`.
-- Flutter port: `weather` element model + board/detail.
-
-### StatusBarElementWifi.smali
-- Purpose: loads `elem_bg_wifi` xml.
-- Flutter port: `wifi` element model entry.
-
-## Related resource mapping inspected
-- `reference/mezo/mezo/res/xml/settings_iback_elite.smali` (links all statusbar element background fragments).
-- `reference/mezo/mezo/res/xml/my_clock_settings.smali`, `settings_date_elite.smali`, `settings_resize_elite.smali`.
-- `reference/mezo/mezo/res/drawable-xxxhdpi/*elem_*_card.png` for section/board art.
-
-## Current deferred list
-- Exact binary-equivalent `status_bar_elem_position` parser/encoder and legacy numeric placement codes.
-- Android fragment dialog classes from `StatusBarElementBase`.
-- Native vibration/handler timing identity.
+## Port status
+- Default layout is now source-data driven from serialized string.
+- Save/restore now reads and writes `status_bar_elem_position` directly.
+- Layout generation is no longer guessed from simplified side/row defaults.
