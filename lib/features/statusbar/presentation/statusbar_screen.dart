@@ -247,38 +247,23 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
     });
   }
 
-  void _dropInLane(String id, _BoardLane lane, Offset localOffset, Size quadrantSize) {
+  void _dropOnBoard(String id, Offset localOffset, Size boardSize) {
     final sourceIndex = _modules.indexWhere((module) => module.id == id);
     final source = sourceIndex == -1 ? null : _modules[sourceIndex];
     if (source == null) {
       return;
     }
 
-    final occupiedCodes = _modules
-        .where((module) => module.id != id)
-        .map((module) => module.currentPositionCode)
-        .toSet();
-    final candidates = lane.codes.where((code) => !occupiedCodes.contains(code)).toList(growable: false);
-    final nearestFree = _nearestCodeFromOffset(
-      lane: lane,
+    final tileSize = _tileSizeForBoard(boardSize.height, compact: false);
+    final nearestCode = _nearestCodeFromBoardOffset(
       offset: localOffset,
-      size: quadrantSize,
-      allowedCodes: candidates,
+      boardSize: boardSize,
+      tileSize: tileSize,
     );
-    if (nearestFree != null) {
-      _moveModule(id, nearestFree);
+    if (nearestCode == null) {
       return;
     }
-
-    final nearestInLane = _nearestCodeFromOffset(
-      lane: lane,
-      offset: localOffset,
-      size: quadrantSize,
-      allowedCodes: lane.codes,
-    );
-    if (nearestInLane != null) {
-      _moveModule(id, nearestInLane);
-    }
+    _moveModule(id, nearestCode);
   }
 
   void _resetToDefault() {
@@ -345,7 +330,7 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
                     children: <Widget>[
                       _MezoIconBoard(
                         modules: _modules,
-                        onDropInLane: _dropInLane,
+                        onDropInLane: _dropOnBoard,
                         compact: false,
                       ),
                       const SizedBox(height: 12),
@@ -375,7 +360,7 @@ class _MezoIconBoard extends StatelessWidget {
   });
 
   final List<StatusbarBoardModuleState> modules;
-  final void Function(String id, _BoardLane lane, Offset localOffset, Size laneSize)? onDropInLane;
+  final void Function(String id, Offset localOffset, Size boardSize)? onDropInLane;
   final bool compact;
 
   bool get _interactive => onDropInLane != null;
@@ -403,10 +388,7 @@ class _MezoIconBoard extends StatelessWidget {
             }
             final localOffset = box.globalToLocal(details.offset);
             final boardSize = Size(width, boardHeight);
-            final lane = _laneForBoardOffset(localOffset, boardSize);
-            final laneRect = _laneRectFor(lane, boardSize);
-            final laneOffset = localOffset - laneRect.topLeft;
-            onDropInLane!(details.data, lane, laneOffset, laneRect.size);
+            onDropInLane!(details.data, localOffset, boardSize);
           },
           builder: (context, candidates, rejected) {
             final hovering = candidates.isNotEmpty;
@@ -577,25 +559,32 @@ class _StudioActionButton extends StatelessWidget {
 }
 
 
-int? _nearestCodeFromOffset({
-  required _BoardLane lane,
+int? _nearestCodeFromBoardOffset({
   required Offset offset,
-  required Size size,
-  required List<int> allowedCodes,
+  required Size boardSize,
+  required Size tileSize,
 }) {
-  if (allowedCodes.isEmpty) {
+  if (statusbarBoardAllowedPositionCodes.isEmpty) {
     return null;
   }
 
   final clamped = Offset(
-    offset.dx.clamp(0.0, size.width).toDouble(),
-    offset.dy.clamp(0.0, size.height).toDouble(),
+    offset.dx.clamp(0.0, boardSize.width).toDouble(),
+    offset.dy.clamp(0.0, boardSize.height).toDouble(),
   );
-  var bestCode = allowedCodes.first;
+  var bestCode = statusbarBoardAllowedPositionCodes.first;
   var bestDistance = double.infinity;
-  for (final code in allowedCodes) {
-    final anchor = _anchorForCode(code: code, lane: lane, size: size);
-    final distance = (anchor - clamped).distanceSquared;
+  for (final code in statusbarBoardAllowedPositionCodes) {
+    final topLeft = _visualPositionForCode(
+      code: code,
+      boardSize: boardSize,
+      tileSize: tileSize,
+    );
+    final center = Offset(
+      topLeft.dx + tileSize.width / 2,
+      topLeft.dy + tileSize.height / 2,
+    );
+    final distance = (center - clamped).distanceSquared;
     if (distance < bestDistance) {
       bestDistance = distance;
       bestCode = code;
@@ -609,8 +598,9 @@ Offset _anchorForCode({
   required _BoardLane lane,
   required Size size,
 }) {
-  final index = lane.codes.indexOf(code).clamp(0, lane.codes.length - 1);
-  final slots = lane.codes.length.clamp(1, 9);
+  final rawIndex = lane.codes.indexOf(code);
+  final index = rawIndex < 0 ? 0 : rawIndex.clamp(0, 8);
+  final slots = 9;
   final xStep = size.width / slots;
   return Offset((index + 0.5) * xStep, size.height / 2);
 }
@@ -622,14 +612,6 @@ _BoardLane _laneForCode(int code) {
     }
   }
   return _BoardLane.leftTop;
-}
-
-_BoardLane _laneForBoardOffset(Offset offset, Size boardSize) {
-  final ySplit = boardSize.height * 0.54;
-  if (offset.dy < ySplit) {
-    return offset.dx < boardSize.width / 2 ? _BoardLane.leftTop : _BoardLane.rightTop;
-  }
-  return offset.dx < boardSize.width / 2 ? _BoardLane.leftBottom : _BoardLane.rightBottom;
 }
 
 Rect _laneRectFor(_BoardLane lane, Size boardSize) {
