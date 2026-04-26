@@ -16,98 +16,284 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName).setMethodCallHandler { call, result ->
-            val args = call.arguments as? Map<*, *>
-            val key = args?.get("key") as? String
-            val storeType = (args?.get("storeType") as? Int) ?: 0
 
-            when (call.method) {
-                "readInt" -> {
-                    if (key == null) {
-                        result.error("invalid_args", "Missing key", null)
-                        return@setMethodCallHandler
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName)
+            .setMethodCallHandler { call, result ->
+                val args = call.arguments as? Map<*, *>
+
+                when (call.method) {
+                    "readInt" -> {
+                        val key = args.stringArg("key")
+                        if (key.isNullOrBlank()) {
+                            result.error("invalid_args", "Missing key", null)
+                            return@setMethodCallHandler
+                        }
+                        result.success(
+                            readInt(
+                                args.storeTypeArg(),
+                                key,
+                                args.intArg("defaultValue", 0)
+                            )
+                        )
                     }
-                    val fallback = (args["defaultValue"] as? Int) ?: 0
-                    result.success(readInt(storeType, key, fallback))
-                }
 
-                "readBool" -> {
-                    if (key == null) {
-                        result.error("invalid_args", "Missing key", null)
-                        return@setMethodCallHandler
+                    "writeInt" -> {
+                        val key = args.stringArg("key")
+                        if (key.isNullOrBlank()) {
+                            result.error("invalid_args", "Missing key", null)
+                            return@setMethodCallHandler
+                        }
+                        result.success(
+                            writeInt(
+                                args.storeTypeArg(),
+                                key,
+                                args.intArg("value", 0)
+                            )
+                        )
                     }
-                    val fallback = (args["defaultValue"] as? Boolean) ?: false
-                    result.success(readInt(storeType, key, if (fallback) 1 else 0) == 1)
-                }
 
-                "writeInt" -> {
-                    if (key == null) {
-                        result.error("invalid_args", "Missing key", null)
-                        return@setMethodCallHandler
+                    "readBool" -> {
+                        val key = args.stringArg("key")
+                        if (key.isNullOrBlank()) {
+                            result.error("invalid_args", "Missing key", null)
+                            return@setMethodCallHandler
+                        }
+                        val fallback = args.boolArg("defaultValue", false)
+                        result.success(
+                            readInt(
+                                args.storeTypeArg(),
+                                key,
+                                if (fallback) 1 else 0
+                            ) == 1
+                        )
                     }
-                    val value = (args["value"] as? Int) ?: 0
-                    result.success(writeInt(storeType, key, value))
-                }
 
-                "writeBool" -> {
-                    if (key == null) {
-                        result.error("invalid_args", "Missing key", null)
-                        return@setMethodCallHandler
+                    "writeBool" -> {
+                        val key = args.stringArg("key")
+                        if (key.isNullOrBlank()) {
+                            result.error("invalid_args", "Missing key", null)
+                            return@setMethodCallHandler
+                        }
+                        result.success(
+                            writeInt(
+                                args.storeTypeArg(),
+                                key,
+                                if (args.boolArg("value", false)) 1 else 0
+                            )
+                        )
                     }
-                    val value = (args["value"] as? Boolean) ?: false
-                    result.success(writeInt(storeType, key, if (value) 1 else 0))
-                }
 
-
-                "readString" -> {
-                    if (key == null) {
-                        result.error("invalid_args", "Missing key", null)
-                        return@setMethodCallHandler
+                    "readString" -> {
+                        val key = args.stringArg("key")
+                        if (key.isNullOrBlank()) {
+                            result.error("invalid_args", "Missing key", null)
+                            return@setMethodCallHandler
+                        }
+                        result.success(
+                            readString(
+                                args.storeTypeArg(),
+                                key,
+                                args.stringArg("defaultValue") ?: ""
+                            )
+                        )
                     }
-                    val fallback = (args["defaultValue"] as? String) ?: ""
-                    result.success(readString(storeType, key, fallback))
-                }
 
-                "writeString" -> {
-                    if (key == null) {
-                        result.error("invalid_args", "Missing key", null)
-                        return@setMethodCallHandler
+                    "writeString" -> {
+                        val key = args.stringArg("key")
+                        if (key.isNullOrBlank()) {
+                            result.error("invalid_args", "Missing key", null)
+                            return@setMethodCallHandler
+                        }
+                        result.success(
+                            writeString(
+                                args.storeTypeArg(),
+                                key,
+                                args.stringArg("value") ?: ""
+                            )
+                        )
                     }
-                    val value = (args["value"] as? String) ?: ""
-                    result.success(writeString(storeType, key, value))
-                }
 
-                "sendBroadcast" -> {
-                    val action = args?.get("action") as? String
-                    result.success(sendSafeBroadcast(action))
-                }
+                    "sendBroadcast" -> {
+                        result.success(sendSafeBroadcast(args.stringArg("action")))
+                    }
 
-                "openExternalApp" -> {
-                    val packageName = args?.get("packageName") as? String
-                    result.success(openExternalApp(packageName))
-                }
+                    "openExternalApp" -> {
+                        result.success(openExternalApp(args.stringArg("packageName")))
+                    }
 
-                "launchMonetPicker" -> result.success(launchMonetPicker())
-                "getWallpaperColors" -> result.success(getWallpaperColors())
-                "getInstalledPackages" -> result.success(getInstalledPackages())
-                "getKnownPackageInstallStates" -> {
-                    val packageNames = (args?.get("packageNames") as? List<*>)
-                        ?.mapNotNull { it?.toString() }
-                        ?: emptyList()
-                    result.success(getKnownPackageInstallStates(packageNames))
+                    "launchMonetPicker" -> result.success(launchMonetPicker())
+                    "getWallpaperColors" -> result.success(getWallpaperColors())
+                    "getInstalledPackages" -> result.success(getInstalledPackages())
+                    "getKnownPackageInstallStates" -> {
+                        val packageNames = (args?.get("packageNames") as? List<*>)
+                            ?.mapNotNull { it?.toString() }
+                            ?: emptyList()
+                        result.success(getKnownPackageInstallStates(packageNames))
+                    }
+
+                    "getCurrentPackageName" -> result.success(applicationContext.packageName)
+
+                    "isPackageInstalled" -> {
+                        result.success(isPackageInstalled(args.stringArg("packageName")))
+                    }
+
+                    "writeMountBridgeConfig" -> {
+                        result.success(writeMountBridgeConfig(args?.get("config")))
+                    }
+
+                    else -> result.notImplemented()
                 }
-                "getCurrentPackageName" -> result.success(applicationContext.packageName)
-                "isPackageInstalled" -> {
-                    val packageName = args?.get("packageName") as? String
-                    result.success(isPackageInstalled(packageName))
+            }
+    }
+
+    private fun Map<*, *>?.storeTypeArg(): Int {
+        return intArg("storeType", 0)
+    }
+
+    private fun Map<*, *>?.stringArg(name: String): String? {
+        return this?.get(name)?.toString()
+    }
+
+    private fun Map<*, *>?.intArg(name: String, fallback: Int): Int {
+        val raw = this?.get(name) ?: return fallback
+        return when (raw) {
+            is Int -> raw
+            is Number -> raw.toInt()
+            is String -> raw.toIntOrNull() ?: fallback
+            is Boolean -> if (raw) 1 else 0
+            else -> fallback
+        }
+    }
+
+    private fun Map<*, *>?.boolArg(name: String, fallback: Boolean): Boolean {
+        val raw = this?.get(name) ?: return fallback
+        return when (raw) {
+            is Boolean -> raw
+            is Int -> raw == 1
+            is Number -> raw.toInt() == 1
+            is String -> raw.equals("true", ignoreCase = true) || raw == "1"
+            else -> fallback
+        }
+    }
+
+    private fun readString(storeType: Int, key: String, fallback: String): String {
+        val resolver = applicationContext.contentResolver
+        return try {
+            when (storeType) {
+                2 -> Settings.Global.getString(resolver, key) ?: fallback
+                1 -> Settings.Secure.getString(resolver, key) ?: fallback
+                else -> Settings.System.getString(resolver, key) ?: fallback
+            }
+        } catch (_: Exception) {
+            fallback
+        }
+    }
+
+    private fun writeString(storeType: Int, key: String, value: String): Boolean {
+        val resolver = applicationContext.contentResolver
+        return try {
+            when (storeType) {
+                2 -> Settings.Global.putString(resolver, key, value)
+                1 -> Settings.Secure.putString(resolver, key, value)
+                else -> Settings.System.putString(resolver, key, value)
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun readInt(storeType: Int, key: String, fallback: Int): Int {
+        val resolver = applicationContext.contentResolver
+        return try {
+            when (storeType) {
+                2 -> Settings.Global.getInt(resolver, key, fallback)
+                1 -> Settings.Secure.getInt(resolver, key, fallback)
+                else -> Settings.System.getInt(resolver, key, fallback)
+            }
+        } catch (_: Exception) {
+            fallback
+        }
+    }
+
+    private fun writeInt(storeType: Int, key: String, value: Int): Boolean {
+        val resolver = applicationContext.contentResolver
+        return try {
+            when (storeType) {
+                2 -> Settings.Global.putInt(resolver, key, value)
+                1 -> Settings.Secure.putInt(resolver, key, value)
+                else -> Settings.System.putInt(resolver, key, value)
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun sendSafeBroadcast(action: String?): Boolean {
+        return try {
+            if (action.isNullOrBlank()) {
+                false
+            } else {
+                sendBroadcast(Intent(action))
+                true
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun openExternalApp(packageName: String?): Boolean {
+        if (packageName.isNullOrBlank()) {
+            return false
+        }
+
+        return try {
+            val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+            if (launchIntent == null) {
+                false
+            } else {
+                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(launchIntent)
+                true
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun launchMonetPicker(): Boolean {
+        val intents = listOf(
+            Intent("android.settings.WALLPAPER_SETTINGS"),
+            Intent("android.settings.DISPLAY_SETTINGS"),
+            Intent().setClassName(
+                "com.android.wallpaper",
+                "com.android.wallpaper.picker.CustomizationPickerActivity"
+            ),
+            Intent().setClassName(
+                "com.miui.home",
+                "com.miui.home.launcher.settings.MiuiHomeSettings"
+            ),
+            Intent().setClassName(
+                "com.miui.thememanager",
+                "com.miui.thememanager.activity.ThemeTabActivity"
+            ),
+            Intent().setClassName(
+                "com.miui.personalassistant",
+                "com.miui.personalassistant.settings.WallpaperSettingsActivity"
+            ),
+        )
+
+        for (intent in intents) {
+            try {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                if (intent.resolveActivity(packageManager) != null) {
+                    startActivity(intent)
+                    return true
                 }
-                "writeMountBridgeConfig" -> {
-                    val config = args?.get("config")
-                    result.success(writeMountBridgeConfig(config))
-                }
-                else -> result.notImplemented()
+            } catch (_: Exception) {
+                // Try next intent.
             }
         }
+        return false
     }
 
     private fun getInstalledPackages(): List<Map<String, Any>> {
@@ -183,74 +369,6 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun sendSafeBroadcast(action: String?): Boolean {
-        return try {
-            if (action.isNullOrBlank()) {
-                false
-            } else {
-                sendBroadcast(Intent(action))
-                true
-            }
-        } catch (_: Exception) {
-            false
-        }
-    }
-
-    private fun openExternalApp(packageName: String?): Boolean {
-        if (packageName.isNullOrBlank()) {
-            return false
-        }
-
-        return try {
-            val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
-            if (launchIntent == null) {
-                false
-            } else {
-                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                startActivity(launchIntent)
-                true
-            }
-        } catch (_: Exception) {
-            false
-        }
-    }
-
-    private fun launchMonetPicker(): Boolean {
-        val intents = listOf(
-            Intent("android.settings.WALLPAPER_SETTINGS"),
-            Intent("android.settings.DISPLAY_SETTINGS"),
-            Intent().setClassName(
-                "com.android.wallpaper",
-                "com.android.wallpaper.picker.CustomizationPickerActivity"
-            ),
-            Intent().setClassName(
-                "com.miui.home",
-                "com.miui.home.launcher.settings.MiuiHomeSettings"
-            ),
-            Intent().setClassName(
-                "com.miui.thememanager",
-                "com.miui.thememanager.activity.ThemeTabActivity"
-            ),
-            Intent().setClassName(
-                "com.miui.personalassistant",
-                "com.miui.personalassistant.settings.WallpaperSettingsActivity"
-            ),
-        )
-
-        for (intent in intents) {
-            try {
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                if (intent.resolveActivity(packageManager) != null) {
-                    startActivity(intent)
-                    return true
-                }
-            } catch (_: Exception) {
-                // Try next intent.
-            }
-        }
-        return false
-    }
-
     private fun getWallpaperColors(): Map<String, Any?> {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O_MR1) {
             return mapOf(
@@ -264,17 +382,23 @@ class MainActivity : FlutterActivity() {
 
             fun asMap(which: Int): Map<String, Int>? {
                 val colors = manager.getWallpaperColors(which) ?: return null
+                val primary = colors.primaryColor?.toArgb() ?: return null
+                val secondary = colors.secondaryColor?.toArgb() ?: primary
+                val tertiary = colors.tertiaryColor?.toArgb() ?: secondary
                 return mapOf(
-                    "primary" to (colors.primaryColor?.toArgb() ?: return null),
-                    "secondary" to (colors.secondaryColor?.toArgb() ?: colors.primaryColor?.toArgb() ?: return null),
-                    "tertiary" to (colors.tertiaryColor?.toArgb() ?: colors.secondaryColor?.toArgb() ?: colors.primaryColor?.toArgb() ?: return null),
+                    "primary" to primary,
+                    "secondary" to secondary,
+                    "tertiary" to tertiary,
                 )
             }
 
             val system = asMap(WallpaperManager.FLAG_SYSTEM)
             val lock = asMap(WallpaperManager.FLAG_LOCK)
             if (system == null && lock == null) {
-                mapOf("available" to false, "message" to "Wallpaper colors are not available on this ROM.")
+                mapOf(
+                    "available" to false,
+                    "message" to "Wallpaper colors are not available on this ROM."
+                )
             } else {
                 mapOf(
                     "available" to true,
@@ -283,60 +407,10 @@ class MainActivity : FlutterActivity() {
                 )
             }
         } catch (_: Exception) {
-            mapOf("available" to false, "message" to "Wallpaper colors are not available on this ROM.")
-        }
-    }
-
-
-    private fun readString(storeType: Int, key: String, fallback: String): String {
-        return try {
-            val resolver = applicationContext.contentResolver
-            when (storeType) {
-                2 -> Settings.Global.getString(resolver, key) ?: fallback
-                1 -> Settings.Secure.getString(resolver, key) ?: fallback
-                else -> Settings.System.getString(resolver, key) ?: fallback
-            }
-        } catch (_: Exception) {
-            fallback
-        }
-    }
-
-    private fun writeString(storeType: Int, key: String, value: String): Boolean {
-        return try {
-            val resolver = applicationContext.contentResolver
-            when (storeType) {
-                2 -> Settings.Global.putString(resolver, key, value)
-                1 -> Settings.Secure.putString(resolver, key, value)
-                else -> Settings.System.putString(resolver, key, value)
-            }
-        } catch (_: Exception) {
-            false
-        }
-    }
-
-    private fun readInt(storeType: Int, key: String, fallback: Int): Int {
-        return try {
-            val resolver = applicationContext.contentResolver
-            when (storeType) {
-                2 -> Settings.Global.getInt(resolver, key, fallback)
-                1 -> Settings.Secure.getInt(resolver, key, fallback)
-                else -> Settings.System.getInt(resolver, key, fallback)
-            }
-        } catch (_: Exception) {
-            fallback
-        }
-    }
-
-    private fun writeInt(storeType: Int, key: String, value: Int): Boolean {
-        return try {
-            val resolver = applicationContext.contentResolver
-            when (storeType) {
-                2 -> Settings.Global.putInt(resolver, key, value)
-                1 -> Settings.Secure.putInt(resolver, key, value)
-                else -> Settings.System.putInt(resolver, key, value)
-            }
-        } catch (_: Exception) {
-            false
+            mapOf(
+                "available" to false,
+                "message" to "Wallpaper colors are not available on this ROM."
+            )
         }
     }
 }
