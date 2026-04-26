@@ -6,65 +6,76 @@ class StatusbarSettingsRepository {
   StatusbarSettingsRepository._();
 
   static const String _localPrefix = 'statusbar_legacy_';
+  static const String _refreshIntent = 'my.intent.action.REFRESH_STATUSBAR';
 
   static Future<Object?> read(StatusBarSettingItem setting) async {
     final prefs = await SharedPreferences.getInstance();
-    final key = _storageKey(setting.legacyKey);
-    final rawKey = setting.legacyKey;
-    final fallback = setting.defaultValue;
-
-    if (fallback is bool) {
-      return prefs.getBool(rawKey) ?? prefs.getBool(key) ?? fallback;
-    }
-    if (fallback is num) {
-      return _readNumber(prefs, rawKey) ?? _readNumber(prefs, key) ?? fallback.toDouble();
-    }
-    if (fallback is String) {
-      return prefs.getString(rawKey) ?? prefs.getString(key) ?? fallback;
-    }
-    return prefs.get(rawKey) ?? prefs.get(key) ?? fallback;
+    return _readOne(prefs, setting);
   }
 
   static Future<Map<String, Object?>> readAll(List<StatusBarSettingItem> settings) async {
     final prefs = await SharedPreferences.getInstance();
     final values = <String, Object?>{};
     for (final setting in settings) {
-      final key = _storageKey(setting.legacyKey);
-      final rawKey = setting.legacyKey;
-      final fallback = setting.defaultValue;
-      if (fallback is bool) {
-        values[setting.legacyKey] = prefs.getBool(rawKey) ?? prefs.getBool(key) ?? fallback;
-      } else if (fallback is num) {
-        values[setting.legacyKey] = _readNumber(prefs, rawKey) ?? _readNumber(prefs, key) ?? fallback.toDouble();
-      } else if (fallback is String) {
-        values[setting.legacyKey] = prefs.getString(rawKey) ?? prefs.getString(key) ?? fallback;
-      } else {
-        values[setting.legacyKey] = prefs.get(rawKey) ?? prefs.get(key) ?? fallback;
-      }
+      values[setting.legacyKey] = await _readOne(prefs, setting);
     }
     return values;
   }
 
-  static Future<void> write(StatusBarSettingItem setting, Object? value) async {
-    if (value == null) {
-      return;
+  static Future<Object?> _readOne(SharedPreferences prefs, StatusBarSettingItem setting) async {
+    final key = _storageKey(setting.legacyKey);
+    final rawKey = setting.legacyKey;
+    final fallback = setting.defaultValue;
+
+    if (fallback is bool) {
+      final localFallback = prefs.getBool(rawKey) ?? prefs.getBool(key) ?? fallback;
+      return _readNativeBool(rawKey, localFallback);
     }
+    if (fallback is num) {
+      final localFallback = (_readNumber(prefs, rawKey) ?? _readNumber(prefs, key) ?? fallback.toDouble()).round();
+      final native = await _readNativeInt(rawKey, localFallback);
+      return native.toDouble();
+    }
+    if (fallback is String) {
+      final localFallback = prefs.getString(rawKey) ?? prefs.getString(key) ?? fallback;
+      final native = await _readNativeString(rawKey, localFallback);
+      return native;
+    }
+    return prefs.get(rawKey) ?? prefs.get(key) ?? fallback;
+  }
+
+  static Future<void> write(StatusBarSettingItem setting, Object? value) async {
+    if (value == null) return;
     await writeRaw(setting.legacyKey, value);
     await _writeNativeBestEffort(setting.legacyKey, value);
 
-    if (setting.intentAction != null) {
-      try {
+    try {
+      if (setting.intentAction != null) {
         await ResizeStatusbarService.sendBroadcastIntent(setting.intentAction!);
-      } catch (_) {
-        // Local persistence is still preserved when native bridge is unavailable.
       }
+      await ResizeStatusbarService.sendBroadcastIntent(_refreshIntent);
+    } catch (_) {
+      // Local persistence is still preserved when the native bridge is unavailable.
+    }
+  }
+
+
+  static Future<void> writeLoose(String legacyKey, Object? value, {String? intentAction}) async {
+    if (value == null) return;
+    await writeRaw(legacyKey, value);
+    await _writeNativeBestEffort(legacyKey, value);
+    try {
+      if (intentAction != null) {
+        await ResizeStatusbarService.sendBroadcastIntent(intentAction);
+      }
+      await ResizeStatusbarService.sendBroadcastIntent(_refreshIntent);
+    } catch (_) {
+      // Keep local state when native refresh is unavailable.
     }
   }
 
   static Future<void> writeRaw(String legacyKey, Object? value) async {
-    if (value == null) {
-      return;
-    }
+    if (value == null) return;
     final prefs = await SharedPreferences.getInstance();
     final prefixedKey = _storageKey(legacyKey);
 
@@ -80,6 +91,30 @@ class StatusbarSettingsRepository {
     } else if (value is String) {
       await prefs.setString(legacyKey, value);
       await prefs.setString(prefixedKey, value);
+    }
+  }
+
+  static Future<bool> _readNativeBool(String key, bool fallback) async {
+    try {
+      return await ResizeStatusbarService.readBool(key: key, fallback: fallback);
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  static Future<int> _readNativeInt(String key, int fallback) async {
+    try {
+      return await ResizeStatusbarService.readInt(key: key, fallback: fallback);
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  static Future<String> _readNativeString(String key, String fallback) async {
+    try {
+      return await ResizeStatusbarService.readString(key: key, fallback: fallback);
+    } catch (_) {
+      return fallback;
     }
   }
 
@@ -101,9 +136,7 @@ class StatusbarSettingsRepository {
 
   static double? _readNumber(SharedPreferences prefs, String key) {
     final raw = prefs.get(key);
-    if (raw is num) {
-      return raw.toDouble();
-    }
+    if (raw is num) return raw.toDouble();
     return null;
   }
 
