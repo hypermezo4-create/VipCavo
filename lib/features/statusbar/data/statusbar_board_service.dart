@@ -18,8 +18,7 @@ class StatusbarBoardService {
     for (final module in statusbarBoardModules) {
       final parsedEntry = parsed[module.id];
       final originalCode = statusbarBoardDefaultCodeById[module.id] ?? 0;
-      final parsedCode = parsedEntry?.currentPositionCode ?? originalCode;
-      final currentCode = _sanitizePositionCode(parsedCode, originalCode);
+      final currentCode = parsedEntry?.currentPositionCode ?? originalCode;
       final visible = await _readVisible(module);
       final enabled = await _readBool(
         module.enabledKey ?? 'status_bar_element_${module.id}_enabled',
@@ -111,7 +110,7 @@ class StatusbarBoardService {
       parsed[id] = StatusbarBoardModuleState(
         module: module,
         originalPositionCode: originalCode,
-        currentPositionCode: _sanitizePositionCode(code, originalCode),
+        currentPositionCode: code,
         asset: module.iconAsset,
         visible: module.defaultVisible,
         enabled: module.defaultEnabled,
@@ -131,7 +130,7 @@ class StatusbarBoardService {
       buffer
         ..write(module.id)
         ..write('.')
-        ..write(_sanitizePositionCode(module.currentPositionCode, statusbarBoardDefaultCodeById[module.id] ?? 1))
+        ..write(module.currentPositionCode)
         ..write(';');
     }
     return buffer.toString();
@@ -140,24 +139,10 @@ class StatusbarBoardService {
   static List<StatusbarBoardModuleState> _ensureUniqueSlotOrdering(List<StatusbarBoardModuleState> modules) {
     final bySlot = <int, List<StatusbarBoardModuleState>>{};
     for (final module in modules) {
-      final safeCode = _sanitizePositionCode(
-        module.currentPositionCode,
-        statusbarBoardDefaultCodeById[module.id] ?? 1,
-      );
-      final safeModule = module.currentPositionCode == safeCode
-          ? module
-          : module.copyWith(currentPositionCode: safeCode);
-      bySlot.putIfAbsent(safeCode, () => <StatusbarBoardModuleState>[]).add(safeModule);
+      bySlot.putIfAbsent(module.currentPositionCode, () => <StatusbarBoardModuleState>[]).add(module);
     }
 
-    final updated = modules
-        .map((module) => module.copyWith(
-              currentPositionCode: _sanitizePositionCode(
-                module.currentPositionCode,
-                statusbarBoardDefaultCodeById[module.id] ?? 1,
-              ),
-            ))
-        .toList(growable: true);
+    final updated = modules.toList(growable: true);
     for (final entry in bySlot.entries) {
       final colliding = entry.value;
       if (colliding.length <= 1) {
@@ -175,39 +160,14 @@ class StatusbarBoardService {
   }
 
   static int _findNearestEmptyCode(int around, Set<int> occupied) {
-    final safeAround = _sanitizePositionCode(around, 1);
-    final sector = _sectorStartForCode(safeAround);
-    for (var i = 1; i <= 9; i++) {
-      final candidate = sector + i;
-      if (_isAllowedStatusbarPosition(candidate) && !occupied.contains(candidate)) {
+    final candidates = statusbarBoardAllowedPositionCodes.toList(growable: false)
+      ..sort((a, b) => (a - around).abs().compareTo((b - around).abs()));
+    for (final candidate in candidates) {
+      if (!occupied.contains(candidate)) {
         return candidate;
       }
     }
-    return safeAround;
-  }
-
-  static int _sanitizePositionCode(int code, int fallback) {
-    if (_isAllowedStatusbarPosition(code)) {
-      return code;
-    }
-    if (_isAllowedStatusbarPosition(fallback)) {
-      return fallback;
-    }
-    return 1;
-  }
-
-  static int _sectorStartForCode(int code) {
-    if (code >= 31 && code <= 39) return 30;
-    if (code >= 21 && code <= 29) return 20;
-    if (code >= 11 && code <= 19) return 10;
-    return 0;
-  }
-
-  static bool _isAllowedStatusbarPosition(int code) {
-    return (code >= 1 && code <= 9) ||
-        (code >= 11 && code <= 19) ||
-        (code >= 21 && code <= 29) ||
-        (code >= 31 && code <= 39);
+    return around;
   }
 
   static Future<bool> _readVisible(StatusbarBoardModule module) async {
