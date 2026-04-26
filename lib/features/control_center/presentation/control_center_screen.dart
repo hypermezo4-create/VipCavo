@@ -73,12 +73,21 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
     final accent = context.watch<DeadzonThemeController>().accentColor;
     final textColor = Theme.of(context).colorScheme.onSurface;
 
-    return Container(
-      decoration: const BoxDecoration(gradient: DesignTokens.baseGradient),
-      child: SafeArea(
-        child: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : ListView(
+    final media = MediaQuery.of(context);
+
+    return MediaQuery(
+      data: media.copyWith(textScaler: const TextScaler.linear(1.0)),
+      child: DefaultTextStyle.merge(
+        style: const TextStyle(
+          decoration: TextDecoration.none,
+          decorationColor: Colors.transparent,
+        ),
+        child: Container(
+          decoration: const BoxDecoration(gradient: DesignTokens.baseGradient),
+          child: SafeArea(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : ListView(
                 physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                 padding: DesignTokens.pagePadding.copyWith(bottom: 132),
                 children: <Widget>[
@@ -157,18 +166,25 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Uses the original Mezo keys and refresh actions for the Control Center module.',
-                    style: TextStyle(color: textColor.withValues(alpha: 0.62), fontSize: 12, height: 1.35),
+                    'Uses the original Mezo keys. Press Save to apply refresh safely.',
+                    style: TextStyle(
+                      color: textColor.withValues(alpha: 0.62),
+                      fontSize: 12,
+                      height: 1.35,
+                      decoration: TextDecoration.none,
+                    ),
                   ),
                 ],
               ),
+          ),
+        ),
       ),
     );
   }
 
   Future<void> _setSquareTiles(bool value) async {
     setState(() => _config = _config.copyWith(squareMezoTiles: value, lastUpdatedAt: DateTime.now()));
-    await _persistAndBroadcastStatusbar();
+    await _persistLocalOnly();
   }
 
   Future<void> _showStylePicker() async {
@@ -204,7 +220,7 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
 
     if (selected == null) return;
     setState(() => _config = _config.copyWith(controlCenterStyle: selected, lastUpdatedAt: DateTime.now()));
-    await _persistAndBroadcastStatusbar();
+    await _persistLocalOnly();
   }
 
   Future<void> _onTileToggle(String id) async {
@@ -223,20 +239,24 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
     }
 
     setState(() => _config = _config.copyWith(extraTwoMezoTiles: selected.take(2).toList(), lastUpdatedAt: DateTime.now()));
-    await _persistAndBroadcastStatusbar();
+    await _persistLocalOnly();
   }
 
   void _setBlurRatio(double value) {
     setState(() => _config = _config.copyWith(ccBlurRatio: value.round(), lastUpdatedAt: DateTime.now()));
     _blurSaveDebounce?.cancel();
     _blurSaveDebounce = Timer(const Duration(milliseconds: 350), () {
-      _service.saveConfig(_config);
+      _service.saveLocalConfig(_config);
     });
   }
 
   Future<void> _saveBlurRatio(double _) async {
     _blurSaveDebounce?.cancel();
-    await _persistAndBroadcastStatusbar();
+    await _persistLocalOnly();
+  }
+
+  Future<void> _persistLocalOnly() async {
+    await _service.saveLocalConfig(_config);
   }
 
   Future<void> _persistAndBroadcastStatusbar() async {
@@ -264,8 +284,7 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
   }
 
   Future<void> _applyConfig() async {
-    await _service.saveConfig(_config);
-    await _service.requestStatusbarRefresh();
+    await _persistAndBroadcastStatusbar();
     if (!mounted) return;
     _showMessage('Control Center changes saved.');
   }
