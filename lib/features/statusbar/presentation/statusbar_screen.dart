@@ -109,10 +109,6 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
     }
   }
 
-  void _showPreviewFeedback() {
-    _showMessage('Preview updated');
-  }
-
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -149,10 +145,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
                   physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                   padding: const EdgeInsets.fromLTRB(20, 14, 20, 170),
                   children: <Widget>[
-                    const PremiumTopBar(
-                      title: 'Statusbar Studio',
-                      subtitle: 'Arrange your layout with live preview',
-                    ),
+                    const PremiumTopBar(title: 'Statusbar adjustment', subtitle: 'Arrange your layout with live preview'),
                     const SizedBox(height: 18),
                     GlassCard(
                       child: Column(
@@ -176,7 +169,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
                                   children: [
                                     Text('Layout Studio', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w800)),
                                     Text(
-                                      'Design and arrange your status bar',
+                                      'Arrange your layout with live preview',
                                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white.withValues(alpha: 0.72)),
                                     ),
                                   ],
@@ -190,7 +183,6 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
                             runSpacing: 8,
                             children: <Widget>[
                               _StudioActionButton(label: 'Arrange layout', icon: Icons.reorder_rounded, onTap: () { _openArrangeSheet(); }),
-                              _StudioActionButton(label: 'Preview', icon: Icons.preview_rounded, onTap: _showPreviewFeedback),
                               _StudioActionButton(label: _isSavingLayout ? 'Saving...' : 'Restore layout', icon: Icons.restart_alt_rounded, onTap: _isSavingLayout ? null : () { _restoreDefaultLayout(); }),
                             ],
                           ),
@@ -207,19 +199,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
                       subtitle: 'Complete old Mezo section tree with preserved behavior keys',
                     ),
                     const SizedBox(height: 10),
-                    GlassCard(
-                      child: Column(
-                        children: <Widget>[
-                          for (var i = 0; i < StatusbarSectionConfigs.values.length; i++) ...<Widget>[
-                            _FullSectionRow(
-                              section: StatusbarSectionConfigs.values[i],
-                              onTap: () => _openSection(StatusbarSectionConfigs.values[i].id),
-                            ),
-                            if (i != StatusbarSectionConfigs.values.length - 1) const Divider(height: 20),
-                          ],
-                        ],
-                      ),
-                    ),
+                    _FullSectionGrid(onOpenSection: _openSection),
                   ],
                 ),
         ),
@@ -236,101 +216,7 @@ class _StatusbarLivePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sorted = _sortModulesForPreview(modules);
-    return AnimatedContainer(
-      duration: DesignTokens.motionFast,
-      curve: DesignTokens.motionCurve,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        color: const Color(0xFF081224).withValues(alpha: 0.9),
-        border: Border.all(color: const Color(0xFF6FAAFF).withValues(alpha: 0.42)),
-        boxShadow: <BoxShadow>[
-          BoxShadow(color: const Color(0xFF4E9CFF).withValues(alpha: 0.10), blurRadius: 24, offset: const Offset(0, 12)),
-        ],
-      ),
-      child: Column(
-        children: <Widget>[
-          _PreviewRow(
-            left: sorted[_BoardLane.topLeft] ?? const <StatusbarBoardModuleState>[],
-            right: sorted[_BoardLane.topRight] ?? const <StatusbarBoardModuleState>[],
-          ),
-          const SizedBox(height: 8),
-          Container(height: 1, color: Colors.white.withValues(alpha: 0.08)),
-          const SizedBox(height: 8),
-          _PreviewRow(
-            left: sorted[_BoardLane.bottomLeft] ?? const <StatusbarBoardModuleState>[],
-            right: sorted[_BoardLane.bottomRight] ?? const <StatusbarBoardModuleState>[],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PreviewRow extends StatelessWidget {
-  const _PreviewRow({required this.left, required this.right});
-
-  final List<StatusbarBoardModuleState> left;
-  final List<StatusbarBoardModuleState> right;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        Expanded(child: _PreviewSide(modules: left, alignRight: false)),
-        Container(
-          width: 40,
-          alignment: Alignment.center,
-          child: Container(
-            width: 9,
-            height: 9,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.10),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-            ),
-          ),
-        ),
-        Expanded(child: _PreviewSide(modules: right, alignRight: true)),
-      ],
-    );
-  }
-}
-
-class _PreviewSide extends StatelessWidget {
-  const _PreviewSide({
-    required this.modules,
-    required this.alignRight,
-  });
-
-  final List<StatusbarBoardModuleState> modules;
-  final bool alignRight;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return ConstrainedBox(
-          constraints: BoxConstraints(minWidth: constraints.maxWidth),
-          child: Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            alignment: alignRight ? WrapAlignment.end : WrapAlignment.start,
-            runAlignment: alignRight ? WrapAlignment.end : WrapAlignment.start,
-            children: modules
-                .map(
-                  (module) => _ModulePill(
-                    module: module,
-                    dense: true,
-                    label: _compactLabelForModule(module.id),
-                  ),
-                )
-                .toList(growable: false),
-          ),
-        );
-      },
-    );
+    return _MezoIconBoard(modules: modules);
   }
 }
 
@@ -372,6 +258,30 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
       }
       _modules[sourceIndex] = source.copyWith(currentPositionCode: targetCode);
     });
+  }
+
+  void _dropInLane(String id, _BoardLane lane, Offset localOffset, Size quadrantSize) {
+    final sourceIndex = _modules.indexWhere((module) => module.id == id);
+    final source = sourceIndex == -1 ? null : _modules[sourceIndex];
+    if (source == null) {
+      return;
+    }
+
+    final occupiedCodes = _modules
+        .where((module) => module.id != id)
+        .map((module) => module.currentPositionCode)
+        .toSet();
+    final candidates = lane.codes.where((code) => !occupiedCodes.contains(code)).toList(growable: false);
+    final nearestFree = _nearestCodeFromOffset(lane: lane, offset: localOffset, size: quadrantSize, allowedCodes: candidates);
+    if (nearestFree != null) {
+      _moveModule(id, nearestFree);
+      return;
+    }
+
+    final nearestInLane = _nearestCodeFromOffset(lane: lane, offset: localOffset, size: quadrantSize, allowedCodes: lane.codes);
+    if (nearestInLane != null) {
+      _moveModule(id, nearestInLane);
+    }
   }
 
   void _resetToDefault() {
@@ -440,7 +350,7 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
                   padding: EdgeInsets.fromLTRB(16, 4, 16, MediaQuery.of(context).padding.bottom + 106),
                   child: _MezoPositionBoard(
                     modules: _modules,
-                    onMove: _moveModule,
+                    onDropInLane: _dropInLane,
                   ),
                 ),
               ),
@@ -453,71 +363,30 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
 }
 
 class _MezoPositionBoard extends StatelessWidget {
-  const _MezoPositionBoard({required this.modules, required this.onMove});
+  const _MezoPositionBoard({required this.modules, required this.onDropInLane});
 
   final List<StatusbarBoardModuleState> modules;
-  final void Function(String id, int targetCode) onMove;
+  final void Function(String id, _BoardLane lane, Offset localOffset, Size quadrantSize) onDropInLane;
 
   @override
   Widget build(BuildContext context) {
-    final byCode = <int, StatusbarBoardModuleState>{for (final module in modules) module.currentPositionCode: module};
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[
-            const Color(0xFF0A1730).withValues(alpha: 0.96),
-            const Color(0xFF071020).withValues(alpha: 0.98),
-          ],
-        ),
-        border: Border.all(color: const Color(0xFF68B4FF).withValues(alpha: 0.34)),
+        borderRadius: BorderRadius.circular(24),
+        color: const Color(0xFF05070E),
+        border: Border.all(color: const Color(0xFF7050FF).withValues(alpha: 0.55)),
         boxShadow: <BoxShadow>[
-          BoxShadow(color: const Color(0xFF4E9CFF).withValues(alpha: 0.12), blurRadius: 30, offset: const Offset(0, 16)),
+          BoxShadow(color: const Color(0xFF4932C8).withValues(alpha: 0.25), blurRadius: 26, offset: const Offset(0, 16)),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              const Icon(Icons.dashboard_customize_rounded, color: Color(0xFF8DE8FF), size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Drag elements inside the real Mezo board',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _BoardLaneRow(
-            leftLane: _BoardLane.topLeft,
-            rightLane: _BoardLane.topRight,
-            byCode: byCode,
-            onMove: onMove,
-          ),
-          const SizedBox(height: 10),
-          Container(height: 1, color: Colors.white.withValues(alpha: 0.10)),
-          const SizedBox(height: 10),
-          _BoardLaneRow(
-            leftLane: _BoardLane.bottomLeft,
-            rightLane: _BoardLane.bottomRight,
-            byCode: byCode,
-            onMove: onMove,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Save writes only status_bar_elem_position. '
-            'Visibility and advanced settings stay exactly as the old mod stores them.',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.58),
-              fontSize: 11,
-              height: 1.3,
-            ),
+          _MezoIconBoard(
+            modules: modules,
+            onDropInLane: onDropInLane,
+            showInstruction: true,
           ),
         ],
       ),
@@ -525,196 +394,217 @@ class _MezoPositionBoard extends StatelessWidget {
   }
 }
 
-class _BoardLaneRow extends StatelessWidget {
-  const _BoardLaneRow({required this.leftLane, required this.rightLane, required this.byCode, required this.onMove});
+class _MezoIconBoard extends StatelessWidget {
+  const _MezoIconBoard({
+    required this.modules,
+    this.onDropInLane,
+    this.showInstruction = false,
+  });
 
-  final _BoardLane leftLane;
-  final _BoardLane rightLane;
-  final Map<int, StatusbarBoardModuleState> byCode;
-  final void Function(String id, int targetCode) onMove;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Expanded(child: _BoardLaneView(lane: leftLane, byCode: byCode, onMove: onMove)),
-        Container(
-          width: 18,
-          height: 106,
-          margin: const EdgeInsets.symmetric(horizontal: 6),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: Colors.white.withValues(alpha: 0.02),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-          ),
-          alignment: Alignment.center,
-          child: RotatedBox(
-            quarterTurns: 3,
-            child: Text(
-              'NO CENTER',
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.36), fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.4),
-            ),
-          ),
-        ),
-        Expanded(child: _BoardLaneView(lane: rightLane, byCode: byCode, onMove: onMove)),
-      ],
-    );
-  }
-}
-
-class _BoardLaneView extends StatelessWidget {
-  const _BoardLaneView({required this.lane, required this.byCode, required this.onMove});
-
-  final _BoardLane lane;
-  final Map<int, StatusbarBoardModuleState> byCode;
-  final void Function(String id, int targetCode) onMove;
+  final List<StatusbarBoardModuleState> modules;
+  final void Function(String id, _BoardLane lane, Offset localOffset, Size quadrantSize)? onDropInLane;
+  final bool showInstruction;
 
   @override
   Widget build(BuildContext context) {
-    final codes = lane.codes;
-    return Column(
-      crossAxisAlignment: lane.isRight ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-      children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-          child: Text(lane.title, style: TextStyle(color: Colors.white.withValues(alpha: 0.62), fontSize: 11, fontWeight: FontWeight.w700)),
-        ),
-        const SizedBox(height: 6),
-        Wrap(
-          spacing: 7,
-          runSpacing: 7,
-          alignment: lane.isRight ? WrapAlignment.end : WrapAlignment.start,
-          children: codes.map((code) {
-            final module = byCode[code];
-            return _BoardSlot(
-              code: code,
-              module: module,
-              onMove: onMove,
-            );
-          }).toList(growable: false),
-        ),
-      ],
-    );
-  }
-}
-
-class _BoardSlot extends StatelessWidget {
-  const _BoardSlot({required this.code, required this.module, required this.onMove});
-
-  final int code;
-  final StatusbarBoardModuleState? module;
-  final void Function(String id, int targetCode) onMove;
-
-  @override
-  Widget build(BuildContext context) {
-    return DragTarget<String>(
-      onWillAcceptWithDetails: (details) => details.data != module?.id,
-      onAcceptWithDetails: (details) => onMove(details.data, code),
-      builder: (context, candidate, rejected) {
-        final hovered = candidate.isNotEmpty;
-        final child = module == null
-            ? _EmptySlot(code: code, highlighted: hovered)
-            : Draggable<String>(
-                data: module!.id,
-                feedback: Material(
-                  color: Colors.transparent,
-                  child: _ModulePill(module: module!, highlighted: true),
+    final grouped = _sortModulesForPreview(modules);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final boardHeight = constraints.maxWidth >= 560 ? 330.0 : 276.0;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            if (showInstruction)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 2, 8, 12),
+                child: Text(
+                  'Drag icon tiles into a quadrant. The board snaps to valid Mezo position codes only.',
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 11),
                 ),
-                childWhenDragging: Opacity(opacity: 0.26, child: _ModulePill(module: module!)),
-                child: _ModulePill(module: module!, highlighted: hovered),
-              );
-        return AnimatedContainer(
-          duration: DesignTokens.motionFast,
-          curve: DesignTokens.motionCurve,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: hovered ? <BoxShadow>[BoxShadow(color: const Color(0xFF5BA6FF).withValues(alpha: 0.24), blurRadius: 18)] : null,
-          ),
-          child: child,
+              ),
+            Container(
+              height: boardHeight,
+              decoration: BoxDecoration(
+                color: const Color(0xFF060910),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFF7963FF).withValues(alpha: 0.62), width: 1.1),
+                boxShadow: <BoxShadow>[
+                  BoxShadow(color: const Color(0xFF5A42E2).withValues(alpha: 0.22), blurRadius: 22, offset: const Offset(0, 8)),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(19),
+                child: Stack(
+                  children: <Widget>[
+                    Positioned.fill(
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _BoardQuadrant(
+                                    lane: _BoardLane.topLeft,
+                                    modules: grouped[_BoardLane.topLeft] ?? const <StatusbarBoardModuleState>[],
+                                    onDropInLane: onDropInLane,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: _BoardQuadrant(
+                                    lane: _BoardLane.topRight,
+                                    modules: grouped[_BoardLane.topRight] ?? const <StatusbarBoardModuleState>[],
+                                    onDropInLane: onDropInLane,
+                                    alignRight: true,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _BoardQuadrant(
+                                    lane: _BoardLane.bottomLeft,
+                                    modules: grouped[_BoardLane.bottomLeft] ?? const <StatusbarBoardModuleState>[],
+                                    onDropInLane: onDropInLane,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: _BoardQuadrant(
+                                    lane: _BoardLane.bottomRight,
+                                    modules: grouped[_BoardLane.bottomRight] ?? const <StatusbarBoardModuleState>[],
+                                    onDropInLane: onDropInLane,
+                                    alignRight: true,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      top: boardHeight / 2 - 0.5,
+                      child: Container(height: 1, color: const Color(0xFF8677FF).withValues(alpha: 0.62)),
+                    ),
+                    Positioned(
+                      top: 0,
+                      bottom: 0,
+                      left: constraints.maxWidth / 2 - 0.5,
+                      child: Container(width: 1, color: const Color(0xFF8677FF).withValues(alpha: 0.62)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         );
       },
     );
   }
 }
 
-class _EmptySlot extends StatelessWidget {
-  const _EmptySlot({required this.code, required this.highlighted});
+class _BoardQuadrant extends StatefulWidget {
+  const _BoardQuadrant({
+    required this.lane,
+    required this.modules,
+    required this.onDropInLane,
+    this.alignRight = false,
+  });
 
-  final int code;
-  final bool highlighted;
+  final _BoardLane lane;
+  final List<StatusbarBoardModuleState> modules;
+  final void Function(String id, _BoardLane lane, Offset localOffset, Size quadrantSize)? onDropInLane;
+  final bool alignRight;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 64,
-      height: 46,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        color: highlighted ? const Color(0xFF1B4777).withValues(alpha: 0.42) : Colors.white.withValues(alpha: 0.035),
-        border: Border.all(color: Colors.white.withValues(alpha: highlighted ? 0.22 : 0.09)),
-      ),
-      child: Text('$code', style: TextStyle(color: Colors.white.withValues(alpha: 0.30), fontWeight: FontWeight.w800, fontSize: 11)),
-    );
-  }
+  State<_BoardQuadrant> createState() => _BoardQuadrantState();
 }
 
-class _ModulePill extends StatelessWidget {
-  const _ModulePill({required this.module, this.highlighted = false, this.dense = false, this.label});
-
-  final StatusbarBoardModuleState module;
-  final bool highlighted;
-  final bool dense;
-  final String? label;
+class _BoardQuadrantState extends State<_BoardQuadrant> {
+  final GlobalKey _targetKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: DesignTokens.motionFast,
-      width: dense ? null : 64,
-      height: dense ? 28 : 46,
-      padding: EdgeInsets.symmetric(horizontal: dense ? 7 : 7, vertical: dense ? 4 : 5),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(dense ? 11 : 14),
-        color: highlighted ? const Color(0xFF1B4777) : const Color(0xFF10273F),
-        border: Border.all(color: module.module.color.withValues(alpha: highlighted ? 0.9 : 0.48)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Icon(module.module.icon, size: dense ? 11.5 : 13.5, color: Colors.white),
-          SizedBox(width: dense ? 4 : 5),
-          Flexible(
-            child: Text(
-              label ?? _compactLabelForModule(module.id),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: Colors.white, fontSize: dense ? 9.3 : 9.6, fontWeight: FontWeight.w700),
+    final interactive = widget.onDropInLane != null;
+    return DragTarget<String>(
+      key: _targetKey,
+      onWillAcceptWithDetails: (_) => interactive,
+      onAcceptWithDetails: (details) {
+        if (!interactive) {
+          return;
+        }
+        final box = _targetKey.currentContext?.findRenderObject() as RenderBox?;
+        if (box == null) {
+          return;
+        }
+        final localOffset = box.globalToLocal(details.offset);
+        widget.onDropInLane!(details.data, widget.lane, localOffset, box.size);
+      },
+      builder: (context, candidates, rejected) {
+        final hovering = candidates.isNotEmpty;
+        return AnimatedContainer(
+          duration: DesignTokens.motionFast,
+          curve: DesignTokens.motionCurve,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: hovering ? const Color(0xFF281F59).withValues(alpha: 0.24) : Colors.transparent,
+            border: Border.all(
+              color: hovering ? const Color(0xFFA89DFF).withValues(alpha: 0.56) : Colors.transparent,
             ),
           ),
-        ],
-      ),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: widget.alignRight ? WrapAlignment.end : WrapAlignment.start,
+            children: widget.modules
+                .map(
+                  (module) => _StatusbarIconTile(
+                    module: module,
+                    draggable: interactive,
+                  ),
+                )
+                .toList(growable: false),
+          ),
+        );
+      },
     );
   }
 }
 
-String _compactLabelForModule(String id) {
-  const labels = <String, String>{
-    'elem_clock': 'Clock',
-    'elem_notif': 'Alerts',
-    'elem_bat': 'Bat',
-    'elem_net1': 'Net 1',
-    'elem_net2': 'Net 2',
-    'elem_wifi': 'WiFi',
-    'elem_speed': 'Speed',
-    'elem_status': 'Status',
-    'elem_prompt': 'Prompt',
-    'elem_date': 'Date',
-    'elem_weather': 'Weather',
-  };
-  return labels[id] ?? id;
+class _StatusbarIconTile extends StatelessWidget {
+  const _StatusbarIconTile({required this.module, required this.draggable});
+  final StatusbarBoardModuleState module;
+  final bool draggable;
+
+  @override
+  Widget build(BuildContext context) {
+    final tile = Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        color: const Color(0xFF0E1220),
+        border: Border.all(color: module.module.color.withValues(alpha: 0.78)),
+        boxShadow: <BoxShadow>[
+          BoxShadow(color: module.module.color.withValues(alpha: 0.20), blurRadius: 10, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Icon(module.module.icon, size: 16, color: Colors.white),
+    );
+    if (!draggable) {
+      return tile;
+    }
+    return Draggable<String>(
+      data: module.id,
+      feedback: Material(color: Colors.transparent, child: tile),
+      childWhenDragging: Opacity(opacity: 0.32, child: tile),
+      child: tile,
+    );
+  }
 }
 
 class _StudioActionButton extends StatelessWidget {
@@ -755,6 +645,46 @@ Map<_BoardLane, List<StatusbarBoardModuleState>> _sortModulesForPreview(List<Sta
   return grouped;
 }
 
+int? _nearestCodeFromOffset({
+  required _BoardLane lane,
+  required Offset offset,
+  required Size size,
+  required List<int> allowedCodes,
+}) {
+  if (allowedCodes.isEmpty) {
+    return null;
+  }
+
+  final clamped = Offset(
+    offset.dx.clamp(0.0, size.width),
+    offset.dy.clamp(0.0, size.height),
+  );
+  var bestCode = allowedCodes.first;
+  var bestDistance = double.infinity;
+  for (final code in allowedCodes) {
+    final anchor = _anchorForCode(code: code, lane: lane, size: size);
+    final distance = (anchor - clamped).distanceSquared;
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      bestCode = code;
+    }
+  }
+  return bestCode;
+}
+
+Offset _anchorForCode({
+  required int code,
+  required _BoardLane lane,
+  required Size size,
+}) {
+  final index = (code - lane.startCode).clamp(0, 8);
+  final column = index % 3;
+  final row = index ~/ 3;
+  final cellWidth = size.width / 3;
+  final cellHeight = size.height / 3;
+  return Offset((column + 0.5) * cellWidth, (row + 0.5) * cellHeight);
+}
+
 _BoardLane _laneForCode(int code) {
   if (code >= 31 && code <= 39) {
     return _BoardLane.bottomRight;
@@ -769,25 +699,50 @@ _BoardLane _laneForCode(int code) {
 }
 
 enum _BoardLane {
-  topLeft('Left top', 1, false),
-  topRight('Right top', 11, true),
-  bottomLeft('Left bottom', 21, false),
-  bottomRight('Right bottom', 31, true);
+  topLeft(1),
+  topRight(11),
+  bottomLeft(21),
+  bottomRight(31);
 
-  const _BoardLane(this.title, this.startCode, this.isRight);
+  const _BoardLane(this.startCode);
 
-  final String title;
   final int startCode;
-  final bool isRight;
 
   List<int> get codes => List<int>.generate(9, (index) => startCode + index);
 }
 
-class _FullSectionRow extends StatelessWidget {
-  const _FullSectionRow({
-    required this.section,
-    required this.onTap,
-  });
+class _FullSectionGrid extends StatelessWidget {
+  const _FullSectionGrid({required this.onOpenSection});
+
+  final void Function(String sectionId) onOpenSection;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 720 ? 2 : 1;
+        return GridView.builder(
+          itemCount: StatusbarSectionConfigs.values.length,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: columns == 2 ? 1.72 : 2.9,
+          ),
+          itemBuilder: (context, index) {
+            final section = StatusbarSectionConfigs.values[index];
+            return _SectionCardTile(section: section, onTap: () => onOpenSection(section.id));
+          },
+        );
+      },
+    );
+  }
+}
+
+class _SectionCardTile extends StatelessWidget {
+  const _SectionCardTile({required this.section, required this.onTap});
 
   final StatusBarSectionDefinition section;
   final VoidCallback onTap;
@@ -798,34 +753,49 @@ class _FullSectionRow extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(16),
         child: Ink(
+          padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            color: const Color(0xFF112339).withValues(alpha: 0.64),
-            border: Border.all(color: section.accentColor.withValues(alpha: 0.42)),
+            color: const Color(0xFF070A13),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: section.accentColor.withValues(alpha: 0.56)),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             children: <Widget>[
-              Icon(section.icon, color: Colors.white),
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(9),
+                  color: const Color(0xFF141A2F),
+                  border: Border.all(color: section.accentColor.withValues(alpha: 0.64)),
+                ),
+                child: Icon(section.icon, size: 16, color: Colors.white),
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text(section.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 2),
+                    Text(
+                      section.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 3),
                     Text(
                       section.subtitle,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.72), fontSize: 12),
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.66), fontSize: 11.5, height: 1.2),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.white70),
+              const Icon(Icons.arrow_forward_ios_rounded, size: 13, color: Colors.white70),
             ],
           ),
         ),
