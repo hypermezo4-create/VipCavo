@@ -12,6 +12,10 @@ class ControlCenterService {
 
   Future<ControlCenterConfig> loadConfig() => _storage.loadConfig();
 
+  Future<void> saveLocalConfig(ControlCenterConfig config) {
+    return _storage.saveLocalConfig(config.copyWith(lastUpdatedAt: DateTime.now()));
+  }
+
   Future<void> saveConfig(ControlCenterConfig config) {
     return _storage.saveConfig(config.copyWith(lastUpdatedAt: DateTime.now()));
   }
