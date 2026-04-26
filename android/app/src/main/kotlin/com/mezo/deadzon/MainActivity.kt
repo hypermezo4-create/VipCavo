@@ -46,8 +46,7 @@ class MainActivity : FlutterActivity() {
                         return@setMethodCallHandler
                     }
                     val value = (args["value"] as? Int) ?: 0
-                    writeInt(storeType, key, value)
-                    result.success(null)
+                    result.success(writeInt(storeType, key, value))
                 }
 
                 "writeBool" -> {
@@ -56,8 +55,7 @@ class MainActivity : FlutterActivity() {
                         return@setMethodCallHandler
                     }
                     val value = (args["value"] as? Boolean) ?: false
-                    writeInt(storeType, key, if (value) 1 else 0)
-                    result.success(null)
+                    result.success(writeInt(storeType, key, if (value) 1 else 0))
                 }
 
 
@@ -76,8 +74,7 @@ class MainActivity : FlutterActivity() {
                         return@setMethodCallHandler
                     }
                     val value = (args["value"] as? String) ?: ""
-                    writeString(storeType, key, value)
-                    result.success(null)
+                    result.success(writeString(storeType, key, value))
                 }
 
                 "sendBroadcast" -> {
@@ -292,38 +289,54 @@ class MainActivity : FlutterActivity() {
 
 
     private fun readString(storeType: Int, key: String, fallback: String): String {
-        val resolver = applicationContext.contentResolver
-        return when (storeType) {
-            2 -> Settings.Global.getString(resolver, key) ?: fallback
-            1 -> Settings.Secure.getString(resolver, key) ?: fallback
-            else -> Settings.System.getString(resolver, key) ?: fallback
+        return try {
+            val resolver = applicationContext.contentResolver
+            when (storeType) {
+                2 -> Settings.Global.getString(resolver, key) ?: fallback
+                1 -> Settings.Secure.getString(resolver, key) ?: fallback
+                else -> Settings.System.getString(resolver, key) ?: fallback
+            }
+        } catch (_: Exception) {
+            fallback
         }
     }
 
-    private fun writeString(storeType: Int, key: String, value: String) {
-        val resolver = applicationContext.contentResolver
-        when (storeType) {
-            2 -> Settings.Global.putString(resolver, key, value)
-            1 -> Settings.Secure.putString(resolver, key, value)
-            else -> Settings.System.putString(resolver, key, value)
+    private fun writeString(storeType: Int, key: String, value: String): Boolean {
+        return try {
+            val resolver = applicationContext.contentResolver
+            when (storeType) {
+                2 -> Settings.Global.putString(resolver, key, value)
+                1 -> Settings.Secure.putString(resolver, key, value)
+                else -> Settings.System.putString(resolver, key, value)
+            }
+        } catch (_: Exception) {
+            false
         }
     }
 
     private fun readInt(storeType: Int, key: String, fallback: Int): Int {
-        val resolver = applicationContext.contentResolver
-        return when (storeType) {
-            2 -> Settings.Global.getInt(resolver, key, fallback)
-            1 -> Settings.Secure.getInt(resolver, key, fallback)
-            else -> Settings.System.getInt(resolver, key, fallback)
+        return try {
+            val resolver = applicationContext.contentResolver
+            when (storeType) {
+                2 -> Settings.Global.getInt(resolver, key, fallback)
+                1 -> Settings.Secure.getInt(resolver, key, fallback)
+                else -> Settings.System.getInt(resolver, key, fallback)
+            }
+        } catch (_: Exception) {
+            fallback
         }
     }
 
-    private fun writeInt(storeType: Int, key: String, value: Int) {
-        val resolver = applicationContext.contentResolver
-        when (storeType) {
-            2 -> Settings.Global.putInt(resolver, key, value)
-            1 -> Settings.Secure.putInt(resolver, key, value)
-            else -> Settings.System.putInt(resolver, key, value)
+    private fun writeInt(storeType: Int, key: String, value: Int): Boolean {
+        return try {
+            val resolver = applicationContext.contentResolver
+            when (storeType) {
+                2 -> Settings.Global.putInt(resolver, key, value)
+                1 -> Settings.Secure.putInt(resolver, key, value)
+                else -> Settings.System.putInt(resolver, key, value)
+            }
+        } catch (_: Exception) {
+            false
         }
     }
 }
