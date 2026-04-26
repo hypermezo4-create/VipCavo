@@ -319,7 +319,7 @@ class _PreviewSide extends StatelessWidget {
                 .map((module) => _ModulePill(module: module, dense: true, label: _compactLabelForModule(module.id)))
                 .toList(growable: false),
           ),
-        );
+        ),
       ),
     );
   }
