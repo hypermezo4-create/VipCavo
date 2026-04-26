@@ -299,7 +299,10 @@ class _PreviewRow extends StatelessWidget {
 }
 
 class _PreviewSide extends StatelessWidget {
-  const _PreviewSide({required this.modules, required this.alignRight});
+  const _PreviewSide({
+    required this.modules,
+    required this.alignRight,
+  });
 
   final List<StatusbarBoardModuleState> modules;
   final bool alignRight;
@@ -325,8 +328,8 @@ class _PreviewSide extends StatelessWidget {
                 )
                 .toList(growable: false),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
