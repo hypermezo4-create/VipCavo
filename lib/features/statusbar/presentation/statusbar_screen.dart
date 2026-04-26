@@ -316,7 +316,13 @@ class _PreviewSide extends StatelessWidget {
             alignment: alignRight ? WrapAlignment.end : WrapAlignment.start,
             runAlignment: alignRight ? WrapAlignment.end : WrapAlignment.start,
             children: modules
-                .map((module) => _ModulePill(module: module, dense: true, label: _compactLabelForModule(module.id)))
+                .map(
+                  (module) => _ModulePill(
+                    module: module,
+                    dense: true,
+                    label: _compactLabelForModule(module.id),
+                  ),
+                )
                 .toList(growable: false),
           ),
         ),
@@ -502,8 +508,13 @@ class _MezoPositionBoard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Save writes only status_bar_elem_position. Visibility and advanced settings stay exactly as the old mod stores them.',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.58), fontSize: 11, height: 1.3),
+            'Save writes only status_bar_elem_position. '
+            'Visibility and advanced settings stay exactly as the old mod stores them.',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.58),
+              fontSize: 11,
+              height: 1.3,
+            ),
           ),
         ],
       ),
