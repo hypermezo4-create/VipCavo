@@ -223,17 +223,6 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
 
   void _restoreLocalDefault() {
     setState(() => _modules = StatusbarBoardService.defaultModules());
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Default order ready — tap Save to apply', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(18, 0, 18, 110),
-        duration: const Duration(milliseconds: 1200),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        elevation: 0,
-        backgroundColor: const Color(0xFF102C50).withValues(alpha: 0.96),
-      ),
-    );
   }
 
   void _moveModule(String id, int targetCode) {
@@ -280,7 +269,7 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
   @override
   Widget build(BuildContext context) {
     return FractionallySizedBox(
-      heightFactor: 0.68,
+      heightFactor: 0.52,
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF060B16),
@@ -322,7 +311,7 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
               Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.fromLTRB(18, 6, 18, MediaQuery.of(context).padding.bottom + 112),
+                  padding: EdgeInsets.fromLTRB(18, 6, 18, MediaQuery.of(context).padding.bottom + 84),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
@@ -333,7 +322,7 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Drag the small icons like the old Mezo board. Save writes only status_bar_elem_position and never changes visibility.',
+                        'Drag the small icons. Save writes only status_bar_elem_position.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.white.withValues(alpha: 0.62), fontSize: 12, height: 1.35),
                       ),
@@ -371,7 +360,7 @@ class _OldMezoBoardFrame extends StatelessWidget {
         ],
       ),
       child: AspectRatio(
-        aspectRatio: 1.92,
+        aspectRatio: 2.22,
         child: Container(
           decoration: BoxDecoration(
             color: const Color(0xFF000000),
@@ -514,7 +503,7 @@ class _BoardLaneRegionState extends State<_BoardLaneRegion> {
         return AnimatedContainer(
           duration: DesignTokens.motionFast,
           curve: DesignTokens.motionCurve,
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(7),
           decoration: BoxDecoration(color: hovering ? const Color(0xFF4B27A8).withValues(alpha: 0.18) : Colors.transparent),
           alignment: Alignment(widget.alignRight ? 1 : -1, widget.alignBottom ? 1 : -1),
           child: Wrap(
@@ -548,15 +537,15 @@ class _StatusbarIconTile extends StatelessWidget {
     final tile = AnimatedContainer(
       duration: DesignTokens.motionFast,
       curve: DesignTokens.motionCurve,
-      width: 30,
-      height: 30,
+      width: 28,
+      height: 28,
       decoration: BoxDecoration(
         color: const Color(0xFF03060A),
-        borderRadius: BorderRadius.circular(6.5),
+        borderRadius: BorderRadius.circular(6.0),
         border: Border.all(color: module.module.color.withValues(alpha: 0.9), width: 1.05),
         boxShadow: <BoxShadow>[BoxShadow(color: module.module.color.withValues(alpha: 0.30), blurRadius: 10, spreadRadius: 0.4)],
       ),
-      child: Icon(module.module.icon, size: 17, color: Colors.white),
+      child: Icon(module.module.icon, size: 15.8, color: Colors.white),
     );
     if (!draggable) return tile;
     return Draggable<String>(
@@ -686,7 +675,7 @@ class _FullSectionGrid extends StatelessWidget {
             crossAxisCount: columns,
             mainAxisSpacing: 10,
             crossAxisSpacing: 10,
-            childAspectRatio: columns == 3 ? 1.16 : 1.02,
+            childAspectRatio: columns == 3 ? 1.38 : 1.22,
           ),
           itemBuilder: (context, index) {
             final section = StatusbarSectionConfigs.values[index];
@@ -712,7 +701,7 @@ class _SectionCardTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(18),
         child: Ink(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(11),
           decoration: BoxDecoration(
             color: const Color(0xFF020306),
             borderRadius: BorderRadius.circular(18),
@@ -725,23 +714,23 @@ class _SectionCardTile extends StatelessWidget {
               Row(
                 children: <Widget>[
                   Container(
-                    width: 30,
-                    height: 30,
+                    width: 28,
+                    height: 28,
                     decoration: BoxDecoration(
                       color: const Color(0xFF070A13),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(7),
                       border: Border.all(color: section.accentColor.withValues(alpha: 0.64)),
                     ),
-                    child: Icon(section.icon, size: 16, color: Colors.white),
+                    child: Icon(section.icon, size: 15, color: Colors.white),
                   ),
                   const Spacer(),
                   Icon(Icons.chevron_right_rounded, size: 20, color: Colors.white.withValues(alpha: 0.74)),
                 ],
               ),
               const Spacer(),
-              Text(section.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
+              Text(section.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 14.2, fontWeight: FontWeight.w800)),
               const SizedBox(height: 4),
-              Text(section.subtitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 10.6, height: 1.18)),
+              Text(section.subtitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 10.2, height: 1.14)),
             ],
           ),
         ),
