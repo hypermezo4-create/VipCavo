@@ -366,6 +366,7 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
   }
 }
 
+
 class _MezoIconBoard extends StatelessWidget {
   const _MezoIconBoard({
     required this.modules,
@@ -374,194 +375,123 @@ class _MezoIconBoard extends StatelessWidget {
   });
 
   final List<StatusbarBoardModuleState> modules;
-  final void Function(String id, _BoardLane lane, Offset localOffset, Size quadrantSize)? onDropInLane;
+  final void Function(String id, _BoardLane lane, Offset localOffset, Size laneSize)? onDropInLane;
   final bool compact;
+
+  bool get _interactive => onDropInLane != null;
 
   @override
   Widget build(BuildContext context) {
-    final grouped = _sortModulesForPreview(modules);
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final boardHeight = (compact ? (width * 0.43).clamp(154.0, 194.0) : (width * 0.46).clamp(174.0, 224.0)).toDouble();
-        return Container(
-          height: boardHeight,
-          decoration: BoxDecoration(
-            color: const Color(0xFF020309),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFF8A24FF).withValues(alpha: 0.86), width: 1.1),
-            boxShadow: <BoxShadow>[
-              BoxShadow(color: const Color(0xFF792BFF).withValues(alpha: 0.20), blurRadius: 20, offset: const Offset(0, 10)),
-              BoxShadow(color: const Color(0xFF43D7FF).withValues(alpha: 0.08), blurRadius: 16),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(19),
-            child: Stack(
-              children: <Widget>[
-                Positioned.fill(
-                  child: Column(
-                    children: <Widget>[
-                      Expanded(
-                        flex: 3,
-                        child: Row(
-                          children: <Widget>[
-                            Expanded(
-                              flex: 50,
-                              child: _BoardQuadrant(
-                                lane: _BoardLane.leftTop,
-                                modules: grouped[_BoardLane.leftTop] ?? const <StatusbarBoardModuleState>[],
-                                onDropInLane: onDropInLane,
-                                alignRight: false,
-                                compact: compact,
-                              ),
-                            ),
-                            Expanded(
-                              flex: 50,
-                              child: _BoardQuadrant(
-                                lane: _BoardLane.rightTop,
-                                modules: grouped[_BoardLane.rightTop] ?? const <StatusbarBoardModuleState>[],
-                                onDropInLane: onDropInLane,
-                                alignRight: true,
-                                compact: compact,
-                              ),
-                            ),
-                          ],
+        final boardHeight = (compact ? width * 0.47 : width * 0.49).clamp(
+          compact ? 146.0 : 174.0,
+          compact ? 184.0 : 218.0,
+        ).toDouble();
+        final tileSize = _tileSizeForBoard(boardHeight, compact: compact);
+
+        return DragTarget<String>(
+          onWillAcceptWithDetails: (_) => _interactive,
+          onAcceptWithDetails: (details) {
+            if (!_interactive) {
+              return;
+            }
+            final box = context.findRenderObject() as RenderBox?;
+            if (box == null) {
+              return;
+            }
+            final localOffset = box.globalToLocal(details.offset);
+            final boardSize = Size(width, boardHeight);
+            final lane = _laneForBoardOffset(localOffset, boardSize);
+            final laneRect = _laneRectFor(lane, boardSize);
+            final laneOffset = localOffset - laneRect.topLeft;
+            onDropInLane!(details.data, lane, laneOffset, laneRect.size);
+          },
+          builder: (context, candidates, rejected) {
+            final hovering = candidates.isNotEmpty;
+            return AnimatedContainer(
+              duration: DesignTokens.motionFast,
+              curve: DesignTokens.motionCurve,
+              height: boardHeight,
+              decoration: BoxDecoration(
+                color: const Color(0xFF020309),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: hovering
+                      ? const Color(0xFFB661FF).withValues(alpha: 0.96)
+                      : const Color(0xFF8A24FF).withValues(alpha: 0.86),
+                  width: hovering ? 1.6 : 1.1,
+                ),
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                    color: const Color(0xFF792BFF).withValues(alpha: hovering ? 0.32 : 0.20),
+                    blurRadius: hovering ? 28 : 20,
+                    offset: const Offset(0, 10),
+                  ),
+                  BoxShadow(color: const Color(0xFF43D7FF).withValues(alpha: 0.08), blurRadius: 16),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(19),
+                child: Stack(
+                  clipBehavior: Clip.hardEdge,
+                  children: <Widget>[
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: RadialGradient(
+                            center: Alignment.topRight,
+                            radius: 1.45,
+                            colors: <Color>[
+                              const Color(0xFF101B31).withValues(alpha: 0.24),
+                              Colors.transparent,
+                            ],
+                          ),
                         ),
                       ),
-                      SizedBox(height: compact ? 10 : 12),
-                      Expanded(
-                        flex: 2,
-                        child: Row(
-                          children: <Widget>[
-                            Expanded(
-                              flex: 50,
-                              child: _BoardQuadrant(
-                                lane: _BoardLane.leftBottom,
-                                modules: grouped[_BoardLane.leftBottom] ?? const <StatusbarBoardModuleState>[],
-                                onDropInLane: onDropInLane,
-                                alignRight: false,
-                                compact: compact,
-                              ),
-                            ),
-                            Expanded(
-                              flex: 50,
-                              child: _BoardQuadrant(
-                                lane: _BoardLane.rightBottom,
-                                modules: grouped[_BoardLane.rightBottom] ?? const <StatusbarBoardModuleState>[],
-                                onDropInLane: onDropInLane,
-                                alignRight: true,
-                                compact: compact,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  top: boardHeight * 0.55 - 4,
-                  child: Container(
-                    height: 10,
-                    color: const Color(0xFF777A80).withValues(alpha: 0.58),
-                  ),
-                ),
-                Positioned(
-                  top: 18,
-                  bottom: 18,
-                  left: width / 2 - 0.9,
-                  child: Container(width: 1.8, color: Colors.white.withValues(alpha: 0.86)),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _BoardQuadrant extends StatefulWidget {
-  const _BoardQuadrant({
-    required this.lane,
-    required this.modules,
-    required this.onDropInLane,
-    required this.alignRight,
-    required this.compact,
-  });
-
-  final _BoardLane lane;
-  final List<StatusbarBoardModuleState> modules;
-  final void Function(String id, _BoardLane lane, Offset localOffset, Size quadrantSize)? onDropInLane;
-  final bool alignRight;
-  final bool compact;
-
-  @override
-  State<_BoardQuadrant> createState() => _BoardQuadrantState();
-}
-
-class _BoardQuadrantState extends State<_BoardQuadrant> {
-  final GlobalKey _targetKey = GlobalKey();
-
-  @override
-  Widget build(BuildContext context) {
-    final interactive = widget.onDropInLane != null;
-    final topLane = widget.lane == _BoardLane.leftTop || widget.lane == _BoardLane.rightTop;
-    return DragTarget<String>(
-      key: _targetKey,
-      onWillAcceptWithDetails: (_) => interactive,
-      onAcceptWithDetails: (details) {
-        if (!interactive) {
-          return;
-        }
-        final box = _targetKey.currentContext?.findRenderObject() as RenderBox?;
-        if (box == null) {
-          return;
-        }
-        final localOffset = box.globalToLocal(details.offset);
-        widget.onDropInLane!(details.data, widget.lane, localOffset, box.size);
-      },
-      builder: (context, candidates, rejected) {
-        final hovering = candidates.isNotEmpty;
-        return AnimatedContainer(
-          duration: DesignTokens.motionFast,
-          curve: DesignTokens.motionCurve,
-          padding: EdgeInsets.fromLTRB(
-            widget.compact ? 8 : 10,
-            topLane ? (widget.compact ? 8 : 10) : (widget.compact ? 6 : 8),
-            widget.compact ? 8 : 10,
-            widget.compact ? 6 : 8,
-          ),
-          decoration: BoxDecoration(
-            color: hovering ? const Color(0xFF281F59).withValues(alpha: 0.24) : Colors.transparent,
-            border: Border.all(
-              color: hovering ? const Color(0xFFA89DFF).withValues(alpha: 0.56) : Colors.transparent,
-            ),
-          ),
-          child: Align(
-            alignment: Alignment(
-              widget.alignRight ? 1 : -1,
-              topLane ? -1 : 1,
-            ),
-            child: Wrap(
-              spacing: widget.compact ? 5 : 7,
-              runSpacing: widget.compact ? 5 : 7,
-              alignment: widget.alignRight ? WrapAlignment.end : WrapAlignment.start,
-              runAlignment: topLane ? WrapAlignment.start : WrapAlignment.end,
-              children: widget.modules
-                  .map(
-                    (module) => _StatusbarIconTile(
-                      module: module,
-                      draggable: interactive,
-                      compact: widget.compact,
                     ),
-                  )
-                  .toList(growable: false),
-            ),
-          ),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      top: boardHeight * 0.54 - 4,
+                      child: Container(
+                        height: 10,
+                        color: const Color(0xFF777A80).withValues(alpha: 0.58),
+                      ),
+                    ),
+                    Positioned(
+                      top: 18,
+                      bottom: 18,
+                      left: width / 2 - 0.9,
+                      child: Container(width: 1.8, color: Colors.white.withValues(alpha: 0.86)),
+                    ),
+                    ...modules.map(
+                      (module) {
+                        final position = _visualPositionForCode(
+                          code: module.currentPositionCode,
+                          boardSize: Size(width, boardHeight),
+                          tileSize: tileSize,
+                        );
+                        return AnimatedPositioned(
+                          duration: DesignTokens.motionNormal,
+                          curve: DesignTokens.motionCurve,
+                          left: position.dx,
+                          top: position.dy,
+                          child: _StatusbarIconTile(
+                            module: module,
+                            draggable: _interactive,
+                            compact: compact,
+                            size: tileSize,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -569,19 +499,23 @@ class _BoardQuadrantState extends State<_BoardQuadrant> {
 }
 
 class _StatusbarIconTile extends StatelessWidget {
-  const _StatusbarIconTile({required this.module, required this.draggable, required this.compact});
+  const _StatusbarIconTile({
+    required this.module,
+    required this.draggable,
+    required this.compact,
+    required this.size,
+  });
 
   final StatusbarBoardModuleState module;
   final bool draggable;
   final bool compact;
+  final Size size;
 
   @override
   Widget build(BuildContext context) {
-    final imageHeight = compact ? 70.0 : 82.0;
-    final imageWidth = compact ? 25.0 : 30.0;
     final child = SizedBox(
-      width: imageWidth,
-      height: imageHeight,
+      width: size.width,
+      height: size.height,
       child: Image.asset(
         module.asset,
         fit: BoxFit.contain,
@@ -606,7 +540,7 @@ class _StatusbarIconTile extends StatelessWidget {
         color: Colors.transparent,
         child: Transform.scale(scale: 1.08, child: child),
       ),
-      childWhenDragging: Opacity(opacity: 0.28, child: child),
+      childWhenDragging: Opacity(opacity: 0.26, child: child),
       child: child,
     );
   }
@@ -641,6 +575,7 @@ class _StudioActionButton extends StatelessWidget {
     );
   }
 }
+
 
 Map<_BoardLane, List<StatusbarBoardModuleState>> _sortModulesForPreview(List<StatusbarBoardModuleState> modules) {
   final grouped = <_BoardLane, List<StatusbarBoardModuleState>>{
@@ -691,9 +626,10 @@ Offset _anchorForCode({
   required _BoardLane lane,
   required Size size,
 }) {
-  final index = lane.codes.indexOf(code).clamp(0, lane.codes.length - 1).toDouble();
-  final cellWidth = size.width / lane.codes.length;
-  return Offset((index + 0.5) * cellWidth, size.height / 2);
+  final index = lane.codes.indexOf(code).clamp(0, lane.codes.length - 1);
+  final slots = lane.codes.length.clamp(1, 9);
+  final xStep = size.width / slots;
+  return Offset((index + 0.5) * xStep, size.height / 2);
 }
 
 _BoardLane _laneForCode(int code) {
@@ -705,10 +641,64 @@ _BoardLane _laneForCode(int code) {
   return _BoardLane.leftTop;
 }
 
+_BoardLane _laneForBoardOffset(Offset offset, Size boardSize) {
+  final ySplit = boardSize.height * 0.54;
+  if (offset.dy < ySplit) {
+    return offset.dx < boardSize.width / 2 ? _BoardLane.leftTop : _BoardLane.rightTop;
+  }
+  return offset.dx < boardSize.width / 2 ? _BoardLane.leftBottom : _BoardLane.rightBottom;
+}
+
+Rect _laneRectFor(_BoardLane lane, Size boardSize) {
+  final ySplit = boardSize.height * 0.54;
+  final leftRect = Rect.fromLTWH(0, 0, boardSize.width / 2, ySplit);
+  final rightRect = Rect.fromLTWH(boardSize.width / 2, 0, boardSize.width / 2, ySplit);
+  final leftBottom = Rect.fromLTWH(0, ySplit, boardSize.width / 2, boardSize.height - ySplit);
+  final rightBottom = Rect.fromLTWH(boardSize.width / 2, ySplit, boardSize.width / 2, boardSize.height - ySplit);
+
+  return switch (lane) {
+    _BoardLane.leftTop => leftRect,
+    _BoardLane.rightTop => rightRect,
+    _BoardLane.leftBottom => leftBottom,
+    _BoardLane.rightBottom => rightBottom,
+  };
+}
+
+Offset _visualPositionForCode({
+  required int code,
+  required Size boardSize,
+  required Size tileSize,
+}) {
+  final lane = _laneForCode(code);
+  final laneRect = _laneRectFor(lane, boardSize);
+  final anchor = _anchorForCode(code: code, lane: lane, size: laneRect.size);
+  final x = laneRect.left + anchor.dx - tileSize.width / 2;
+  final y = switch (lane) {
+    _BoardLane.leftTop || _BoardLane.rightTop => laneRect.top + 12,
+    _BoardLane.leftBottom || _BoardLane.rightBottom => laneRect.bottom - tileSize.height - 12,
+  };
+  return Offset(
+    x.clamp(8.0, boardSize.width - tileSize.width - 8).toDouble(),
+    y.clamp(8.0, boardSize.height - tileSize.height - 8).toDouble(),
+  );
+}
+
+Size _tileSizeForBoard(double boardHeight, {required bool compact}) {
+  final tileHeight = (boardHeight * (compact ? 0.43 : 0.46)).clamp(
+    compact ? 58.0 : 70.0,
+    compact ? 76.0 : 90.0,
+  ).toDouble();
+  final tileWidth = tileHeight * 70 / 221;
+  return Size(tileWidth, tileHeight);
+}
+
 enum _BoardLane {
-  leftTop(<int>[21, 22]),
-  rightTop(<int>[3, 33, 1, 11, 2, 31]),
-  leftBottom(<int>[12]),
+  // These slot lists intentionally mirror the old visual board behavior:
+  // top-left keeps the clock/notification double sprites, top-right keeps the
+  // dense status/system cluster, and the two lower lanes keep date/weather.
+  leftTop(<int>[21, 22, 23, 24, 25, 26, 27, 28, 29]),
+  rightTop(<int>[3, 33, 1, 11, 2, 31, 4, 34, 5, 35, 6, 36, 7, 37, 8, 38, 9, 39]),
+  leftBottom(<int>[12, 13, 14, 15, 16, 17, 18, 19]),
   rightBottom(<int>[32]);
 
   const _BoardLane(this.codes);
@@ -791,16 +781,16 @@ class _SectionCardTile extends StatelessWidget {
               const Spacer(),
               Text(
                 section.title,
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15.5),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14.4, height: 1.05),
               ),
               const SizedBox(height: 4),
               Text(
                 section.subtitle,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 11.5, height: 1.15),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 11.0, height: 1.12),
               ),
             ],
           ),
