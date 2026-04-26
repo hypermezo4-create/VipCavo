@@ -116,9 +116,16 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(
+          message,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF0D263F),
+        margin: const EdgeInsets.fromLTRB(18, 0, 18, 112),
+        duration: const Duration(milliseconds: 1300),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        elevation: 0,
+        backgroundColor: const Color(0xFF10335A),
       ),
     );
   }
@@ -299,13 +306,20 @@ class _PreviewSide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final children = modules.map((module) => _ModulePill(module: module, dense: true)).toList(growable: false);
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      reverse: alignRight,
-      child: Row(
-        mainAxisAlignment: alignRight ? MainAxisAlignment.end : MainAxisAlignment.start,
-        children: alignRight ? children.reversed.toList(growable: false) : children,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return ConstrainedBox(
+          constraints: BoxConstraints(minWidth: constraints.maxWidth),
+          child: Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            alignment: alignRight ? WrapAlignment.end : WrapAlignment.start,
+            runAlignment: alignRight ? WrapAlignment.end : WrapAlignment.start,
+            children: modules
+                .map((module) => _ModulePill(module: module, dense: true, label: _compactLabelForModule(module.id)))
+                .toList(growable: false),
+          ),
+        );
       ),
     );
   }
@@ -353,13 +367,26 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
 
   void _resetToDefault() {
     setState(() => _modules = StatusbarBoardService.defaultModules());
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Default layout restored')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text(
+          'Default layout restored',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.fromLTRB(18, 0, 18, 112),
+        duration: const Duration(milliseconds: 1300),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        elevation: 0,
+        backgroundColor: const Color(0xFF10335A),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return FractionallySizedBox(
-      heightFactor: 0.92,
+      heightFactor: 0.94,
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF071121),
@@ -379,7 +406,7 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
                 padding: const EdgeInsets.fromLTRB(16, 12, 12, 0),
                 child: Row(
                   children: <Widget>[
-                    TextButton(onPressed: _resetToDefault, child: const Text('Reset layout')),
+                    TextButton(onPressed: _resetToDefault, child: const Text('Restore layout')),
                     Expanded(
                       child: Text(
                         'Mezo Position Board',
@@ -401,7 +428,7 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
               Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                  padding: EdgeInsets.fromLTRB(16, 4, 16, MediaQuery.of(context).padding.bottom + 106),
                   child: _MezoPositionBoard(
                     modules: _modules,
                     onMove: _moveModule,
@@ -499,16 +526,22 @@ class _BoardLaneRow extends StatelessWidget {
       children: <Widget>[
         Expanded(child: _BoardLaneView(lane: leftLane, byCode: byCode, onMove: onMove)),
         Container(
-          width: 42,
+          width: 18,
           height: 106,
-          margin: const EdgeInsets.symmetric(horizontal: 8),
+          margin: const EdgeInsets.symmetric(horizontal: 6),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: Colors.white.withValues(alpha: 0.04),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.white.withValues(alpha: 0.02),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
           ),
           alignment: Alignment.center,
-          child: Text('NO\nCENTER', textAlign: TextAlign.center, style: TextStyle(color: Colors.white.withValues(alpha: 0.34), fontSize: 9, fontWeight: FontWeight.w800, height: 1.2)),
+          child: RotatedBox(
+            quarterTurns: 3,
+            child: Text(
+              'NO CENTER',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.36), fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.4),
+            ),
+          ),
         ),
         Expanded(child: _BoardLaneView(lane: rightLane, byCode: byCode, onMove: onMove)),
       ],
@@ -534,22 +567,18 @@ class _BoardLaneView extends StatelessWidget {
           child: Text(lane.title, style: TextStyle(color: Colors.white.withValues(alpha: 0.62), fontSize: 11, fontWeight: FontWeight.w700)),
         ),
         const SizedBox(height: 6),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          reverse: lane.isRight,
-          child: Row(
-            children: codes.map((code) {
-              final module = byCode[code];
-              return Padding(
-                padding: const EdgeInsetsDirectional.only(end: 7),
-                child: _BoardSlot(
-                  code: code,
-                  module: module,
-                  onMove: onMove,
-                ),
-              );
-            }).toList(growable: false),
-          ),
+        Wrap(
+          spacing: 7,
+          runSpacing: 7,
+          alignment: lane.isRight ? WrapAlignment.end : WrapAlignment.start,
+          children: codes.map((code) {
+            final module = byCode[code];
+            return _BoardSlot(
+              code: code,
+              module: module,
+              onMove: onMove,
+            );
+          }).toList(growable: false),
         ),
       ],
     );
@@ -604,11 +633,11 @@ class _EmptySlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 74,
-      height: 56,
+      width: 64,
+      height: 46,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         color: highlighted ? const Color(0xFF1B4777).withValues(alpha: 0.42) : Colors.white.withValues(alpha: 0.035),
         border: Border.all(color: Colors.white.withValues(alpha: highlighted ? 0.22 : 0.09)),
       ),
@@ -618,21 +647,22 @@ class _EmptySlot extends StatelessWidget {
 }
 
 class _ModulePill extends StatelessWidget {
-  const _ModulePill({required this.module, this.highlighted = false, this.dense = false});
+  const _ModulePill({required this.module, this.highlighted = false, this.dense = false, this.label});
 
   final StatusbarBoardModuleState module;
   final bool highlighted;
   final bool dense;
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: DesignTokens.motionFast,
-      width: dense ? null : 74,
-      height: dense ? 34 : 56,
-      padding: EdgeInsets.symmetric(horizontal: dense ? 8 : 8, vertical: dense ? 5 : 7),
+      width: dense ? null : 64,
+      height: dense ? 28 : 46,
+      padding: EdgeInsets.symmetric(horizontal: dense ? 7 : 7, vertical: dense ? 4 : 5),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(dense ? 12 : 18),
+        borderRadius: BorderRadius.circular(dense ? 11 : 14),
         color: highlighted ? const Color(0xFF1B4777) : const Color(0xFF10273F),
         border: Border.all(color: module.module.color.withValues(alpha: highlighted ? 0.9 : 0.48)),
       ),
@@ -640,20 +670,37 @@ class _ModulePill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Icon(module.module.icon, size: dense ? 13 : 16, color: Colors.white),
-          SizedBox(width: dense ? 5 : 6),
+          Icon(module.module.icon, size: dense ? 11.5 : 13.5, color: Colors.white),
+          SizedBox(width: dense ? 4 : 5),
           Flexible(
             child: Text(
-              dense ? module.module.previewLabel : module.module.title,
+              label ?? _compactLabelForModule(module.id),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: Colors.white, fontSize: dense ? 10 : 10.5, fontWeight: FontWeight.w700),
+              style: TextStyle(color: Colors.white, fontSize: dense ? 9.3 : 9.6, fontWeight: FontWeight.w700),
             ),
           ),
         ],
       ),
     );
   }
+}
+
+String _compactLabelForModule(String id) {
+  const labels = <String, String>{
+    'elem_clock': 'Clock',
+    'elem_notif': 'Alerts',
+    'elem_bat': 'Bat',
+    'elem_net1': 'Net 1',
+    'elem_net2': 'Net 2',
+    'elem_wifi': 'WiFi',
+    'elem_speed': 'Speed',
+    'elem_status': 'Status',
+    'elem_prompt': 'Prompt',
+    'elem_date': 'Date',
+    'elem_weather': 'Weather',
+  };
+  return labels[id] ?? id;
 }
 
 class _StudioActionButton extends StatelessWidget {
