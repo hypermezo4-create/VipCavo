@@ -50,7 +50,7 @@ class StatusbarBoardModule {
 
 const String statusbarBoardSerializedKey = 'status_bar_elem_position';
 const String statusbarBoardSourceDefaultLayout =
-    'elem_status.33;elem_clock.21;elem_bat.31;elem_net1.1;elem_net2.11;elem_wifi.2;elem_notif.22;elem_speed.3;elem_weather.32;elem_date.12;';
+    'elem_clock.1;elem_notif.2;elem_bat.11;elem_net1.12;elem_net2.13;elem_wifi.14;elem_speed.15;elem_status.16;elem_prompt.21;elem_date.22;elem_weather.31;';
 
 const List<StatusbarBoardModule> statusbarBoardModules = <StatusbarBoardModule>[
   StatusbarBoardModule(id: 'elem_status', legacyIndex: 1, title: 'Status icons', previewLabel: 'BT • Alarm', icon: Icons.widgets_rounded, iconAsset: 'reference/mezo/mezo/res/drawable-xxxhdpi/elem_status.png', color: Color(0xFFA9F4E0), sourceSmaliClass: 'StatusBarElementStatus', category: 'Status icons', visibilityKey: 'elem_status_element_visible', offsetKey: 'status_icon_division'),
@@ -63,19 +63,21 @@ const List<StatusbarBoardModule> statusbarBoardModules = <StatusbarBoardModule>[
   StatusbarBoardModule(id: 'elem_speed', legacyIndex: 8, title: 'Netspeed', previewLabel: '1.3MB/s', icon: Icons.speed_rounded, iconAsset: 'reference/mezo/mezo/res/drawable-xxxhdpi/elem_speed.png', color: Color(0xFF8DE8FF), sourceSmaliClass: 'StatusBarElementSpeed', category: 'Netspeed', visibilityKey: 'status_bar_show_network_speed', offsetKey: 'net_speed_division', visibilityType: StatusbarVisibilityType.intAsVisible),
   StatusbarBoardModule(id: 'elem_weather', legacyIndex: 9, title: 'Weather', previewLabel: '28°', icon: Icons.wb_sunny_rounded, iconAsset: 'reference/mezo/mezo/res/drawable-xxxhdpi/elem_weather.png', color: Color(0xFF8DE8FF), sourceSmaliClass: 'StatusBarElementWeather', category: 'Weather', visibilityKey: 'elem_weather_element_visible', offsetKey: 'status_weather_division'),
   StatusbarBoardModule(id: 'elem_date', legacyIndex: 10, title: 'Date', previewLabel: 'Thu 23', icon: Icons.calendar_month_rounded, iconAsset: 'reference/mezo/mezo/res/drawable-xxxhdpi/elem_date.png', color: Color(0xFFB7C6FF), sourceSmaliClass: 'StatusBarElementDate', category: 'Date', visibilityKey: 'elem_date_element_visible', offsetKey: 'status_date_division'),
+  StatusbarBoardModule(id: 'elem_prompt', legacyIndex: 11, title: 'Prompt icon', previewLabel: 'Prompt', icon: Icons.power_rounded, iconAsset: 'reference/mezo/mezo/res/drawable-xxxhdpi/elem_prompt.png', color: Color(0xFFBDE9FF), sourceSmaliClass: 'StatusBarElementPrompt', category: 'Prompt icon', visibilityKey: 'elem_prompt_element_visible', offsetKey: 'prompt_icon_division'),
 ];
 
 const Map<String, int> statusbarBoardDefaultCodeById = <String, int>{
-  'elem_status': 33,
-  'elem_clock': 21,
-  'elem_bat': 31,
-  'elem_net1': 1,
-  'elem_net2': 11,
-  'elem_wifi': 2,
-  'elem_notif': 22,
-  'elem_speed': 3,
-  'elem_weather': 32,
-  'elem_date': 12,
+  'elem_clock': 1,
+  'elem_notif': 2,
+  'elem_bat': 11,
+  'elem_net1': 12,
+  'elem_net2': 13,
+  'elem_wifi': 14,
+  'elem_speed': 15,
+  'elem_status': 16,
+  'elem_prompt': 21,
+  'elem_date': 22,
+  'elem_weather': 31,
 };
 
 final Map<String, StatusbarBoardModule> statusbarBoardModulesById = {
