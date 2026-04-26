@@ -474,7 +474,7 @@ class _MezoIconBoard extends StatelessWidget {
                           tileSize: tileSize,
                         );
                         return AnimatedPositioned(
-                          duration: DesignTokens.motionNormal,
+                          duration: DesignTokens.motionMedium,
                           curve: DesignTokens.motionCurve,
                           left: position.dx,
                           top: position.dy,
@@ -576,23 +576,6 @@ class _StudioActionButton extends StatelessWidget {
   }
 }
 
-
-Map<_BoardLane, List<StatusbarBoardModuleState>> _sortModulesForPreview(List<StatusbarBoardModuleState> modules) {
-  final grouped = <_BoardLane, List<StatusbarBoardModuleState>>{
-    for (final lane in _BoardLane.values) lane: <StatusbarBoardModuleState>[],
-  };
-  for (final module in modules) {
-    grouped[_laneForCode(module.currentPositionCode)]!.add(module);
-  }
-  for (final lane in grouped.keys) {
-    grouped[lane]!.sort((a, b) {
-      final aIndex = lane.codes.indexOf(a.currentPositionCode);
-      final bIndex = lane.codes.indexOf(b.currentPositionCode);
-      return aIndex.compareTo(bIndex);
-    });
-  }
-  return grouped;
-}
 
 int? _nearestCodeFromOffset({
   required _BoardLane lane,
