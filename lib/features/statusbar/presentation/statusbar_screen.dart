@@ -586,7 +586,7 @@ class _StatusbarIconTile extends StatelessWidget {
         module.asset,
         fit: BoxFit.contain,
         filterQuality: FilterQuality.high,
-        errorBuilder: (_, __, ___) => DecoratedBox(
+        errorBuilder: (_, _, _) => DecoratedBox(
           decoration: BoxDecoration(
             color: const Color(0xFF0E1220),
             borderRadius: BorderRadius.circular(8),
