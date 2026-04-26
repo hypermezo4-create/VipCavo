@@ -12,7 +12,10 @@ class StatusBarMapper {
     if (extracted.isEmpty) {
       return curated;
     }
-    return _mergeByLegacyKey(curated, extracted);
+    // Prefer source-extracted old Mezo definitions for duplicate keys because they
+    // preserve real defaults, entry values, and intent actions. Curated rows are
+    // still appended when they add extra controls not present in the source map.
+    return _mergeByLegacyKey(extracted, curated);
   }
 
   static List<StatusBarSettingItem> _mergeByLegacyKey(
