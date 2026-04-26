@@ -50,11 +50,18 @@ class ControlCenterStorageService {
     return config;
   }
 
+  Future<void> saveLocalConfig(ControlCenterConfig config) async {
+    final prefs = await _resolvePrefs();
+    await _saveLocalMirrors(prefs, config);
+  }
+
   Future<void> saveConfig(ControlCenterConfig config) async {
     final prefs = await _resolvePrefs();
     await _saveLocalMirrors(prefs, config);
 
     // Write the real old Mezo keys so the ROM/bridge side can consume them.
+    // These calls are safe: if Android denies Settings writes, the app still keeps
+    // the local state and does not restart/crash.
     await AndroidIntentBridge.writeBool(ControlCenterConfig.squareMezoTilesKey, config.squareMezoTiles);
     await AndroidIntentBridge.writeInt(ControlCenterConfig.controlCenterStyleKey, config.controlCenterStyle);
     await AndroidIntentBridge.writeString(ControlCenterConfig.extraTwoMezoTilesKey, config.extraTwoAsBridgeString);
