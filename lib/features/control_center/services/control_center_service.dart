@@ -8,16 +8,48 @@ class ControlCenterService {
   static const String refreshSystemUiAction = 'my.intent.action.REFRESH_SYSTEMUI';
   static const String refreshStatusbarAction = 'my.intent.action.REFRESH_STATUSBAR';
 
+  // Mezo/Xiaomi Settings store type used by the existing native bridge:
+  // 0 = Settings.System, 1 = Settings.Secure, 2 = Settings.Global.
+  // Keep as one constant so it can be changed in one place if the ROM side expects another store.
+  static const int mezoSettingsStoreType = 0;
+
   final ControlCenterStorageService _storage;
 
   Future<ControlCenterConfig> loadConfig() => _storage.loadConfig();
 
-  Future<void> saveLocalConfig(ControlCenterConfig config) {
-    return _storage.saveLocalConfig(config.copyWith(lastUpdatedAt: DateTime.now()));
-  }
-
   Future<void> saveConfig(ControlCenterConfig config) {
     return _storage.saveConfig(config.copyWith(lastUpdatedAt: DateTime.now()));
+  }
+
+  Future<bool> saveAndApplyConfig(ControlCenterConfig config) async {
+    final saved = config.copyWith(lastUpdatedAt: DateTime.now());
+    await _storage.saveConfig(saved);
+
+    final writes = await Future.wait<bool>(<Future<bool>>[
+      AndroidIntentBridge.writeBool(
+        ControlCenterConfig.squareMezoTilesKey,
+        saved.squareMezoTiles,
+        storeType: mezoSettingsStoreType,
+      ),
+      AndroidIntentBridge.writeInt(
+        ControlCenterConfig.controlCenterStyleKey,
+        saved.controlCenterStyle,
+        storeType: mezoSettingsStoreType,
+      ),
+      AndroidIntentBridge.writeString(
+        ControlCenterConfig.extraTwoMezoTilesKey,
+        saved.extraTwoAsBridgeString,
+        storeType: mezoSettingsStoreType,
+      ),
+      AndroidIntentBridge.writeInt(
+        ControlCenterConfig.ccBlurRatioKey,
+        saved.ccBlurRatio,
+        storeType: mezoSettingsStoreType,
+      ),
+    ]);
+
+    final refresh = await requestStatusbarRefresh();
+    return writes.any((value) => value) || refresh;
   }
 
   Future<bool> requestSystemUiRefresh() => AndroidIntentBridge.sendDeadzonBroadcast(refreshSystemUiAction);
