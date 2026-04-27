@@ -1203,6 +1203,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
   }
 
   Future<void> _writeResizeSetting(StatusBarSettingItem setting, Object? value) async {
+    if (!mounted) return;
     setState(() => _values[setting.legacyKey] = value);
     StatusbarSettingsRepository.write(setting, value);
     await ResizeStatusbarService.write(setting.legacyKey, value);
@@ -1405,7 +1406,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     if (!await _ensureResizeWritePermission()) return;
     final initial = ((_values[setting.legacyKey] as num?) ?? (setting.defaultValue as num)).toDouble();
     if (!mounted) return;
-    await showModalBottomSheet<void>(
+    final selected = await showModalBottomSheet<double>(
       context: context,
       backgroundColor: const Color(0xFF0D1424),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
@@ -1415,9 +1416,10 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
         min: setting.min ?? 0,
         max: setting.max ?? 100,
         defaultValue: (setting.defaultValue as num).toDouble(),
-        onSet: (value) => _writeResizeSetting(setting, value),
       ),
     );
+    if (!mounted || selected == null) return;
+    await _writeResizeSetting(setting, selected);
   }
 
   Future<void> _openResizeSelectSheet(StatusBarSettingItem setting) async {
@@ -1661,7 +1663,6 @@ class _ResizeSliderSheet extends StatefulWidget {
     required this.min,
     required this.max,
     required this.defaultValue,
-    required this.onSet,
   });
 
   final String title;
@@ -1669,7 +1670,6 @@ class _ResizeSliderSheet extends StatefulWidget {
   final double min;
   final double max;
   final double defaultValue;
-  final ValueChanged<double> onSet;
 
   @override
   State<_ResizeSliderSheet> createState() => _ResizeSliderSheetState();
@@ -1706,8 +1706,7 @@ class _ResizeSliderSheetState extends State<_ResizeSliderSheet> {
                 const Spacer(),
                 ElevatedButton(
                   onPressed: () {
-                    widget.onSet(_value);
-                    Navigator.of(context).pop();
+                    Navigator.of(context).pop(_value);
                   },
                   child: const Text('Set'),
                 ),
