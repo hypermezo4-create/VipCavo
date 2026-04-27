@@ -50,16 +50,13 @@ class StatusbarBoardModule {
 
 const String statusbarBoardSerializedKey = 'status_bar_elem_position';
 
-// Source of truth: reference/mezo/mezo/smali/com/android/settings/statusbarelement/
-// PositionsElementsStatusbarDouble.smali
-// This old Mezo double-board resets layouts containing elem_prompt, so the board
-// position writer intentionally mirrors the original 10 persisted elements only.
+// Source of truth: current SystemUI statusbar mod. The old settings reference
+// app had a 10-element board, but the live SystemUI mod supports elem_prompt.
+// Keep all confirmed legacy elem_* ids and write only this serialized key.
 const String statusbarBoardSourceDefaultLayout =
-    // User-approved visual default order:
-    // Left top: clock/time, notification/call, weather/temperature, date.
-    // Right top: speed, status icons, SIM 1, SIM 2, Wi‑Fi, battery.
-    // Bottom lanes start empty.
-    'elem_status.15;elem_clock.1;elem_bat.11;elem_net1.14;elem_net2.13;elem_wifi.12;elem_notif.2;elem_speed.16;elem_weather.3;elem_date.4;';
+    // Confirmed SystemUI legacy order. Keep the old elem_* ids and avoid position 0.
+    // 1-9 top-left, 11-19 top-right, 21-29 bottom-left, 31-39 bottom-right.
+    'elem_clock.1;elem_notif.2;elem_bat.11;elem_net1.12;elem_net2.13;elem_wifi.14;elem_speed.15;elem_status.16;elem_prompt.21;elem_date.22;elem_weather.31;';
 
 const List<int> statusbarBoardAllowedPositionCodes = <int>[
   // Same position ranges used by PositionsElementsStatusbarDouble.smali.
@@ -73,21 +70,8 @@ const List<int> statusbarBoardAllowedPositionCodes = <int>[
 
 const List<StatusbarBoardModule> statusbarBoardModules = <StatusbarBoardModule>[
   StatusbarBoardModule(
-    id: 'elem_status',
-    legacyIndex: 1,
-    title: 'Status icons',
-    previewLabel: 'BT • Alarm',
-    icon: Icons.widgets_rounded,
-    iconAsset: 'reference/mezo/mezo/res/drawable-xxxhdpi/elem_status.png',
-    color: Color(0xFFA9F4E0),
-    sourceSmaliClass: 'StatusBarElementStatus',
-    category: 'Status icons',
-    visibilityKey: 'elem_status_element_visible',
-    offsetKey: 'status_icon_division',
-  ),
-  StatusbarBoardModule(
     id: 'elem_clock',
-    legacyIndex: 2,
+    legacyIndex: 1,
     title: 'Clock',
     previewLabel: '09:41',
     icon: Icons.access_time_rounded,
@@ -97,6 +81,20 @@ const List<StatusbarBoardModule> statusbarBoardModules = <StatusbarBoardModule>[
     category: 'Clock',
     visibilityKey: 'elem_clock_element_visible',
     offsetKey: 'status_clock_division',
+  ),
+  StatusbarBoardModule(
+    id: 'elem_notif',
+    legacyIndex: 2,
+    title: 'Notification icons',
+    previewLabel: 'Alerts',
+    icon: Icons.notifications_rounded,
+    iconAsset: 'reference/mezo/mezo/res/drawable-xxxhdpi/elem_notif.png',
+    color: Color(0xFFFFBE87),
+    sourceSmaliClass: 'StatusBarElementNotif',
+    category: 'Notification icons',
+    visibilityKey: 'status_bar_show_notification_icon',
+    offsetKey: 'notif_icon_division',
+    visibilityType: StatusbarVisibilityType.intAsVisible,
   ),
   StatusbarBoardModule(
     id: 'elem_bat',
@@ -151,22 +149,8 @@ const List<StatusbarBoardModule> statusbarBoardModules = <StatusbarBoardModule>[
     offsetKey: 'status_bar_element_wifi_offset',
   ),
   StatusbarBoardModule(
-    id: 'elem_notif',
-    legacyIndex: 7,
-    title: 'Notification icons',
-    previewLabel: 'Alerts',
-    icon: Icons.notifications_rounded,
-    iconAsset: 'reference/mezo/mezo/res/drawable-xxxhdpi/elem_notif.png',
-    color: Color(0xFFFFBE87),
-    sourceSmaliClass: 'StatusBarElementNotif',
-    category: 'Notification icons',
-    visibilityKey: 'status_bar_show_notification_icon',
-    offsetKey: 'notif_icon_division',
-    visibilityType: StatusbarVisibilityType.intAsVisible,
-  ),
-  StatusbarBoardModule(
     id: 'elem_speed',
-    legacyIndex: 8,
+    legacyIndex: 7,
     title: 'Netspeed',
     previewLabel: '1.3MB/s',
     icon: Icons.speed_rounded,
@@ -179,17 +163,30 @@ const List<StatusbarBoardModule> statusbarBoardModules = <StatusbarBoardModule>[
     visibilityType: StatusbarVisibilityType.intAsVisible,
   ),
   StatusbarBoardModule(
-    id: 'elem_weather',
+    id: 'elem_status',
+    legacyIndex: 8,
+    title: 'Status icons',
+    previewLabel: 'BT • Alarm',
+    icon: Icons.widgets_rounded,
+    iconAsset: 'reference/mezo/mezo/res/drawable-xxxhdpi/elem_status.png',
+    color: Color(0xFFA9F4E0),
+    sourceSmaliClass: 'StatusBarElementStatus',
+    category: 'Status icons',
+    visibilityKey: 'elem_status_element_visible',
+    offsetKey: 'status_icon_division',
+  ),
+  StatusbarBoardModule(
+    id: 'elem_prompt',
     legacyIndex: 9,
-    title: 'Weather',
-    previewLabel: '28°',
-    icon: Icons.wb_sunny_rounded,
-    iconAsset: 'reference/mezo/mezo/res/drawable-xxxhdpi/elem_weather.png',
-    color: Color(0xFF8DE8FF),
-    sourceSmaliClass: 'StatusBarElementWeather',
-    category: 'Weather',
-    visibilityKey: 'elem_weather_element_visible',
-    offsetKey: 'status_weather_division',
+    title: 'Prompt icon',
+    previewLabel: 'Prompt',
+    icon: Icons.chat_bubble_outline_rounded,
+    iconAsset: 'reference/mezo/mezo/res/drawable-xxxhdpi/elem_prompt.png',
+    color: Color(0xFFE2B4FF),
+    sourceSmaliClass: 'StatusBarElementPrompt',
+    category: 'Prompt icon',
+    visibilityKey: 'elem_prompt_element_visible',
+    offsetKey: 'elem_prompt_division',
   ),
   StatusbarBoardModule(
     id: 'elem_date',
@@ -204,21 +201,34 @@ const List<StatusbarBoardModule> statusbarBoardModules = <StatusbarBoardModule>[
     visibilityKey: 'elem_date_element_visible',
     offsetKey: 'status_date_division',
   ),
+  StatusbarBoardModule(
+    id: 'elem_weather',
+    legacyIndex: 11,
+    title: 'Weather',
+    previewLabel: '28°',
+    icon: Icons.wb_sunny_rounded,
+    iconAsset: 'reference/mezo/mezo/res/drawable-xxxhdpi/elem_weather.png',
+    color: Color(0xFF8DE8FF),
+    sourceSmaliClass: 'StatusBarElementWeather',
+    category: 'Weather',
+    visibilityKey: 'elem_weather_element_visible',
+    offsetKey: 'status_weather_division',
+  ),
 ];
 
 const Map<String, int> statusbarBoardDefaultCodeById = <String, int>{
   // Keep this map exactly aligned with statusbarBoardSourceDefaultLayout.
-  // This is the approved default shown in the user's reference screenshot.
   'elem_clock': 1,
   'elem_notif': 2,
-  'elem_weather': 3,
-  'elem_date': 4,
   'elem_bat': 11,
-  'elem_wifi': 12,
+  'elem_net1': 12,
   'elem_net2': 13,
-  'elem_net1': 14,
-  'elem_status': 15,
-  'elem_speed': 16,
+  'elem_wifi': 14,
+  'elem_speed': 15,
+  'elem_status': 16,
+  'elem_prompt': 21,
+  'elem_date': 22,
+  'elem_weather': 31,
 };
 
 final Map<String, StatusbarBoardModule> statusbarBoardModulesById = {
