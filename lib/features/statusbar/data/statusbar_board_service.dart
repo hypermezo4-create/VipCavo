@@ -69,9 +69,17 @@ class StatusbarBoardService {
   /// when the user wants to refresh SystemUI immediately.
   static Future<bool> writeModules(List<StatusbarBoardModuleState> modules) async {
     final normalized = _ensureUniqueSlotOrdering(modules);
+    final serialized = encodeSerializedLayout(normalized);
+    final current = await AndroidIntentBridge.readString(
+      statusbarBoardSerializedKey,
+      defaultValue: '',
+    );
+    if (_sameSerializedLayout(current, serialized)) {
+      return true;
+    }
     return AndroidIntentBridge.writeString(
       statusbarBoardSerializedKey,
-      encodeSerializedLayout(normalized),
+      serialized,
     );
   }
 
@@ -223,6 +231,19 @@ class StatusbarBoardService {
       return 11;
     }
     return 1;
+  }
+
+
+  static bool _sameSerializedLayout(String left, String right) {
+    return _normalizeSerializedLayout(left) == _normalizeSerializedLayout(right);
+  }
+
+  static String _normalizeSerializedLayout(String serialized) {
+    final parsed = parseSerializedLayout(serialized);
+    if (parsed.isEmpty) {
+      return '';
+    }
+    return encodeSerializedLayout(parsed.values.toList(growable: false));
   }
 
   static Future<bool> _readVisible(StatusbarBoardModule module) async {
