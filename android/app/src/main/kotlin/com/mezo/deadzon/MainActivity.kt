@@ -16,6 +16,12 @@ import java.util.concurrent.TimeUnit
 class MainActivity : FlutterActivity() {
     private val channelName = "deadzon/mezo_settings"
 
+    companion object {
+        // This flag is hidden/missing in some CI Android SDK stubs.
+        // 0x01000000 is the platform value for FLAG_RECEIVER_INCLUDE_BACKGROUND.
+        private const val FLAG_RECEIVER_INCLUDE_BACKGROUND_SAFE = 0x01000000
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
@@ -297,7 +303,7 @@ class MainActivity : FlutterActivity() {
         }
         return try {
             val intent = Intent(action).apply {
-                addFlags(Intent.FLAG_RECEIVER_INCLUDE_BACKGROUND)
+                addFlags(FLAG_RECEIVER_INCLUDE_BACKGROUND_SAFE)
             }
             sendBroadcast(intent)
             true
