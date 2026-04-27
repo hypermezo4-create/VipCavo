@@ -559,22 +559,28 @@ class _StudioActionButton extends StatelessWidget {
 }
 
 
+
 int? _nearestCodeFromBoardOffset({
   required Offset offset,
   required Size boardSize,
   required Size tileSize,
 }) {
-  if (statusbarBoardAllowedPositionCodes.isEmpty) {
+  final lane = _laneForBoardOffset(offset, boardSize);
+  final codes = lane.codes;
+  if (codes.isEmpty) {
     return null;
   }
 
-  final clamped = Offset(
-    offset.dx.clamp(0.0, boardSize.width).toDouble(),
-    offset.dy.clamp(0.0, boardSize.height).toDouble(),
-  );
-  var bestCode = statusbarBoardAllowedPositionCodes.first;
+  final splitY = _boardSplitY(boardSize.height);
+  final horizontalBandHeight = _boardBandHeight(boardSize.height);
+  final topRowCenterY = _boardTopY(tileSize);
+  final bottomRowCenterY = splitY + horizontalBandHeight / 2 + _boardBottomInset(boardSize.height) + tileSize.height / 2;
+  final isBottomLane = lane == _BoardLane.leftBottom || lane == _BoardLane.rightBottom;
+  final rowCenterY = isBottomLane ? bottomRowCenterY : topRowCenterY + tileSize.height / 2;
+
+  var bestCode = codes.first;
   var bestDistance = double.infinity;
-  for (final code in statusbarBoardAllowedPositionCodes) {
+  for (final code in codes) {
     final topLeft = _visualPositionForCode(
       code: code,
       boardSize: boardSize,
@@ -584,7 +590,10 @@ int? _nearestCodeFromBoardOffset({
       topLeft.dx + tileSize.width / 2,
       topLeft.dy + tileSize.height / 2,
     );
-    final distance = (center - clamped).distanceSquared;
+    // Make horizontal position the primary snap signal, like the old Mezo board.
+    // Vertical distance only decides top/bottom lane, not random cross-row snaps.
+    final distance = (center.dx - offset.dx) * (center.dx - offset.dx) +
+        (rowCenterY - offset.dy) * (rowCenterY - offset.dy) * 0.18;
     if (distance < bestDistance) {
       bestDistance = distance;
       bestCode = code;
@@ -593,40 +602,34 @@ int? _nearestCodeFromBoardOffset({
   return bestCode;
 }
 
-Offset _anchorForCode({
-  required int code,
-  required _BoardLane lane,
-  required Size size,
-}) {
-  final rawIndex = lane.codes.indexOf(code);
-  final index = rawIndex < 0 ? 0 : rawIndex.clamp(0, 8);
-  final slots = 9;
-  final xStep = size.width / slots;
-  return Offset((index + 0.5) * xStep, size.height / 2);
-}
-
-_BoardLane _laneForCode(int code) {
-  for (final lane in _BoardLane.values) {
-    if (lane.codes.contains(code)) {
-      return lane;
-    }
+_BoardLane _laneForBoardOffset(Offset offset, Size boardSize) {
+  final splitY = _boardSplitY(boardSize.height);
+  final centerX = boardSize.width / 2;
+  final isBottom = offset.dy >= splitY;
+  final isRight = offset.dx >= centerX;
+  if (isBottom && isRight) {
+    return _BoardLane.rightBottom;
+  }
+  if (isBottom) {
+    return _BoardLane.leftBottom;
+  }
+  if (isRight) {
+    return _BoardLane.rightTop;
   }
   return _BoardLane.leftTop;
 }
 
-Rect _laneRectFor(_BoardLane lane, Size boardSize) {
-  final ySplit = boardSize.height * 0.54;
-  final leftRect = Rect.fromLTWH(0, 0, boardSize.width / 2, ySplit);
-  final rightRect = Rect.fromLTWH(boardSize.width / 2, 0, boardSize.width / 2, ySplit);
-  final leftBottom = Rect.fromLTWH(0, ySplit, boardSize.width / 2, boardSize.height - ySplit);
-  final rightBottom = Rect.fromLTWH(boardSize.width / 2, ySplit, boardSize.width / 2, boardSize.height - ySplit);
-
-  return switch (lane) {
-    _BoardLane.leftTop => leftRect,
-    _BoardLane.rightTop => rightRect,
-    _BoardLane.leftBottom => leftBottom,
-    _BoardLane.rightBottom => rightBottom,
-  };
+_BoardLane _laneForCode(int code) {
+  if (code >= 31 && code <= 39) {
+    return _BoardLane.rightBottom;
+  }
+  if (code >= 21 && code <= 29) {
+    return _BoardLane.leftBottom;
+  }
+  if (code >= 11 && code <= 19) {
+    return _BoardLane.rightTop;
+  }
+  return _BoardLane.leftTop;
 }
 
 Offset _visualPositionForCode({
@@ -635,36 +638,61 @@ Offset _visualPositionForCode({
   required Size tileSize,
 }) {
   final lane = _laneForCode(code);
-  final laneRect = _laneRectFor(lane, boardSize);
-  final anchor = _anchorForCode(code: code, lane: lane, size: laneRect.size);
-  final x = laneRect.left + anchor.dx - tileSize.width / 2;
-  final y = switch (lane) {
-    _BoardLane.leftTop || _BoardLane.rightTop => laneRect.top + 12,
-    _BoardLane.leftBottom || _BoardLane.rightBottom => laneRect.bottom - tileSize.height - 12,
+  final step = _boardStep(tileSize);
+  final leftPadding = _boardHorizontalInset(boardSize.width);
+  final rightPadding = _boardHorizontalInset(boardSize.width);
+  final splitY = _boardSplitY(boardSize.height);
+  final horizontalBandHeight = _boardBandHeight(boardSize.height);
+  final topY = _boardTopY(tileSize);
+  final bottomY = splitY + horizontalBandHeight / 2 + _boardBottomInset(boardSize.height);
+  final maxX = boardSize.width - rightPadding - tileSize.width;
+
+  final double x = switch (lane) {
+    _BoardLane.leftTop => leftPadding + (code - 1) * step,
+    _BoardLane.rightTop => maxX - (code - 11) * step,
+    _BoardLane.leftBottom => leftPadding + (code - 21) * step,
+    _BoardLane.rightBottom => maxX - (code - 31) * step,
   };
+
+  final y = switch (lane) {
+    _BoardLane.leftTop || _BoardLane.rightTop => topY,
+    _BoardLane.leftBottom || _BoardLane.rightBottom => bottomY,
+  };
+
   return Offset(
-    x.clamp(8.0, boardSize.width - tileSize.width - 8).toDouble(),
-    y.clamp(8.0, boardSize.height - tileSize.height - 8).toDouble(),
+    x.clamp(6.0, boardSize.width - tileSize.width - 6).toDouble(),
+    y.clamp(6.0, boardSize.height - tileSize.height - 6).toDouble(),
   );
 }
 
+double _boardSplitY(double boardHeight) => boardHeight * 0.54;
+
+double _boardBandHeight(double boardHeight) => (boardHeight * 0.055).clamp(7.0, 10.0).toDouble();
+
+double _boardTopY(Size tileSize) => 12.0;
+
+double _boardBottomInset(double boardHeight) => 12.0;
+
+double _boardHorizontalInset(double boardWidth) => boardWidth >= 520 ? 18.0 : 14.0;
+
+double _boardStep(Size tileSize) => tileSize.width + 6.0;
+
 Size _tileSizeForBoard(double boardHeight, {required bool compact}) {
-  final tileHeight = (boardHeight * (compact ? 0.43 : 0.46)).clamp(
-    compact ? 58.0 : 70.0,
-    compact ? 76.0 : 90.0,
+  // Old Mezo assets are tall two-icon strips. Keep them compact so all strips
+  // can sit on the board without overlap or clipping, especially on phones.
+  final tileHeight = (boardHeight * (compact ? 0.33 : 0.35)).clamp(
+    compact ? 44.0 : 50.0,
+    compact ? 58.0 : 66.0,
   ).toDouble();
   final tileWidth = tileHeight * 70 / 221;
   return Size(tileWidth, tileHeight);
 }
 
 enum _BoardLane {
-  // These slot lists intentionally mirror the old visual board behavior:
-  // top-left keeps the clock/notification double sprites, top-right keeps the
-  // dense status/system cluster, and the two lower lanes keep date/weather.
-  leftTop(<int>[21, 22, 23, 24, 25, 26, 27, 28, 29]),
-  rightTop(<int>[3, 33, 1, 11, 2, 31, 4, 34, 5, 35, 6, 36, 7, 37, 8, 38, 9, 39]),
-  leftBottom(<int>[12, 13, 14, 15, 16, 17, 18, 19]),
-  rightBottom(<int>[32]);
+  leftTop(<int>[1, 2, 3, 4, 5, 6, 7, 8, 9]),
+  rightTop(<int>[11, 12, 13, 14, 15, 16, 17, 18, 19]),
+  leftBottom(<int>[21, 22, 23, 24, 25, 26, 27, 28, 29]),
+  rightBottom(<int>[31, 32, 33, 34, 35, 36, 37, 38, 39]);
 
   const _BoardLane(this.codes);
 
