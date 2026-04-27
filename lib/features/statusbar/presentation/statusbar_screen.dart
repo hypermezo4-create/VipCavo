@@ -29,6 +29,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
   List<StatusbarBoardModuleState> _boardModules = StatusbarBoardService.defaultModules();
   bool _isHydrating = true;
   bool _isSavingLayout = false;
+  bool _isApplyingLayout = false;
 
   @override
   void initState() {
@@ -64,13 +65,56 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
       _isSavingLayout = true;
     });
     try {
-      await StatusbarBoardService.writeModules(defaults);
-      _showMessage('Default layout restored');
+      final written = await StatusbarBoardService.writeModules(defaults);
+      if (written) {
+        _showMessage('Default layout saved. Tap Apply to refresh SystemUI.');
+      } else {
+        _showMessage(
+          'Default loaded locally. Allow system write to save it.',
+          actionLabel: 'Allow',
+          onAction: () { _openWriteSettingsPage(); },
+        );
+      }
     } catch (_) {
-      _showMessage('Layout restored locally');
+      _showMessage(
+        'Default loaded locally. Allow system write to save it.',
+        actionLabel: 'Allow',
+        onAction: () { _openWriteSettingsPage(); },
+      );
     } finally {
       if (mounted) {
         setState(() => _isSavingLayout = false);
+      }
+    }
+  }
+
+  Future<void> _openWriteSettingsPage() async {
+    await StatusbarBoardService.openWriteSettingsPage();
+  }
+
+  Future<void> _applyCurrentLayout() async {
+    if (_isApplyingLayout) {
+      return;
+    }
+    setState(() => _isApplyingLayout = true);
+    try {
+      final written = await StatusbarBoardService.writeModules(_boardModules);
+      if (!written) {
+        _showMessage(
+          'Saved locally only. Allow system write first.',
+          actionLabel: 'Allow',
+          onAction: () { _openWriteSettingsPage(); },
+        );
+        return;
+      }
+
+      final applied = await StatusbarBoardService.applyStatusbarRefresh();
+      _showMessage(applied ? 'Apply request sent to SystemUI' : 'Saved, but SystemUI refresh did not respond');
+    } catch (_) {
+      _showMessage('Apply failed. Layout kept locally.');
+    } finally {
+      if (mounted) {
+        setState(() => _isApplyingLayout = false);
       }
     }
   }
@@ -105,16 +149,28 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
     setState(() => _boardModules = result);
   }
 
-  void _showMessage(String message) {
+  void _showMessage(
+    String message, {
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           message,
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
         ),
+        action: actionLabel == null || onAction == null
+            ? null
+            : SnackBarAction(
+                label: actionLabel,
+                textColor: const Color(0xFF8DE8FF),
+                onPressed: onAction,
+              ),
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.fromLTRB(18, 0, 18, 112),
-        duration: const Duration(milliseconds: 1300),
+        duration: const Duration(milliseconds: 2200),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         elevation: 0,
         backgroundColor: const Color(0xFF10335A),
@@ -173,6 +229,12 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 10),
+                    _StudioActionButton(
+                      label: _isApplyingLayout ? 'Applying...' : 'Apply to SystemUI',
+                      icon: Icons.flash_on_rounded,
+                      onTap: _isApplyingLayout ? null : _applyCurrentLayout,
+                    ),
                     const SizedBox(height: 22),
                     const SectionHeader(
                       title: 'Full statusbar settings',
@@ -218,6 +280,7 @@ class _ArrangeLayoutSheet extends StatefulWidget {
 class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
   late List<StatusbarBoardModuleState> _modules;
   bool _isSaving = false;
+  bool _isApplying = false;
 
   @override
   void initState() {
@@ -268,20 +331,8 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
 
   void _resetToDefault() {
     setState(() => _modules = StatusbarBoardService.defaultModules());
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text(
-          'Default Mezo order restored',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-        ),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(18, 0, 18, 112),
-        duration: const Duration(milliseconds: 1200),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        elevation: 0,
-        backgroundColor: const Color(0xFF10335A),
-      ),
-    );
+    widget.onSaved(_modules.map((module) => module.copyWith()).toList(growable: false));
+    _showSheetMessage('Default loaded. Tap Save to store it.');
   }
 
   Future<void> _saveCurrentLayout() async {
@@ -291,12 +342,24 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
     final snapshot = _modules.map((module) => module.copyWith()).toList(growable: false);
     setState(() => _isSaving = true);
     try {
-      await StatusbarBoardService.writeModules(snapshot);
+      final written = await StatusbarBoardService.writeModules(snapshot);
       widget.onSaved(snapshot);
-      _showSheetMessage('Layout saved');
+      if (written) {
+        _showSheetMessage('Layout saved. Apply when you want SystemUI to refresh.');
+      } else {
+        _showSheetMessage(
+          'Saved in preview only. Allow system write first.',
+          actionLabel: 'Allow',
+          onAction: () { _openWriteSettingsPage(); },
+        );
+      }
     } catch (_) {
       widget.onSaved(snapshot);
-      _showSheetMessage('Layout saved locally');
+      _showSheetMessage(
+        'Saved in preview only. Allow system write first.',
+        actionLabel: 'Allow',
+        onAction: () { _openWriteSettingsPage(); },
+      );
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -304,19 +367,64 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
     }
   }
 
-  void _showSheetMessage(String message) {
+  Future<void> _applyCurrentLayout() async {
+    if (_isApplying) {
+      return;
+    }
+    final snapshot = _modules.map((module) => module.copyWith()).toList(growable: false);
+    setState(() => _isApplying = true);
+    try {
+      final written = await StatusbarBoardService.writeModules(snapshot);
+      widget.onSaved(snapshot);
+      if (!written) {
+        _showSheetMessage(
+          'Saved in preview only. Allow system write first.',
+          actionLabel: 'Allow',
+          onAction: () { _openWriteSettingsPage(); },
+        );
+        return;
+      }
+      final applied = await StatusbarBoardService.applyStatusbarRefresh();
+      _showSheetMessage(applied ? 'Apply request sent to SystemUI' : 'Saved, but SystemUI refresh did not respond');
+    } catch (_) {
+      widget.onSaved(snapshot);
+      _showSheetMessage('Apply failed. Layout kept in preview.');
+    } finally {
+      if (mounted) {
+        setState(() => _isApplying = false);
+      }
+    }
+  }
+
+  Future<void> _openWriteSettingsPage() async {
+    await StatusbarBoardService.openWriteSettingsPage();
+  }
+
+  void _showSheetMessage(
+    String message, {
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
     if (!mounted) {
       return;
     }
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           message,
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
         ),
+        action: actionLabel == null || onAction == null
+            ? null
+            : SnackBarAction(
+                label: actionLabel,
+                textColor: const Color(0xFF8DE8FF),
+                onPressed: onAction,
+              ),
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.fromLTRB(18, 0, 18, 112),
-        duration: const Duration(milliseconds: 1200),
+        duration: const Duration(milliseconds: 2200),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         elevation: 0,
         backgroundColor: const Color(0xFF10335A),
@@ -375,9 +483,15 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Same PositionsElementsStatusbarDouble.smali order. Save writes only status_bar_elem_position.',
+                        'Save stores the layout only. Apply refreshes SystemUI when you choose.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.white.withValues(alpha: 0.64), height: 1.25),
+                      ),
+                      const SizedBox(height: 12),
+                      _StudioActionButton(
+                        label: _isApplying ? 'Applying...' : 'Apply to SystemUI',
+                        icon: Icons.flash_on_rounded,
+                        onTap: _isApplying ? null : _applyCurrentLayout,
                       ),
                     ],
                   ),
