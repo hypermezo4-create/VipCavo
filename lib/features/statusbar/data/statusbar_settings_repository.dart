@@ -40,7 +40,10 @@ class StatusbarSettingsRepository {
     if (fallback is num) {
       final localFallback = (_readNumber(prefs, rawKey) ?? _readNumber(prefs, key) ?? fallback.toDouble()).round();
       final native = await _readNativeInt(rawKey, localFallback);
-      return native.toDouble();
+      if (setting.controlType == StatusBarControlType.slider) {
+        return native.toDouble();
+      }
+      return native;
     }
     if (fallback is String) {
       final localFallback = prefs.getString(rawKey) ?? prefs.getString(key) ?? fallback;
