@@ -58,10 +58,13 @@ const String statusbarBoardSourceDefaultLayout =
     'elem_status.33;elem_clock.21;elem_bat.31;elem_net1.1;elem_net2.11;elem_wifi.2;elem_notif.22;elem_speed.3;elem_weather.32;elem_date.12;';
 
 const List<int> statusbarBoardAllowedPositionCodes = <int>[
+  // Same position ranges used by PositionsElementsStatusbarDouble.smali.
+  // 1-9 top-left, 11-19 top-right, 21-29 bottom-left, 31-39 bottom-right.
+  // Position 0 is intentionally excluded because it is center/dynamic/island.
+  1, 2, 3, 4, 5, 6, 7, 8, 9,
+  11, 12, 13, 14, 15, 16, 17, 18, 19,
   21, 22, 23, 24, 25, 26, 27, 28, 29,
-  3, 33, 1, 11, 2, 31, 4, 34, 5, 35, 6, 36, 7, 37, 8, 38, 9, 39,
-  12, 13, 14, 15, 16, 17, 18, 19,
-  32,
+  31, 32, 33, 34, 35, 36, 37, 38, 39,
 ];
 
 const List<StatusbarBoardModule> statusbarBoardModules = <StatusbarBoardModule>[
