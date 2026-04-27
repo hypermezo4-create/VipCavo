@@ -203,10 +203,12 @@ class MainActivity : FlutterActivity() {
             }
             if (ok) {
                 notifySettingChanged(storeType, key)
+                true
+            } else {
+                writeViaSettingsCommand(storeType, key, value)
             }
-            ok
         } catch (_: Exception) {
-            false
+            writeViaSettingsCommand(storeType, key, value)
         }
     }
 
@@ -233,25 +235,43 @@ class MainActivity : FlutterActivity() {
             }
             if (ok) {
                 notifySettingChanged(storeType, key)
+                true
+            } else {
+                writeViaSettingsCommand(storeType, key, value.toString())
             }
-            ok
+        } catch (_: Exception) {
+            writeViaSettingsCommand(storeType, key, value.toString())
+        }
+    }
+
+    private fun notifySettingChanged(@Suppress("UNUSED_PARAMETER") storeType: Int, @Suppress("UNUSED_PARAMETER") key: String) {
+        // Settings.put* already notifies its observers. Avoid an extra notifyChange so
+        // SystemUI does not receive duplicate ContentObserver work from every app write.
+    }
+
+    private fun writeViaSettingsCommand(storeType: Int, key: String, value: String): Boolean {
+        val namespace = when (storeType) {
+            2 -> "global"
+            1 -> "secure"
+            else -> "system"
+        }
+        return runSuCommand(listOf("settings", "put", namespace, key, value))
+    }
+
+    private fun runSuCommand(args: List<String>): Boolean {
+        return try {
+            val command = args.joinToString(" ") { shellQuote(it) }
+            val process = ProcessBuilder("su", "-c", command)
+                .redirectErrorStream(true)
+                .start()
+            process.waitFor() == 0
         } catch (_: Exception) {
             false
         }
     }
 
-    private fun notifySettingChanged(storeType: Int, key: String) {
-        try {
-            val resolver = applicationContext.contentResolver
-            val uri = when (storeType) {
-                2 -> Settings.Global.getUriFor(key)
-                1 -> Settings.Secure.getUriFor(key)
-                else -> Settings.System.getUriFor(key)
-            }
-            resolver.notifyChange(uri, null)
-        } catch (_: Exception) {
-            // Settings.put* normally notifies observers already. This is only a safe extra nudge.
-        }
+    private fun shellQuote(value: String): String {
+        return "'" + value.replace("'", "'\"'\"'") + "'"
     }
 
 
