@@ -136,6 +136,15 @@ class ResizeStatusbarService {
     return _sendIntent(action);
   }
 
+  static Future<bool> canWriteSystemSettings() async {
+    final current = await _channel.invokeMethod<bool>('canWriteSystemSettings');
+    return current ?? false;
+  }
+
+  static Future<void> openWriteSettingsPanel() async {
+    await _channel.invokeMethod<void>('openWriteSettingsPanel');
+  }
+
   static Future<int> _readInt(String key, int fallback, MezoSettingsStoreType storeType) async {
     final current = await _channel.invokeMethod<int>(
       'readInt',
