@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:deadzon/features/statusbar/data/resize_statusbar_service.dart';
 import 'package:deadzon/features/statusbar/statusbar_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +9,10 @@ class StatusbarSettingsRepository {
 
   static const String _localPrefix = 'statusbar_legacy_';
   static const String _refreshIntent = 'my.intent.action.REFRESH_STATUSBAR';
+  static const Duration _sliderWriteDelay = Duration(milliseconds: 220);
+  static const Duration _broadcastDelay = Duration(milliseconds: 360);
+  static final Map<String, Timer> _pendingWrites = <String, Timer>{};
+  static final Map<String, Timer> _pendingBroadcasts = <String, Timer>{};
 
   static Future<Object?> read(StatusBarSettingItem setting) async {
     final prefs = await SharedPreferences.getInstance();
@@ -47,31 +53,21 @@ class StatusbarSettingsRepository {
   static Future<void> write(StatusBarSettingItem setting, Object? value) async {
     if (value == null) return;
     await writeRaw(setting.legacyKey, value);
-    await _writeNativeBestEffort(setting.legacyKey, value);
 
-    try {
-      if (setting.intentAction != null) {
-        await ResizeStatusbarService.sendBroadcastIntent(setting.intentAction!);
-      }
-      await ResizeStatusbarService.sendBroadcastIntent(_refreshIntent);
-    } catch (_) {
-      // Local persistence is still preserved when the native bridge is unavailable.
+    final action = setting.intentAction ?? _refreshIntent;
+    if (setting.controlType == StatusBarControlType.slider) {
+      _scheduleNativeWrite(setting.legacyKey, value, action);
+      return;
     }
-  }
 
+    await _writeNativeBestEffort(setting.legacyKey, value);
+    _scheduleBroadcast(action);
+  }
 
   static Future<void> writeLoose(String legacyKey, Object? value, {String? intentAction}) async {
     if (value == null) return;
     await writeRaw(legacyKey, value);
-    await _writeNativeBestEffort(legacyKey, value);
-    try {
-      if (intentAction != null) {
-        await ResizeStatusbarService.sendBroadcastIntent(intentAction);
-      }
-      await ResizeStatusbarService.sendBroadcastIntent(_refreshIntent);
-    } catch (_) {
-      // Keep local state when native refresh is unavailable.
-    }
+    _scheduleNativeWrite(legacyKey, value, intentAction ?? _refreshIntent);
   }
 
   static Future<void> writeRaw(String legacyKey, Object? value) async {
@@ -92,6 +88,28 @@ class StatusbarSettingsRepository {
       await prefs.setString(legacyKey, value);
       await prefs.setString(prefixedKey, value);
     }
+  }
+
+  static void _scheduleNativeWrite(String key, Object value, String action) {
+    _pendingWrites[key]?.cancel();
+    _pendingWrites[key] = Timer(_sliderWriteDelay, () async {
+      _pendingWrites.remove(key);
+      await _writeNativeBestEffort(key, value);
+      _scheduleBroadcast(action);
+    });
+  }
+
+  static void _scheduleBroadcast(String action) {
+    if (action.isEmpty) return;
+    _pendingBroadcasts[action]?.cancel();
+    _pendingBroadcasts[action] = Timer(_broadcastDelay, () async {
+      _pendingBroadcasts.remove(action);
+      try {
+        await ResizeStatusbarService.sendBroadcastIntent(action);
+      } catch (_) {
+        // Local persistence remains intact when the native bridge is unavailable.
+      }
+    });
   }
 
   static Future<bool> _readNativeBool(String key, bool fallback) async {
