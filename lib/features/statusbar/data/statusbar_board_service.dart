@@ -8,17 +8,21 @@ class StatusbarBoardService {
 
   static const String _refreshIntent = 'my.intent.action.REFRESH_STATUSBAR';
 
-  /// Load exactly what SystemUI/Settings currently stores.
+  /// Load exactly what SystemUI/Settings currently stores when it is safe.
   ///
-  /// We intentionally do NOT migrate existing user layouts here. Opening the app
-  /// must reflect the real current `status_bar_elem_position`. Restore is the
-  /// only action that returns to the user-approved default order.
+  /// PositionsElementsStatusbarDouble is the source for this board. It supports
+  /// exactly the 10 legacy elements below and resets any value containing
+  /// elem_prompt, so the app mirrors that behavior and falls back to the approved
+  /// visual default instead of previewing a broken/foreign layout.
   static Future<StatusbarBoardState> load() async {
     final serialized = await AndroidIntentBridge.readString(
       statusbarBoardSerializedKey,
       defaultValue: statusbarBoardSourceDefaultLayout,
     );
-    final parsed = parseSerializedLayout(serialized);
+    final safeSerialized = _isValidSerializedLayout(serialized)
+        ? serialized
+        : statusbarBoardSourceDefaultLayout;
+    final parsed = parseSerializedLayout(safeSerialized);
     final modules = <StatusbarBoardModuleState>[];
 
     for (final module in statusbarBoardModules) {
@@ -64,22 +68,25 @@ class StatusbarBoardService {
 
   /// Save the current board order only.
   ///
-  /// This does not send REFRESH_STATUSBAR because that broadcast can recreate the
-  /// app on this ROM. Use [applyStatusbarRefresh] from the explicit Apply action
-  /// when the user wants to refresh SystemUI immediately.
+  /// This writes status_bar_elem_position only. It never touches visibility,
+  /// show/hide, clock, alarm, battery, notification, or prompt keys. The native
+  /// bridge has a root fallback for ROM builds where WRITE_SETTINGS is not
+  /// enough, so Apply to SystemUI can really persist the old Mezo key.
   static Future<bool> writeModules(List<StatusbarBoardModuleState> modules) async {
     final normalized = _ensureUniqueSlotOrdering(modules);
-    final serialized = encodeSerializedLayout(normalized);
+    final encoded = encodeSerializedLayout(normalized);
     final current = await AndroidIntentBridge.readString(
       statusbarBoardSerializedKey,
       defaultValue: '',
     );
-    if (_sameSerializedLayout(current, serialized)) {
+
+    if (_normalizeSerialized(current) == _normalizeSerialized(encoded)) {
       return true;
     }
+
     return AndroidIntentBridge.writeString(
       statusbarBoardSerializedKey,
-      serialized,
+      encoded,
     );
   }
 
@@ -163,6 +170,37 @@ class StatusbarBoardService {
     return buffer.toString();
   }
 
+  static bool _isValidSerializedLayout(String serialized) {
+    if (serialized.trim().isEmpty || serialized.contains('elem_prompt')) {
+      return false;
+    }
+    final parsed = parseSerializedLayout(serialized);
+    if (parsed.length != statusbarBoardModules.length) {
+      return false;
+    }
+    final seenCodes = <int>{};
+    for (final module in statusbarBoardModules) {
+      final entry = parsed[module.id];
+      if (entry == null) {
+        return false;
+      }
+      if (!statusbarBoardAllowedPositionCodes.contains(entry.currentPositionCode)) {
+        return false;
+      }
+      if (!seenCodes.add(entry.currentPositionCode)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static String _normalizeSerialized(String serialized) {
+    if (!_isValidSerializedLayout(serialized)) {
+      return '';
+    }
+    return encodeSerializedLayout(_ensureUniqueSlotOrdering(parseSerializedLayout(serialized).values.toList(growable: false)));
+  }
+
   static List<StatusbarBoardModuleState> _ensureUniqueSlotOrdering(List<StatusbarBoardModuleState> modules) {
     final updated = modules
         .map(
@@ -190,7 +228,7 @@ class StatusbarBoardService {
         final candidate = colliding[i];
         final occupied = updated.map((module) => module.currentPositionCode).toSet();
         final nextCode = _findNearestEmptyCode(entry.key, occupied);
-        final index = updated.indexWhere((module) => module.id == candidate.id);
+        final index = updated.indexWhere((module) => module.module.id == candidate.module.id);
         if (index != -1) {
           updated[index] = candidate.copyWith(currentPositionCode: nextCode);
         }
@@ -231,19 +269,6 @@ class StatusbarBoardService {
       return 11;
     }
     return 1;
-  }
-
-
-  static bool _sameSerializedLayout(String left, String right) {
-    return _normalizeSerializedLayout(left) == _normalizeSerializedLayout(right);
-  }
-
-  static String _normalizeSerializedLayout(String serialized) {
-    final parsed = parseSerializedLayout(serialized);
-    if (parsed.isEmpty) {
-      return '';
-    }
-    return encodeSerializedLayout(parsed.values.toList(growable: false));
   }
 
   static Future<bool> _readVisible(StatusbarBoardModule module) async {
