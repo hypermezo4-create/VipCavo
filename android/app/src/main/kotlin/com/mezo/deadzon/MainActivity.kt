@@ -11,6 +11,7 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import org.json.JSONObject
+import java.util.concurrent.TimeUnit
 
 class MainActivity : FlutterActivity() {
     private val channelName = "deadzon/mezo_settings"
@@ -205,10 +206,10 @@ class MainActivity : FlutterActivity() {
                 notifySettingChanged(storeType, key)
                 true
             } else {
-                writeViaSettingsCommand(storeType, key, value)
+                writeStringWithRootFallback(storeType, key, value)
             }
         } catch (_: Exception) {
-            writeViaSettingsCommand(storeType, key, value)
+            writeStringWithRootFallback(storeType, key, value)
         }
     }
 
@@ -237,41 +238,25 @@ class MainActivity : FlutterActivity() {
                 notifySettingChanged(storeType, key)
                 true
             } else {
-                writeViaSettingsCommand(storeType, key, value.toString())
+                writeStringWithRootFallback(storeType, key, value.toString())
             }
         } catch (_: Exception) {
-            writeViaSettingsCommand(storeType, key, value.toString())
+            writeStringWithRootFallback(storeType, key, value.toString())
         }
     }
 
-    private fun notifySettingChanged(@Suppress("UNUSED_PARAMETER") storeType: Int, @Suppress("UNUSED_PARAMETER") key: String) {
-        // Settings.put* already notifies its observers. Avoid an extra notifyChange so
-        // SystemUI does not receive duplicate ContentObserver work from every app write.
-    }
-
-    private fun writeViaSettingsCommand(storeType: Int, key: String, value: String): Boolean {
-        val namespace = when (storeType) {
-            2 -> "global"
-            1 -> "secure"
-            else -> "system"
-        }
-        return runSuCommand(listOf("settings", "put", namespace, key, value))
-    }
-
-    private fun runSuCommand(args: List<String>): Boolean {
-        return try {
-            val command = args.joinToString(" ") { shellQuote(it) }
-            val process = ProcessBuilder("su", "-c", command)
-                .redirectErrorStream(true)
-                .start()
-            process.waitFor() == 0
+    private fun notifySettingChanged(storeType: Int, key: String) {
+        try {
+            val resolver = applicationContext.contentResolver
+            val uri = when (storeType) {
+                2 -> Settings.Global.getUriFor(key)
+                1 -> Settings.Secure.getUriFor(key)
+                else -> Settings.System.getUriFor(key)
+            }
+            resolver.notifyChange(uri, null)
         } catch (_: Exception) {
-            false
+            // Settings.put* normally notifies observers already. This is only a safe extra nudge.
         }
-    }
-
-    private fun shellQuote(value: String): String {
-        return "'" + value.replace("'", "'\"'\"'") + "'"
     }
 
 
@@ -307,16 +292,50 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun sendSafeBroadcast(action: String?): Boolean {
+        if (action.isNullOrBlank()) {
+            return false
+        }
         return try {
-            if (action.isNullOrBlank()) {
-                false
-            } else {
-                sendBroadcast(Intent(action))
-                true
+            val intent = Intent(action).apply {
+                addFlags(Intent.FLAG_RECEIVER_INCLUDE_BACKGROUND)
             }
+            sendBroadcast(intent)
+            true
+        } catch (_: Exception) {
+            runRootCommand("am broadcast -a ${shellQuote(action)}")
+        }
+    }
+
+    private fun storeNameForShell(storeType: Int): String {
+        return when (storeType) {
+            2 -> "global"
+            1 -> "secure"
+            else -> "system"
+        }
+    }
+
+    private fun writeStringWithRootFallback(storeType: Int, key: String, value: String): Boolean {
+        val store = storeNameForShell(storeType)
+        val ok = runRootCommand("settings put $store ${shellQuote(key)} ${shellQuote(value)}")
+        if (ok) {
+            notifySettingChanged(storeType, key)
+        }
+        return ok
+    }
+
+    private fun runRootCommand(command: String): Boolean {
+        return try {
+            val process = ProcessBuilder("su", "-c", command)
+                .redirectErrorStream(true)
+                .start()
+            process.waitFor(3500, TimeUnit.MILLISECONDS) && process.exitValue() == 0
         } catch (_: Exception) {
             false
         }
+    }
+
+    private fun shellQuote(value: String): String {
+        return "'" + value.replace("'", "'\\''") + "'"
     }
 
     private fun openExternalApp(packageName: String?): Boolean {
