@@ -55,7 +55,11 @@ const String statusbarBoardSerializedKey = 'status_bar_elem_position';
 // This old Mezo double-board resets layouts containing elem_prompt, so the board
 // position writer intentionally mirrors the original 10 persisted elements only.
 const String statusbarBoardSourceDefaultLayout =
-    'elem_status.33;elem_clock.21;elem_bat.31;elem_net1.1;elem_net2.11;elem_wifi.2;elem_notif.22;elem_speed.3;elem_weather.32;elem_date.12;';
+    // User-approved visual default order:
+    // Left top: clock/time, notification/call, weather/temperature, date.
+    // Right top: speed, status icons, SIM 1, SIM 2, Wi‑Fi, battery.
+    // Bottom lanes start empty.
+    'elem_status.15;elem_clock.1;elem_bat.11;elem_net1.14;elem_net2.13;elem_wifi.12;elem_notif.2;elem_speed.16;elem_weather.3;elem_date.4;';
 
 const List<int> statusbarBoardAllowedPositionCodes = <int>[
   // Same position ranges used by PositionsElementsStatusbarDouble.smali.
@@ -203,16 +207,18 @@ const List<StatusbarBoardModule> statusbarBoardModules = <StatusbarBoardModule>[
 ];
 
 const Map<String, int> statusbarBoardDefaultCodeById = <String, int>{
-  'elem_status': 33,
-  'elem_clock': 21,
-  'elem_bat': 31,
-  'elem_net1': 1,
-  'elem_net2': 11,
-  'elem_wifi': 2,
-  'elem_notif': 22,
-  'elem_speed': 3,
-  'elem_weather': 32,
-  'elem_date': 12,
+  // Keep this map exactly aligned with statusbarBoardSourceDefaultLayout.
+  // This is the approved default shown in the user's reference screenshot.
+  'elem_clock': 1,
+  'elem_notif': 2,
+  'elem_weather': 3,
+  'elem_date': 4,
+  'elem_bat': 11,
+  'elem_wifi': 12,
+  'elem_net2': 13,
+  'elem_net1': 14,
+  'elem_status': 15,
+  'elem_speed': 16,
 };
 
 final Map<String, StatusbarBoardModule> statusbarBoardModulesById = {
