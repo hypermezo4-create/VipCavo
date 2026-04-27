@@ -60,11 +60,22 @@ class StatusbarBoardService {
     // The arrange board must only write the old Mezo position key.
     // Visibility, size, offsets and enabled flags belong to their own settings screens,
     // so this method intentionally does not force show/hide or rewrite unrelated keys.
+    //
+    // Important: do NOT send my.intent.action.REFRESH_STATUSBAR here.
+    // That broadcast refreshes SystemUI aggressively on some ROM builds and can recreate
+    // the host Activity, which sends the app back to its main/home screen after Save or
+    // Restore. SystemUI already observes Settings.System changes for
+    // status_bar_elem_position, so writing the key is enough for the layout pipeline.
     final normalized = _ensureUniqueSlotOrdering(modules);
     await ResizeStatusbarService.writeString(
       key: statusbarBoardSerializedKey,
       value: encodeSerializedLayout(normalized),
     );
+  }
+
+  static Future<void> refreshStatusbarOnly() async {
+    // Manual escape hatch if a ROM build ever needs an explicit refresh.
+    // Do not call this from Save/Restore.
     await _sendRefreshIntent();
   }
 
