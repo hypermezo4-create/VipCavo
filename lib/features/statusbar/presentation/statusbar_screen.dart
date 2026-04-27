@@ -3,6 +3,7 @@ import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
 import 'package:deadzon/core/widgets/section_header.dart';
 import 'package:deadzon/core/widgets/settings_row.dart';
+import 'package:deadzon/features/statusbar/data/mezo_resize_source.dart';
 import 'package:deadzon/features/statusbar/data/resize_statusbar_service.dart';
 import 'package:deadzon/features/statusbar/data/statusbar_board_model.dart';
 import 'package:deadzon/features/statusbar/data/statusbar_board_service.dart';
@@ -1169,7 +1170,36 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
   }
 
   StatusBarSettingItem _resizeSetting(String key) {
-    return _settings.firstWhere((item) => item.legacyKey == key);
+    final source = _settings.firstWhere((item) => item.legacyKey == key);
+    if (source.controlType != StatusBarControlType.select) {
+      return source;
+    }
+    final fallbackCandidates = MezoResizeSource.settings.where((item) => item.legacyKey == key);
+    if (fallbackCandidates.isEmpty) {
+      return source;
+    }
+    final fallback = fallbackCandidates.first;
+    final hasOnlyDefaultOption = source.options.length == 1 && source.options.first.label == 'Default';
+    final resolvedOptions = source.options.isEmpty || hasOnlyDefaultOption ? fallback.options : source.options;
+    return StatusBarSettingItem(
+      legacyKey: source.legacyKey,
+      title: source.title,
+      subtitle: source.subtitle,
+      controlType: source.controlType,
+      group: source.group,
+      defaultValue: source.defaultValue,
+      min: source.min,
+      max: source.max,
+      options: resolvedOptions,
+      step: source.step,
+      preferenceType: source.preferenceType,
+      intentAction: source.intentAction,
+      entriesReference: source.entriesReference,
+      entryValuesReference: source.entryValuesReference,
+      xmlReference: source.xmlReference,
+      layoutReferences: source.layoutReferences,
+      drawableReferences: source.drawableReferences,
+    );
   }
 
   Future<void> _writeResizeSetting(StatusBarSettingItem setting, Object? value) async {
@@ -1215,7 +1245,12 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
       appBar: AppBar(title: const Text('Resize statusbar')),
       body: ListView(
         physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 26),
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 12,
+          bottom: MediaQuery.paddingOf(context).bottom + 140,
+        ),
         children: <Widget>[
           if (_isLoadingResize || _isLoadingStoredValues)
             const Padding(
@@ -1391,14 +1426,17 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     final current = (_values[setting.legacyKey] as String?) ?? '${setting.defaultValue}';
     final selected = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: const Color(0xFF0D1424),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-      builder: (context) => _ResizeSelectSheet(
+      builder: (sheetContext) => _ResizeSelectSheet(
         title: setting.title ?? setting.legacyKey,
         current: current,
         options: setting.options,
+        sheetContext: sheetContext,
       ),
     );
+    if (!context.mounted) return;
     if (selected == null) return;
     await _writeResizeSetting(setting, selected);
   }
@@ -1586,6 +1624,9 @@ class _ResizeSelectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (options.isEmpty) {
+      return const SizedBox.shrink();
+    }
     final label = options.firstWhere((option) => option.value == value, orElse: () => options.first).label;
     return InkWell(
       onTap: onTap,
@@ -1684,32 +1725,62 @@ class _ResizeSelectSheet extends StatelessWidget {
     required this.title,
     required this.current,
     required this.options,
+    required this.sheetContext,
   });
 
   final String title;
   final String current;
   final List<StatusBarOption> options;
+  final BuildContext sheetContext;
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.of(context).padding.bottom + 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 17)),
-            const SizedBox(height: 10),
-            for (final option in options)
-              ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                title: Text(option.label, style: const TextStyle(color: Colors.white)),
-                trailing: option.value == current ? const Icon(Icons.check_rounded, color: Color(0xFF8DE8FF)) : null,
-                onTap: () => Navigator.of(context).pop(option.value),
-              ),
-          ],
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        child: Container(
+          constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.72),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0B1522).withValues(alpha: 0.96),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+          ),
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(16, 14, 16, MediaQuery.paddingOf(context).bottom + 18),
+            shrinkWrap: true,
+            children: <Widget>[
+              Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 17)),
+              const SizedBox(height: 12),
+              for (final option in options) ...<Widget>[
+                InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () => Navigator.of(sheetContext).pop(option.value),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+                    ),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: Text(
+                            option.label,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        if (option.value == current) const Icon(Icons.check_rounded, color: Color(0xFF8DE8FF)),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ],
+          ),
         ),
       ),
     );
