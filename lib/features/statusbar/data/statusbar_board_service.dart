@@ -12,7 +12,7 @@ class StatusbarBoardService {
       key: statusbarBoardSerializedKey,
       fallback: statusbarBoardSourceDefaultLayout,
     );
-    final parsed = parseSerializedLayout(serialized);
+    final parsed = parseSerializedLayout(_normalizeStoredDefaultLayout(serialized));
     final modules = <StatusbarBoardModuleState>[];
 
     for (final module in statusbarBoardModules) {
@@ -70,6 +70,21 @@ class StatusbarBoardService {
 
   static Future<void> writeClusterOffsets({required double left, required double right}) async {
     return;
+  }
+
+
+  static String _normalizeStoredDefaultLayout(String serialized) {
+    final compact = serialized.trim();
+    const oldSmaliDefault =
+        'elem_status.33;elem_clock.21;elem_bat.31;elem_net1.1;elem_net2.11;elem_wifi.2;elem_notif.22;elem_speed.3;elem_weather.32;elem_date.12;';
+    const oldEarlyDefault =
+        'elem_clock.1;elem_notif.2;elem_bat.11;elem_net1.12;elem_net2.13;elem_wifi.14;elem_speed.15;elem_status.16;elem_prompt.21;elem_date.22;elem_weather.31;';
+
+    // Migrate only the known old defaults. Custom user layouts stay untouched.
+    if (compact.isEmpty || compact == oldSmaliDefault || compact == oldEarlyDefault) {
+      return statusbarBoardSourceDefaultLayout;
+    }
+    return serialized;
   }
 
   static List<StatusbarBoardModuleState> defaultModules() {
@@ -160,9 +175,9 @@ class StatusbarBoardService {
   }
 
   static int _findNearestEmptyCode(int around, Set<int> occupied) {
-    final candidates = statusbarBoardAllowedPositionCodes.toList(growable: false)
-      ..sort((a, b) => (a - around).abs().compareTo((b - around).abs()));
-    for (final candidate in candidates) {
+    final sector = (around ~/ 10) * 10;
+    for (var i = 1; i <= 9; i++) {
+      final candidate = sector + i;
       if (!occupied.contains(candidate)) {
         return candidate;
       }
