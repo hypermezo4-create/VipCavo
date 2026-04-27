@@ -208,6 +208,41 @@ class AndroidIntentBridge {
     }
   }
 
+
+
+  static Future<String> getCurrentPackageName() async {
+    try {
+      final result = await _channel.invokeMethod<String>('getCurrentPackageName');
+      return result ?? '';
+    } on PlatformException {
+      return '';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  static Future<bool> canWriteSystemSettings() async {
+    try {
+      final result = await _channel.invokeMethod<bool>('canWriteSystemSettings');
+      return result ?? false;
+    } on PlatformException {
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<bool> openWriteSettingsPanel() async {
+    try {
+      final result = await _channel.invokeMethod<bool>('openWriteSettingsPanel');
+      return result ?? false;
+    } on PlatformException {
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Convenience helper for Mezo preference-like values.
   ///
   /// bool -> writeBool
