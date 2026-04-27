@@ -24,6 +24,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
+          # Keep channel-only setup to avoid unresolved pinned versions in flutter-action.
           channel: stable
           cache: true
 
