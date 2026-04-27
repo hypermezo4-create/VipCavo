@@ -5,14 +5,12 @@ import 'package:deadzon/features/statusbar/statusbar_board_config.dart';
 class StatusbarBoardService {
   StatusbarBoardService._();
 
-  static const String _refreshIntent = 'my.intent.action.REFRESH_STATUSBAR';
-
   static Future<StatusbarBoardState> load() async {
     final serialized = await ResizeStatusbarService.readString(
       key: statusbarBoardSerializedKey,
       fallback: statusbarBoardSourceDefaultLayout,
     );
-    final parsed = parseSerializedLayout(serialized);
+    final parsed = parseSerializedLayout(_normalizeStoredDefaultLayout(serialized));
     final modules = <StatusbarBoardModuleState>[];
 
     for (final module in statusbarBoardModules) {
@@ -57,7 +55,7 @@ class StatusbarBoardService {
   }
 
   static Future<void> writeModules(List<StatusbarBoardModuleState> modules) async {
-    // The arrange board writes only the old Mezo position key.
+    // The arrange board must only write the old Mezo position key.
     // Visibility, size, offsets and enabled flags belong to their own settings screens,
     // so this method intentionally does not force show/hide or rewrite unrelated keys.
     final normalized = _ensureUniqueSlotOrdering(modules);
@@ -65,22 +63,28 @@ class StatusbarBoardService {
       key: statusbarBoardSerializedKey,
       value: encodeSerializedLayout(normalized),
     );
-
-    // Apply the change to SystemUI after the Settings.System write is committed.
-    // DeadzonShell now restores the last selected tab after this ROM-side refresh, so
-    // the app no longer stays stuck on Home after Save/Restore.
-    await Future<void>.delayed(const Duration(milliseconds: 160));
-    await _sendRefreshIntent();
-  }
-
-  static Future<void> refreshStatusbarOnly() async {
-    await _sendRefreshIntent();
+    // No broadcast here. Native writeString notifies the Settings URI.
+    // The REFRESH_STATUSBAR broadcast is too aggressive on this ROM and can recreate the app.
   }
 
   static Future<void> writeClusterOffsets({required double left, required double right}) async {
     return;
   }
 
+
+  static String _normalizeStoredDefaultLayout(String serialized) {
+    final compact = serialized.trim();
+    const oldSmaliDefault =
+        'elem_status.33;elem_clock.21;elem_bat.31;elem_net1.1;elem_net2.11;elem_wifi.2;elem_notif.22;elem_speed.3;elem_weather.32;elem_date.12;';
+    const oldEarlyDefault =
+        'elem_clock.1;elem_notif.2;elem_bat.11;elem_net1.12;elem_net2.13;elem_wifi.14;elem_speed.15;elem_status.16;elem_prompt.21;elem_date.22;elem_weather.31;';
+
+    // Migrate only the known old defaults. Custom user layouts stay untouched.
+    if (compact.isEmpty || compact == oldSmaliDefault || compact == oldEarlyDefault) {
+      return statusbarBoardSourceDefaultLayout;
+    }
+    return serialized;
+  }
 
   static List<StatusbarBoardModuleState> defaultModules() {
     final parsed = parseSerializedLayout(statusbarBoardSourceDefaultLayout);
@@ -190,5 +194,4 @@ class StatusbarBoardService {
 
   static Future<int> _readInt(String key, int fallback) => ResizeStatusbarService.readInt(key: key, fallback: fallback);
   static Future<bool> _readBool(String key, bool fallback) => ResizeStatusbarService.readBool(key: key, fallback: fallback);
-  static Future<void> _sendRefreshIntent() => ResizeStatusbarService.sendBroadcastIntent(_refreshIntent);
 }
