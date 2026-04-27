@@ -1095,7 +1095,10 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
           if (widget.section.id == 'background') ...<Widget>[
             _BackgroundModuleEditor(
               values: _values,
-              onChanged: (key, value) => setState(() => _values[key] = value),
+              onChanged: (key, value) {
+                setState(() => _values[key] = value);
+                StatusbarSettingsRepository.writeLoose(key, value);
+              },
             ),
             const SizedBox(height: 12),
           ],
