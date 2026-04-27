@@ -1033,6 +1033,10 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.section.id == 'resize_statusbar') {
+      return _buildResizeStatusbarScreen(context);
+    }
+
     final grouped = <String, List<StatusBarSettingItem>>{};
     for (final setting in _settings) {
       final groupKey = setting.group ?? 'General';
@@ -1131,7 +1135,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
   }
 
   bool get _supportsLivePreview =>
-      widget.section.id == 'resize_statusbar' || widget.section.id == 'battery' || widget.section.id == 'clock';
+      widget.section.id == 'battery' || widget.section.id == 'clock';
 
   String _groupTitle(String group) {
     switch (group) {
@@ -1162,6 +1166,552 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
       return 'Left camera layout mode, reserved width, and row reservation behavior.';
     }
     return null;
+  }
+
+  StatusBarSettingItem _resizeSetting(String key) {
+    return _settings.firstWhere((item) => item.legacyKey == key);
+  }
+
+  Future<void> _writeResizeSetting(StatusBarSettingItem setting, Object? value) async {
+    setState(() => _values[setting.legacyKey] = value);
+    StatusbarSettingsRepository.write(setting, value);
+    await ResizeStatusbarService.write(setting.legacyKey, value);
+  }
+
+  Future<bool> _ensureResizeWritePermission() async {
+    final canWrite = await ResizeStatusbarService.canWriteSystemSettings();
+    if (canWrite || !mounted) {
+      return canWrite;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Allow modify system settings to save Resize values.'),
+        action: SnackBarAction(
+          label: 'Open',
+          onPressed: () {
+            ResizeStatusbarService.openWriteSettingsPanel();
+          },
+        ),
+      ),
+    );
+    return false;
+  }
+
+  Widget _buildResizeStatusbarScreen(BuildContext context) {
+    final sizeSetting = _resizeSetting('custom_status_bar_height');
+    final centerSetting = _resizeSetting('status_bar_elem_center_in_island');
+    final topSetting = _resizeSetting('custom_status_bar_top');
+    final sideSetting = _resizeSetting('custom_status_bar_left_right');
+    final cutoutPaddingSetting = _resizeSetting('status_bar_element_cutout_padding');
+    final cutoutTypeSetting = _resizeSetting('status_bar_element_cutout_type');
+    final cutoutCenterSetting = _resizeSetting('status_bar_element_cutout_center');
+    final cutoutWidthSetting = _resizeSetting('status_bar_element_cutout_camera_width');
+    final cutoutLeftSetting = _resizeSetting('status_bar_element_cutout_left');
+    final leftPaddingSetting = _resizeSetting('status_bar_element_cutout_padding_left_camera');
+    final leftCalcSetting = _resizeSetting('status_bar_element_cutout_left_not_calculate');
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF060B17),
+      appBar: AppBar(title: const Text('Resize statusbar')),
+      body: ListView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 26),
+        children: <Widget>[
+          if (_isLoadingResize || _isLoadingStoredValues)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 12),
+              child: LinearProgressIndicator(minHeight: 2),
+            ),
+          const SectionHeader(
+            title: 'Resize statusbar',
+            subtitle: 'Adjust height, margins, and camera cutout behavior.',
+          ),
+          const SizedBox(height: 12),
+          _ResizeHeroSizeCard(
+            value: ((_values[sizeSetting.legacyKey] as num?) ?? 99).toDouble(),
+            subtitle: sizeSetting.subtitle ?? 'Reboot device after adjustment',
+            onTap: () => _openResizeSliderSheet(setting: sizeSetting, title: 'Status bar size'),
+          ),
+          const SizedBox(height: 14),
+          const SectionHeader(title: 'Layout spacing'),
+          const SizedBox(height: 8),
+          MezoGlassPanel(
+            child: Column(
+              children: <Widget>[
+                _ResizeSwitchCard(
+                  title: centerSetting.title ?? centerSetting.legacyKey,
+                  value: (_values[centerSetting.legacyKey] as bool?) ?? true,
+                  onChanged: (next) async {
+                    if (!await _ensureResizeWritePermission()) return;
+                    await _writeResizeSetting(centerSetting, next);
+                  },
+                ),
+                const Divider(height: 18),
+                _ResizeInlineSliderCard(
+                  title: topSetting.title ?? topSetting.legacyKey,
+                  min: topSetting.min ?? 0,
+                  max: topSetting.max ?? 40,
+                  defaultValue: (topSetting.defaultValue as num).toDouble(),
+                  value: ((_values[topSetting.legacyKey] as num?) ?? 2).toDouble(),
+                  onLiveChanged: (v) => setState(() => _values[topSetting.legacyKey] = v),
+                  onCommitted: (v) async {
+                    if (!await _ensureResizeWritePermission()) return;
+                    await _writeResizeSetting(topSetting, v);
+                  },
+                ),
+                const Divider(height: 18),
+                _ResizeInlineSliderCard(
+                  title: sideSetting.title ?? sideSetting.legacyKey,
+                  min: sideSetting.min ?? 0,
+                  max: sideSetting.max ?? 200,
+                  defaultValue: (sideSetting.defaultValue as num).toDouble(),
+                  value: ((_values[sideSetting.legacyKey] as num?) ?? 0).toDouble(),
+                  onLiveChanged: (v) => setState(() => _values[sideSetting.legacyKey] = v),
+                  onCommitted: (v) async {
+                    if (!await _ensureResizeWritePermission()) return;
+                    await _writeResizeSetting(sideSetting, v);
+                  },
+                ),
+                const Divider(height: 18),
+                _ResizeInlineSliderCard(
+                  title: cutoutPaddingSetting.title ?? cutoutPaddingSetting.legacyKey,
+                  min: cutoutPaddingSetting.min ?? 0,
+                  max: cutoutPaddingSetting.max ?? 150,
+                  defaultValue: (cutoutPaddingSetting.defaultValue as num).toDouble(),
+                  value: ((_values[cutoutPaddingSetting.legacyKey] as num?) ?? 35).toDouble(),
+                  onLiveChanged: (v) => setState(() => _values[cutoutPaddingSetting.legacyKey] = v),
+                  onCommitted: (v) async {
+                    if (!await _ensureResizeWritePermission()) return;
+                    await _writeResizeSetting(cutoutPaddingSetting, v);
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          const SectionHeader(title: 'Camera cutout'),
+          const SizedBox(height: 8),
+          MezoGlassPanel(
+            child: Column(
+              children: <Widget>[
+                _ResizeSelectCard(
+                  title: cutoutTypeSetting.title ?? cutoutTypeSetting.legacyKey,
+                  value: (_values[cutoutTypeSetting.legacyKey] as String?) ?? '${cutoutTypeSetting.defaultValue}',
+                  options: cutoutTypeSetting.options,
+                  onTap: () => _openResizeSelectSheet(cutoutTypeSetting),
+                ),
+                const Divider(height: 18),
+                _ResizeSelectCard(
+                  title: cutoutCenterSetting.title ?? cutoutCenterSetting.legacyKey,
+                  value: (_values[cutoutCenterSetting.legacyKey] as String?) ?? '${cutoutCenterSetting.defaultValue}',
+                  options: cutoutCenterSetting.options,
+                  onTap: () => _openResizeSelectSheet(cutoutCenterSetting),
+                ),
+                const Divider(height: 18),
+                _ResizeInlineSliderCard(
+                  title: cutoutWidthSetting.title ?? cutoutWidthSetting.legacyKey,
+                  min: cutoutWidthSetting.min ?? 1,
+                  max: cutoutWidthSetting.max ?? 200,
+                  defaultValue: (cutoutWidthSetting.defaultValue as num).toDouble(),
+                  value: ((_values[cutoutWidthSetting.legacyKey] as num?) ?? 80).toDouble(),
+                  onLiveChanged: (v) => setState(() => _values[cutoutWidthSetting.legacyKey] = v),
+                  onCommitted: (v) async {
+                    if (!await _ensureResizeWritePermission()) return;
+                    await _writeResizeSetting(cutoutWidthSetting, v);
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          const SectionHeader(title: 'Left camera notch settings'),
+          const SizedBox(height: 8),
+          MezoGlassPanel(
+            child: Column(
+              children: <Widget>[
+                _ResizeSelectCard(
+                  title: cutoutLeftSetting.title ?? cutoutLeftSetting.legacyKey,
+                  value: (_values[cutoutLeftSetting.legacyKey] as String?) ?? '${cutoutLeftSetting.defaultValue}',
+                  options: cutoutLeftSetting.options,
+                  onTap: () => _openResizeSelectSheet(cutoutLeftSetting),
+                ),
+                const Divider(height: 18),
+                _ResizeInlineSliderCard(
+                  title: leftPaddingSetting.title ?? leftPaddingSetting.legacyKey,
+                  min: leftPaddingSetting.min ?? 10,
+                  max: leftPaddingSetting.max ?? 150,
+                  defaultValue: (leftPaddingSetting.defaultValue as num).toDouble(),
+                  value: ((_values[leftPaddingSetting.legacyKey] as num?) ?? 75).toDouble(),
+                  onLiveChanged: (v) => setState(() => _values[leftPaddingSetting.legacyKey] = v),
+                  onCommitted: (v) async {
+                    if (!await _ensureResizeWritePermission()) return;
+                    await _writeResizeSetting(leftPaddingSetting, v);
+                  },
+                ),
+                const Divider(height: 18),
+                _ResizeSelectCard(
+                  title: leftCalcSetting.title ?? leftCalcSetting.legacyKey,
+                  value: (_values[leftCalcSetting.legacyKey] as String?) ?? '${leftCalcSetting.defaultValue}',
+                  options: leftCalcSetting.options,
+                  onTap: () => _openResizeSelectSheet(leftCalcSetting),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openResizeSliderSheet({
+    required StatusBarSettingItem setting,
+    required String title,
+  }) async {
+    if (!await _ensureResizeWritePermission()) return;
+    final initial = ((_values[setting.legacyKey] as num?) ?? (setting.defaultValue as num)).toDouble();
+    if (!mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF0D1424),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (context) => _ResizeSliderSheet(
+        title: title,
+        initial: initial,
+        min: setting.min ?? 0,
+        max: setting.max ?? 100,
+        defaultValue: (setting.defaultValue as num).toDouble(),
+        onSet: (value) => _writeResizeSetting(setting, value),
+      ),
+    );
+  }
+
+  Future<void> _openResizeSelectSheet(StatusBarSettingItem setting) async {
+    if (!await _ensureResizeWritePermission()) return;
+    final current = (_values[setting.legacyKey] as String?) ?? '${setting.defaultValue}';
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: const Color(0xFF0D1424),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (context) => _ResizeSelectSheet(
+        title: setting.title ?? setting.legacyKey,
+        current: current,
+        options: setting.options,
+      ),
+    );
+    if (selected == null) return;
+    await _writeResizeSetting(setting, selected);
+  }
+}
+
+class _ResizeHeroSizeCard extends StatelessWidget {
+  const _ResizeHeroSizeCard({
+    required this.value,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final double value;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(22),
+      child: Ink(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          gradient: const LinearGradient(colors: <Color>[Color(0xFF123750), Color(0xFF291B48)]),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          children: <Widget>[
+            const Icon(Icons.height_rounded, color: Color(0xFF8DE8FF)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const Text('Status bar size', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+                  SizedBox(height: 4),
+                  Text(subtitle, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                ],
+              ),
+            ),
+            Text(
+              value.toStringAsFixed(0),
+              style: const TextStyle(color: Color(0xFFC4FDFF), fontSize: 28, fontWeight: FontWeight.w900),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ResizeSwitchCard extends StatelessWidget {
+  const _ResizeSwitchCard({required this.title, required this.value, required this.onChanged});
+
+  final String title;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+        Switch(value: value, onChanged: onChanged),
+      ],
+    );
+  }
+}
+
+class _ResizeInlineSliderCard extends StatefulWidget {
+  const _ResizeInlineSliderCard({
+    required this.title,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.defaultValue,
+    required this.onLiveChanged,
+    required this.onCommitted,
+  });
+
+  final String title;
+  final double value;
+  final double min;
+  final double max;
+  final double defaultValue;
+  final ValueChanged<double> onLiveChanged;
+  final ValueChanged<double> onCommitted;
+
+  @override
+  State<_ResizeInlineSliderCard> createState() => _ResizeInlineSliderCardState();
+}
+
+class _ResizeInlineSliderCardState extends State<_ResizeInlineSliderCard> {
+  late double _localValue = widget.value.clamp(widget.min, widget.max).toDouble();
+
+  @override
+  void didUpdateWidget(covariant _ResizeInlineSliderCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value != oldWidget.value) {
+      _localValue = widget.value.clamp(widget.min, widget.max).toDouble();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Expanded(child: Text(widget.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(99),
+              ),
+              child: Text(_localValue.toStringAsFixed(0), style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700)),
+            ),
+            const SizedBox(width: 8),
+            TextButton(
+              onPressed: () {
+                setState(() => _localValue = widget.defaultValue);
+                widget.onLiveChanged(widget.defaultValue);
+                widget.onCommitted(widget.defaultValue);
+              },
+              child: const Text('Reset'),
+            ),
+          ],
+        ),
+        Row(
+          children: <Widget>[
+            IconButton(
+              onPressed: () {
+                final next = (_localValue - 1).clamp(widget.min, widget.max).toDouble();
+                setState(() => _localValue = next);
+                widget.onLiveChanged(next);
+                widget.onCommitted(next);
+              },
+              icon: const Icon(Icons.remove_rounded, color: Colors.white70),
+            ),
+            Expanded(
+              child: Slider(
+                value: _localValue,
+                min: widget.min,
+                max: widget.max,
+                activeColor: const Color(0xFF8DE8FF),
+                onChanged: (value) {
+                  setState(() => _localValue = value);
+                  widget.onLiveChanged(value);
+                },
+                onChangeEnd: widget.onCommitted,
+              ),
+            ),
+            IconButton(
+              onPressed: () {
+                final next = (_localValue + 1).clamp(widget.min, widget.max).toDouble();
+                setState(() => _localValue = next);
+                widget.onLiveChanged(next);
+                widget.onCommitted(next);
+              },
+              icon: const Icon(Icons.add_rounded, color: Colors.white70),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ResizeSelectCard extends StatelessWidget {
+  const _ResizeSelectCard({
+    required this.title,
+    required this.value,
+    required this.options,
+    required this.onTap,
+  });
+
+  final String title;
+  final String value;
+  final List<StatusBarOption> options;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = options.firstWhere((option) => option.value == value, orElse: () => options.first).label;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: <Widget>[
+            Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.right,
+                style: const TextStyle(color: Colors.white70),
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white60),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ResizeSliderSheet extends StatefulWidget {
+  const _ResizeSliderSheet({
+    required this.title,
+    required this.initial,
+    required this.min,
+    required this.max,
+    required this.defaultValue,
+    required this.onSet,
+  });
+
+  final String title;
+  final double initial;
+  final double min;
+  final double max;
+  final double defaultValue;
+  final ValueChanged<double> onSet;
+
+  @override
+  State<_ResizeSliderSheet> createState() => _ResizeSliderSheetState();
+}
+
+class _ResizeSliderSheetState extends State<_ResizeSliderSheet> {
+  late double _value = widget.initial;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(18, 14, 18, MediaQuery.of(context).padding.bottom + 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(widget.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
+            const SizedBox(height: 8),
+            Text(_value.toStringAsFixed(0), style: const TextStyle(color: Color(0xFF8DE8FF), fontSize: 28, fontWeight: FontWeight.w800)),
+            Slider(
+              value: _value,
+              min: widget.min,
+              max: widget.max,
+              activeColor: const Color(0xFF8DE8FF),
+              onChanged: (value) => setState(() => _value = value),
+            ),
+            Row(
+              children: <Widget>[
+                OutlinedButton(
+                  onPressed: () => setState(() => _value = widget.defaultValue),
+                  child: const Text('Reset'),
+                ),
+                const Spacer(),
+                ElevatedButton(
+                  onPressed: () {
+                    widget.onSet(_value);
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Set'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ResizeSelectSheet extends StatelessWidget {
+  const _ResizeSelectSheet({
+    required this.title,
+    required this.current,
+    required this.options,
+  });
+
+  final String title;
+  final String current;
+  final List<StatusBarOption> options;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.of(context).padding.bottom + 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 17)),
+            const SizedBox(height: 10),
+            for (final option in options)
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                title: Text(option.label, style: const TextStyle(color: Colors.white)),
+                trailing: option.value == current ? const Icon(Icons.check_rounded, color: Color(0xFF8DE8FF)) : null,
+                onTap: () => Navigator.of(context).pop(option.value),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
