@@ -958,6 +958,40 @@ class StatusbarDetailScreen extends StatefulWidget {
 }
 
 class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
+  static const List<String> _batteryOrderedKeys = <String>[
+    'elem_bat_element_visible',
+    'battery_indicator_style',
+    'use_legacy_drawable',
+    'android.theme.customization.battery_icon',
+    'batteryview_zoom',
+    'batteryview_scale',
+    'batteryview_division',
+    'battery_percent_zoom',
+    'battery_percent_division',
+    'battery_charge_zoom',
+    'battery_charge_scale',
+    'battery_charge_division',
+    'battery_percent_digit_zoom',
+    'battery_percent_digit_division',
+    'text_bat_color_0',
+    'text_bat_color_1',
+    'text_bat_color_2',
+    'text_bat_color_3',
+    'text_bat_color_4',
+    'battery_percent_digit_color',
+    'battery_charge_color',
+    'battery_percent_typefase',
+    'battery_percent_mark_enable',
+    'battery_percent_mark_settings_enable',
+    'battery_percent_mark_typefase',
+    'text_bat_color_mark_0',
+    'text_bat_color_mark_1',
+    'text_bat_color_mark_2',
+    'text_bat_color_mark_3',
+    'text_bat_color_mark_4',
+    'battery_percent_mark_zoom',
+    'battery_percent_mark_division',
+  ];
   late final List<StatusBarSettingItem> _settings;
   final Map<String, Object?> _values = <String, Object?>{};
   bool _isLoadingResize = false;
@@ -1036,6 +1070,9 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
   Widget build(BuildContext context) {
     if (widget.section.id == 'resize_statusbar') {
       return _buildResizeStatusbarScreen(context);
+    }
+    if (widget.section.id == 'battery') {
+      return _buildBatteryScreen(context);
     }
 
     final grouped = <String, List<StatusBarSettingItem>>{};
@@ -1133,6 +1170,270 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildBatteryScreen(BuildContext context) {
+    final batterySettings = <StatusBarSettingItem>[
+      for (final key in _batteryOrderedKeys)
+        ..._settings.where((setting) => setting.legacyKey == key),
+    ];
+    final byKey = <String, StatusBarSettingItem>{
+      for (final setting in batterySettings) setting.legacyKey: setting,
+    };
+    final markDetailsEnabled = (_values['battery_percent_mark_settings_enable'] as bool?) ?? false;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF050B1A),
+      appBar: AppBar(title: const Text('Battery')),
+      body: ListView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.paddingOf(context).bottom + 140),
+        children: <Widget>[
+          if (_isLoadingStoredValues)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: LinearProgressIndicator(
+                minHeight: 2,
+                color: const Color(0xFF8DE8FF),
+                backgroundColor: Colors.white.withValues(alpha: 0.12),
+              ),
+            ),
+          _BatteryHeroCard(values: _values),
+          const SizedBox(height: 14),
+          _BatterySectionCard(
+            title: 'Style and visibility',
+            subtitle: 'Old Mezo battery style controls with exact keys.',
+            children: <Widget>[
+              _batteryToggle(byKey['elem_bat_element_visible']),
+              _batterySelect(byKey['battery_indicator_style']),
+              _batterySelect(byKey['use_legacy_drawable']),
+              _BatteryInfoTile(
+                title: byKey['android.theme.customization.battery_icon']?.title ?? 'Battery icon pack',
+                subtitle: 'Legacy fragment preference in Mezo source (no direct selector values in XML).',
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _BatterySectionCard(
+            title: 'Icon size & position',
+            subtitle: 'Battery body dimensions from old source ranges.',
+            children: <Widget>[
+              _batterySlider(byKey['batteryview_zoom']),
+              _batterySlider(byKey['batteryview_scale']),
+              _batterySlider(byKey['batteryview_division']),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _BatterySectionCard(
+            title: 'Percentage',
+            subtitle: 'Percent text and in-icon digit behavior.',
+            children: <Widget>[
+              _batterySlider(byKey['battery_percent_zoom']),
+              _batterySlider(byKey['battery_percent_division']),
+              _batterySlider(byKey['battery_percent_digit_zoom']),
+              _batterySlider(byKey['battery_percent_digit_division']),
+              _batteryColor(byKey['battery_percent_digit_color']),
+              _batterySelect(byKey['battery_percent_typefase']),
+              _batteryToggle(byKey['battery_percent_mark_enable']),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _BatterySectionCard(
+            title: 'Charging',
+            subtitle: 'Charging icon size, position, and tint.',
+            children: <Widget>[
+              _batterySlider(byKey['battery_charge_zoom']),
+              _batterySlider(byKey['battery_charge_scale']),
+              _batterySlider(byKey['battery_charge_division']),
+              _batteryColor(byKey['battery_charge_color']),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _BatterySectionCard(
+            title: 'Battery level colors',
+            subtitle: 'Threshold color layers from less than 20% to less than 100%.',
+            children: <Widget>[
+              _batteryColor(byKey['text_bat_color_0']),
+              _batteryColor(byKey['text_bat_color_1']),
+              _batteryColor(byKey['text_bat_color_2']),
+              _batteryColor(byKey['text_bat_color_3']),
+              _batteryColor(byKey['text_bat_color_4']),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _BatterySectionCard(
+            title: 'Percent mark details',
+            subtitle: 'Enabled only when mark custom settings are turned on.',
+            children: <Widget>[
+              _batteryToggle(byKey['battery_percent_mark_settings_enable']),
+              if (markDetailsEnabled) ...<Widget>[
+                _batterySelect(byKey['battery_percent_mark_typefase']),
+                _batteryColor(byKey['text_bat_color_mark_0']),
+                _batteryColor(byKey['text_bat_color_mark_1']),
+                _batteryColor(byKey['text_bat_color_mark_2']),
+                _batteryColor(byKey['text_bat_color_mark_3']),
+                _batteryColor(byKey['text_bat_color_mark_4']),
+                _batterySlider(byKey['battery_percent_mark_zoom']),
+                _batterySlider(byKey['battery_percent_mark_division']),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _batteryToggle(StatusBarSettingItem? setting) {
+    if (setting == null) return const SizedBox.shrink();
+    return _BatteryToggleTile(
+      title: _batteryLabel(setting),
+      subtitle: setting.subtitle,
+      value: (_values[setting.legacyKey] as bool?) ?? (setting.defaultValue as bool? ?? false),
+      onChanged: (next) => _handleSettingChanged(setting, next),
+    );
+  }
+
+  Widget _batterySlider(StatusBarSettingItem? setting) {
+    if (setting == null) return const SizedBox.shrink();
+    final min = setting.min ?? 0;
+    final max = setting.max ?? 100;
+    final value = ((_values[setting.legacyKey] as num?)?.toDouble() ?? (setting.defaultValue as num?)?.toDouble() ?? min).clamp(min, max).toDouble();
+    return _BatterySliderTile(
+      title: _batteryLabel(setting),
+      subtitle: setting.subtitle,
+      value: value,
+      min: min,
+      max: max,
+      onChanged: (next) => _handleSettingChanged(setting, next),
+      onReset: () => _handleSettingChanged(setting, setting.defaultValue),
+    );
+  }
+
+  Widget _batterySelect(StatusBarSettingItem? setting) {
+    if (setting == null) return const SizedBox.shrink();
+    final options = _batteryOptionsFor(setting);
+    if (options.isEmpty) return const SizedBox.shrink();
+    final current = (_values[setting.legacyKey] as String?) ?? options.first.value;
+    final selectedOption = options.where((o) => o.value == current);
+    final label = selectedOption.isEmpty ? options.first.label : selectedOption.first.label;
+    return _BatterySelectTile(
+      title: _batteryLabel(setting),
+      subtitle: setting.subtitle,
+      valueLabel: label,
+      onTap: () async {
+        final selected = await showModalBottomSheet<String>(
+          context: context,
+          useSafeArea: true,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (sheetContext) => _BatteryOptionSheet(
+            title: _batteryLabel(setting),
+            selectedValue: current,
+            options: options,
+            onSelected: (value) => Navigator.of(sheetContext).pop(value),
+          ),
+        );
+        if (!mounted) return;
+        if (selected != null) {
+          _handleSettingChanged(setting, selected);
+        }
+      },
+    );
+  }
+
+  List<StatusBarOption> _batteryOptionsFor(StatusBarSettingItem setting) {
+    switch (setting.legacyKey) {
+      case 'battery_indicator_style':
+        return const <StatusBarOption>[
+          StatusBarOption(label: 'Graphical', value: '0'),
+          StatusBarOption(label: 'Percentage (center) and graphical', value: '1'),
+          StatusBarOption(label: 'Percentages (right) and graphical', value: '3'),
+          StatusBarOption(label: 'Percentages (left) and graphical', value: '6'),
+          StatusBarOption(label: 'Percent only', value: '5'),
+          StatusBarOption(label: 'Do not show', value: '4'),
+        ];
+      case 'use_legacy_drawable':
+        return const <StatusBarOption>[
+          StatusBarOption(label: 'Android (Rectangle)', value: '0'),
+          StatusBarOption(label: 'MIUI (Oval)', value: '1'),
+        ];
+      case 'battery_percent_typefase':
+      case 'battery_percent_mark_typefase':
+        return const <StatusBarOption>[
+          StatusBarOption(label: 'Default', value: '0'),
+          StatusBarOption(label: 'Inter', value: 'inter'),
+          StatusBarOption(label: 'Roboto', value: 'roboto'),
+          StatusBarOption(label: 'Monospace', value: 'mono'),
+        ];
+      default:
+        return setting.options;
+    }
+  }
+
+  Widget _batteryColor(StatusBarSettingItem? setting) {
+    if (setting == null) return const SizedBox.shrink();
+    final current = (_values[setting.legacyKey] as String?) ?? (setting.defaultValue as String? ?? '#00000000');
+    return _BatteryColorTile(
+      title: _batteryLabel(setting),
+      subtitle: setting.subtitle,
+      hex: current,
+      onTap: () async {
+        final selected = await showModalBottomSheet<String>(
+          context: context,
+          useSafeArea: true,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (sheetContext) => _BatteryColorSheet(
+            title: _batteryLabel(setting),
+            current: current,
+            defaultValue: (setting.defaultValue as String?) ?? '#00000000',
+            onSelected: (value) => Navigator.of(sheetContext).pop(value),
+          ),
+        );
+        if (!mounted) return;
+        if (selected != null) {
+          _handleSettingChanged(setting, selected);
+        }
+      },
+    );
+  }
+
+  String _batteryLabel(StatusBarSettingItem setting) {
+    const labels = <String, String>{
+      'elem_bat_element_visible': 'Show battery icon',
+      'battery_indicator_style': 'Battery indicator style',
+      'use_legacy_drawable': 'Battery icon shape',
+      'android.theme.customization.battery_icon': 'Battery icon pack',
+      'batteryview_zoom': 'Icon size',
+      'batteryview_scale': 'Icon scale',
+      'batteryview_division': 'Icon division',
+      'battery_percent_zoom': 'Percent size',
+      'battery_percent_division': 'Percent division',
+      'battery_charge_zoom': 'Charging size',
+      'battery_charge_scale': 'Charging scale',
+      'battery_charge_division': 'Charging division',
+      'battery_percent_digit_zoom': 'Digit size',
+      'battery_percent_digit_division': 'Digit division',
+      'text_bat_color_0': 'Color less than 20%',
+      'text_bat_color_1': 'Color less than 40%',
+      'text_bat_color_2': 'Color less than 60%',
+      'text_bat_color_3': 'Color less than 80%',
+      'text_bat_color_4': 'Color less than 100%',
+      'battery_percent_digit_color': 'Battery percent digit color',
+      'battery_charge_color': 'Charging color',
+      'battery_percent_typefase': 'Percent font',
+      'battery_percent_mark_enable': 'Show percent mark',
+      'battery_percent_mark_settings_enable': 'Enable mark custom settings',
+      'battery_percent_mark_typefase': 'Percent mark font',
+      'text_bat_color_mark_0': 'Mark color less than 20%',
+      'text_bat_color_mark_1': 'Mark color less than 40%',
+      'text_bat_color_mark_2': 'Mark color less than 60%',
+      'text_bat_color_mark_3': 'Mark color less than 80%',
+      'text_bat_color_mark_4': 'Mark color less than 100%',
+      'battery_percent_mark_zoom': 'Mark size',
+      'battery_percent_mark_division': 'Mark division',
+    };
+    return labels[setting.legacyKey] ?? setting.title ?? setting.legacyKey;
   }
 
   bool get _supportsLivePreview =>
@@ -1891,6 +2192,397 @@ class _BackgroundModuleEditor extends StatelessWidget {
     if (key.endsWith('_stroke_width')) return 5;
     if (key.contains('_corner')) return 90;
     return 30;
+  }
+}
+
+class _BatteryHeroCard extends StatelessWidget {
+  const _BatteryHeroCard({required this.values});
+
+  final Map<String, Object?> values;
+
+  @override
+  Widget build(BuildContext context) {
+    final visible = (values['elem_bat_element_visible'] as bool?) ?? true;
+    final iconSize = ((values['batteryview_zoom'] as num?) ?? 100).toDouble();
+    final percentSize = ((values['battery_percent_zoom'] as num?) ?? 14).toDouble();
+    final color = MezoColorChip.fromHex((values['text_bat_color_4'] as String?) ?? '#00000000');
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        gradient: const LinearGradient(colors: <Color>[Color(0xFF0A1F3E), Color(0xFF1A1540)]),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Text('Battery', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 30)),
+          Text(
+            'Battery icon style, size, percent, and charging visuals',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.75)),
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.28),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            ),
+            child: Row(
+              children: <Widget>[
+                Icon(Icons.battery_6_bar_rounded, color: visible ? color : Colors.white24, size: (iconSize / 100) * 28),
+                const SizedBox(width: 10),
+                Text(
+                  visible ? '78%' : 'Hidden',
+                  style: TextStyle(color: Colors.white, fontSize: percentSize.clamp(12, 24).toDouble(), fontWeight: FontWeight.w700),
+                ),
+                const Spacer(),
+                Text('Live', style: TextStyle(color: const Color(0xFF8DE8FF).withValues(alpha: 0.9))),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BatterySectionCard extends StatelessWidget {
+  const _BatterySectionCard({required this.title, required this.subtitle, required this.children});
+
+  final String title;
+  final String subtitle;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return MezoGlassPanel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(title, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 3),
+          Text(subtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.66), fontSize: 12)),
+          const SizedBox(height: 10),
+          for (var i = 0; i < children.length; i++) ...<Widget>[
+            children[i],
+            if (i != children.length - 1) Divider(height: 18, color: Colors.white.withValues(alpha: 0.08)),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _BatteryToggleTile extends StatelessWidget {
+  const _BatteryToggleTile({required this.title, required this.value, required this.onChanged, this.subtitle});
+
+  final String title;
+  final String? subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+              if (subtitle != null) Text(subtitle!, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
+            ],
+          ),
+        ),
+        Switch(value: value, onChanged: onChanged),
+      ],
+    );
+  }
+}
+
+class _BatterySliderTile extends StatelessWidget {
+  const _BatterySliderTile({
+    required this.title,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.onChanged,
+    required this.onReset,
+    this.subtitle,
+  });
+
+  final String title;
+  final String? subtitle;
+  final double value;
+  final double min;
+  final double max;
+  final ValueChanged<double> onChanged;
+  final VoidCallback onReset;
+
+  @override
+  Widget build(BuildContext context) {
+    return MezoSourceSeekbarRow(
+      title: title,
+      subtitle: subtitle,
+      value: value,
+      min: min,
+      max: max,
+      onChanged: onChanged,
+      onReset: onReset,
+    );
+  }
+}
+
+class _BatterySelectTile extends StatelessWidget {
+  const _BatterySelectTile({required this.title, required this.valueLabel, required this.onTap, this.subtitle});
+
+  final String title;
+  final String? subtitle;
+  final String valueLabel;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  if (subtitle != null) Text(subtitle!, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(valueLabel, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white54, size: 16),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BatteryColorTile extends StatelessWidget {
+  const _BatteryColorTile({required this.title, required this.hex, required this.onTap, this.subtitle});
+
+  final String title;
+  final String? subtitle;
+  final String hex;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+              if (subtitle != null) Text(subtitle!, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
+            ],
+          ),
+        ),
+        MezoColorChip(hex: hex, onTap: onTap),
+      ],
+    );
+  }
+}
+
+class _BatteryInfoTile extends StatelessWidget {
+  const _BatteryInfoTile({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        children: <Widget>[
+          const Icon(Icons.info_outline_rounded, color: Color(0xFF8DE8FF), size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                Text(subtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BatteryOptionSheet extends StatelessWidget {
+  const _BatteryOptionSheet({
+    required this.title,
+    required this.options,
+    required this.selectedValue,
+    required this.onSelected,
+  });
+
+  final String title;
+  final List<StatusBarOption> options;
+  final String selectedValue;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Container(
+        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.78),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0B1522).withValues(alpha: 0.98),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        ),
+        padding: EdgeInsets.fromLTRB(16, 14, 16, MediaQuery.paddingOf(context).bottom + 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 17)),
+            const SizedBox(height: 12),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: options.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                itemBuilder: (context, index) {
+                  final option = options[index];
+                  return InkWell(
+                    onTap: () => onSelected(option.value),
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+                      ),
+                      child: Row(
+                        children: <Widget>[
+                          Expanded(child: Text(option.label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+                          if (option.value == selectedValue) const Icon(Icons.check_rounded, color: Color(0xFF8DE8FF)),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BatteryColorSheet extends StatelessWidget {
+  const _BatteryColorSheet({
+    required this.title,
+    required this.current,
+    required this.defaultValue,
+    required this.onSelected,
+  });
+
+  final String title;
+  final String current;
+  final String defaultValue;
+  final ValueChanged<String> onSelected;
+
+  static const List<String> _swatches = <String>[
+    '#00000000',
+    '#FFFFFFFF',
+    '#8DE8FF',
+    '#76A7FF',
+    '#B9A3FF',
+    '#90FFAC',
+    '#FFC66D',
+    '#FF8EA8',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF0B1522).withValues(alpha: 0.98),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        ),
+        padding: EdgeInsets.fromLTRB(16, 14, 16, MediaQuery.paddingOf(context).bottom + 18),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 17)),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: _swatches
+                  .map(
+                    (hex) => InkWell(
+                      onTap: () => onSelected(hex),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: MezoColorChip.fromHex(hex),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: hex == current ? Colors.white : Colors.white.withValues(alpha: 0.3),
+                            width: hex == current ? 2 : 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+            const SizedBox(height: 14),
+            TextButton(
+              onPressed: () => onSelected(defaultValue),
+              child: const Text('Reset to default'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
