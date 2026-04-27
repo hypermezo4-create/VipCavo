@@ -192,11 +192,15 @@ class MainActivity : FlutterActivity() {
     private fun writeString(storeType: Int, key: String, value: String): Boolean {
         val resolver = applicationContext.contentResolver
         return try {
-            when (storeType) {
+            val ok = when (storeType) {
                 2 -> Settings.Global.putString(resolver, key, value)
                 1 -> Settings.Secure.putString(resolver, key, value)
                 else -> Settings.System.putString(resolver, key, value)
             }
+            if (ok) {
+                notifySettingChanged(storeType, key)
+            }
+            ok
         } catch (_: Exception) {
             false
         }
@@ -218,13 +222,31 @@ class MainActivity : FlutterActivity() {
     private fun writeInt(storeType: Int, key: String, value: Int): Boolean {
         val resolver = applicationContext.contentResolver
         return try {
-            when (storeType) {
+            val ok = when (storeType) {
                 2 -> Settings.Global.putInt(resolver, key, value)
                 1 -> Settings.Secure.putInt(resolver, key, value)
                 else -> Settings.System.putInt(resolver, key, value)
             }
+            if (ok) {
+                notifySettingChanged(storeType, key)
+            }
+            ok
         } catch (_: Exception) {
             false
+        }
+    }
+
+    private fun notifySettingChanged(storeType: Int, key: String) {
+        try {
+            val resolver = applicationContext.contentResolver
+            val uri = when (storeType) {
+                2 -> Settings.Global.getUriFor(key)
+                1 -> Settings.Secure.getUriFor(key)
+                else -> Settings.System.getUriFor(key)
+            }
+            resolver.notifyChange(uri, null)
+        } catch (_: Exception) {
+            // Settings.put* normally notifies observers already. This is only a safe extra nudge.
         }
     }
 
