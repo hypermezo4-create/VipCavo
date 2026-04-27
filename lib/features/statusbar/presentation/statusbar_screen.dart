@@ -1387,6 +1387,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
 
   Future<void> _openResizeSelectSheet(StatusBarSettingItem setting) async {
     if (!await _ensureResizeWritePermission()) return;
+    if (!mounted) return;
     final current = (_values[setting.legacyKey] as String?) ?? '${setting.defaultValue}';
     final selected = await showModalBottomSheet<String>(
       context: context,
