@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:deadzon/core/theme/design_tokens.dart';
@@ -1078,6 +1079,9 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     if (widget.section.id == 'battery') {
       return _buildBatteryScreen(context);
     }
+    if (widget.section.id == 'clock') {
+      return _buildClockScreen(context);
+    }
 
     final grouped = <String, List<StatusBarSettingItem>>{};
     for (final setting in _settings) {
@@ -1286,6 +1290,211 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildClockScreen(BuildContext context) {
+    final byKey = <String, StatusBarSettingItem>{
+      for (final setting in _settings) setting.legacyKey: setting,
+    };
+    final clockAnimOptions = byKey['status_clock_anim_style']?.options ?? const <StatusBarOption>[];
+    final dateFormatOptions = byKey['Notif_date_format']?.options ?? const <StatusBarOption>[];
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF050B1A),
+      appBar: AppBar(title: const Text('Clock')),
+      body: ListView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.paddingOf(context).bottom + 140),
+        children: <Widget>[
+          if (_isLoadingStoredValues)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: LinearProgressIndicator(
+                minHeight: 2,
+                color: const Color(0xFF8DE8FF),
+                backgroundColor: Colors.white.withValues(alpha: 0.12),
+              ),
+            ),
+          _ClockPreview(values: _values),
+          const SizedBox(height: 14),
+          _BatterySectionCard(
+            title: 'Statusbar clock',
+            subtitle: 'Personalize how the statusbar clock appears.',
+            children: <Widget>[
+              _clockToggle(byKey['elem_clock_element_visible'], 'Show clock'),
+              _clockToggle(byKey['clock_mezo_time_style'], '24-hour clock'),
+              _clockToggle(byKey['status_clock_second_enable'], 'Show seconds'),
+              _clockToggle(byKey['status_clock_dots_enable'], 'Blinking dots'),
+              _clockSelect(byKey['status_clock_anim_style'], clockAnimOptions, 'Digits change animation'),
+              _clockColor(byKey['status_clock_color'], 'Clock color'),
+              _clockFont(byKey['status_clock_typefase'], 'Clock font'),
+              _clockSlider(byKey['status_clock_zoom'], 'Clock size'),
+              _clockSlider(byKey['status_clock_division'], 'Clock spacing / division'),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _BatterySectionCard(
+            title: 'Notification center clock',
+            subtitle: 'Tune the expanded clock block independently.',
+            children: <Widget>[
+              _clockSlider(byKey['expanded_clock_zoom'], 'Notification clock size'),
+              _clockSlider(byKey['expanded_clock_division'], 'Notification clock spacing / division'),
+              _clockColor(byKey['expanded_clock_color'], 'Notification clock color'),
+              _clockToggle(byKey['expanded_clock_dots_enable'], 'Blinking dots'),
+              _clockSelect(byKey['expanded_clock_anim_style'], clockAnimOptions, 'Digits change animation'),
+              _clockToggle(byKey['expanded_clock_second_enable'], 'Show seconds'),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _BatterySectionCard(
+            title: 'Notification date style',
+            subtitle: 'Date size, division, color, font, and format.',
+            children: <Widget>[
+              _clockSlider(byKey['Notif_date_zoom'], 'Date size'),
+              _clockSlider(byKey['Notif_date_division'], 'Date spacing / division'),
+              _clockColor(byKey['Notif_date_color'], 'Date color'),
+              _clockFont(byKey['Notif_date_typefase'], 'Date font'),
+              _clockSelect(byKey['Notif_date_format'], dateFormatOptions, 'Date format'),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _BatterySectionCard(
+            title: 'Weather text',
+            subtitle: 'Notification weather typography and tint.',
+            children: <Widget>[
+              _clockSlider(byKey['weather_notif_text_zoom'], 'Weather text size'),
+              _clockColor(byKey['weather_notif_text_color'], 'Weather text color'),
+              _clockFont(byKey['weather_notif_text_typefase'], 'Weather text font'),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _BatterySectionCard(
+            title: 'Settings icon',
+            subtitle: 'Settings / notification icon style controls.',
+            children: <Widget>[
+              _clockColor(byKey['Settingsfachen_color'], 'Settings icon color'),
+              _clockSlider(byKey['Settingsfachen_zoom'], 'Settings icon size'),
+              _clockSlider(byKey['Settingsfachen_scale'], 'Settings icon scale'),
+              _clockSlider(byKey['Settingsfachen_division'], 'Settings icon spacing / division'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _clockToggle(StatusBarSettingItem? setting, String label) {
+    if (setting == null) return const SizedBox.shrink();
+    final defaultValue = setting.defaultValue as bool? ?? false;
+    final current = (_values[setting.legacyKey] as bool?) ?? defaultValue;
+    return _BatteryToggleTile(
+      title: label,
+      value: current,
+      onChanged: (next) => _handleSettingChanged(setting, next),
+    );
+  }
+
+  Widget _clockSlider(StatusBarSettingItem? setting, String label) {
+    if (setting == null) return const SizedBox.shrink();
+    final min = setting.min ?? 0;
+    final max = setting.max ?? 100;
+    final defaultValue = (setting.defaultValue as num?)?.toDouble() ?? min;
+    final value = ((_values[setting.legacyKey] as num?)?.toDouble() ?? defaultValue).clamp(min, max).toDouble();
+    return _BatterySliderTile(
+      title: label,
+      value: value,
+      min: min,
+      max: max,
+      onChanged: (next) => _handleSettingChanged(setting, next.round()),
+      onReset: () => _handleSettingChanged(setting, defaultValue.round()),
+    );
+  }
+
+  Widget _clockColor(StatusBarSettingItem? setting, String label) {
+    if (setting == null) return const SizedBox.shrink();
+    final defaultValue = (setting.defaultValue as int?) ?? 0;
+    final current = _colorIntValue(setting, defaultValue);
+    return _BatteryColorTile(
+      title: label,
+      colorValue: current,
+      onTap: () async {
+        final selected = await showModalBottomSheet<int>(
+          context: context,
+          useSafeArea: true,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (sheetContext) => _BatteryColorSheet(
+            title: label,
+            current: current,
+            defaultValue: defaultValue,
+            onSelected: (value) => Navigator.of(sheetContext).pop(value),
+          ),
+        );
+        if (!context.mounted) return;
+        if (selected != null) {
+          _handleSettingChanged(setting, selected);
+        }
+      },
+    );
+  }
+
+  Widget _clockSelect(StatusBarSettingItem? setting, List<StatusBarOption> options, String label) {
+    if (setting == null || options.isEmpty) return const SizedBox.shrink();
+    final fallback = setting.defaultValue?.toString() ?? options.first.value;
+    final current = _stringSettingValue(setting, fallback);
+    final selectedOption = options.where((option) => option.value == current);
+    final valueLabel = selectedOption.isEmpty ? options.first.label : selectedOption.first.label;
+    return _BatterySelectTile(
+      title: label,
+      valueLabel: valueLabel,
+      onTap: () async {
+        final selected = await showModalBottomSheet<String>(
+          context: context,
+          useSafeArea: true,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (sheetContext) => _BatteryOptionSheet(
+            title: label,
+            selectedValue: current,
+            options: options,
+            onSelected: (value) => Navigator.of(sheetContext).pop(value),
+          ),
+        );
+        if (!context.mounted) return;
+        if (selected != null) {
+          _handleSettingChanged(setting, selected);
+        }
+      },
+    );
+  }
+
+  Widget _clockFont(StatusBarSettingItem? setting, String label) {
+    if (setting == null) return const SizedBox.shrink();
+    final current = _stringSettingValue(setting, 'Default');
+    return _BatterySelectTile(
+      title: label,
+      valueLabel: _fontDisplayLabel(current),
+      onTap: () async {
+        final options = await _batteryFontOptions(current);
+        if (!context.mounted) return;
+        final selected = await showModalBottomSheet<String>(
+          context: context,
+          useSafeArea: true,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (sheetContext) => _BatteryOptionSheet(
+            title: label,
+            selectedValue: current,
+            options: options,
+            onSelected: (value) => Navigator.of(sheetContext).pop(value),
+          ),
+        );
+        if (!context.mounted) return;
+        if (selected != null) {
+          _handleSettingChanged(setting, selected);
+        }
+      },
     );
   }
 
@@ -3223,15 +3432,78 @@ class _BatteryPreview extends StatelessWidget {
   }
 }
 
-class _ClockPreview extends StatelessWidget {
+class _ClockPreview extends StatefulWidget {
   const _ClockPreview({required this.values});
 
   final Map<String, Object?> values;
+
+  @override
+  State<_ClockPreview> createState() => _ClockPreviewState();
+}
+
+class _ClockPreviewState extends State<_ClockPreview> {
+  Timer? _timer;
+  DateTime _now = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _scheduleTimer();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ClockPreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldSeconds = (oldWidget.values['status_clock_second_enable'] as bool?) ?? true;
+    final newSeconds = (widget.values['status_clock_second_enable'] as bool?) ?? true;
+    if (oldSeconds != newSeconds) {
+      _scheduleTimer();
+    }
+  }
+
+  void _scheduleTimer() {
+    _timer?.cancel();
+    final secondsEnabled = (widget.values['status_clock_second_enable'] as bool?) ?? true;
+    final period = secondsEnabled ? const Duration(seconds: 1) : const Duration(minutes: 1);
+    _timer = Timer.periodic(period, (_) {
+      if (!mounted) return;
+      setState(() => _now = DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final values = widget.values;
+    final show24h = (values['clock_mezo_time_style'] as bool?) ?? false;
+    final showSeconds = (values['status_clock_second_enable'] as bool?) ?? true;
+    final blinkDots = (values['status_clock_dots_enable'] as bool?) ?? true;
+    final colorValue = (values['status_clock_color'] as int?) ?? 0;
+    final dateColor = (values['Notif_date_color'] as int?) ?? -1;
+    final weatherColor = (values['weather_notif_text_color'] as int?) ?? 0xFF8DE8FF;
+
     final size = ((values['status_clock_zoom'] as num?) ?? 14).toDouble().clamp(11, 24).toDouble();
     final dateSize = ((values['Notif_date_zoom'] as num?) ?? 18).toDouble().clamp(12, 24).toDouble();
     final weatherSize = ((values['weather_notif_text_zoom'] as num?) ?? 16).toDouble().clamp(11, 22).toDouble();
+
+    final hour24 = _now.hour.toString().padLeft(2, '0');
+    final hour12Raw = _now.hour % 12 == 0 ? 12 : _now.hour % 12;
+    final hour = show24h ? hour24 : hour12Raw.toString().padLeft(2, '0');
+    final minute = _now.minute.toString().padLeft(2, '0');
+    final second = _now.second.toString().padLeft(2, '0');
+    final separator = blinkDots && _now.second.isOdd ? ' ' : ':';
+    final suffix = show24h ? '' : (_now.hour < 12 ? ' AM' : ' PM');
+    final time = showSeconds ? '$hour$separator$minute$separator$second$suffix' : '$hour$separator$minute$suffix';
+
+    const weekdays = <String>['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const months = <String>['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final dateText = '${weekdays[_now.weekday - 1]}, ${_now.day} ${months[_now.month - 1]}';
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -3242,11 +3514,11 @@ class _ClockPreview extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text('12:48', style: TextStyle(color: Colors.white, fontSize: size)),
+          Text(time, style: TextStyle(color: Color(colorValue), fontSize: size)),
           const SizedBox(height: 4),
-          Text('Wed, 23 Apr', style: TextStyle(color: Colors.white70, fontSize: dateSize)),
+          Text(dateText, style: TextStyle(color: Color(dateColor), fontSize: dateSize)),
           const SizedBox(height: 4),
-          Text('23°  Cloudy', style: TextStyle(color: const Color(0xFF8DE8FF), fontSize: weatherSize)),
+          Text('23°  Cloudy', style: TextStyle(color: Color(weatherColor), fontSize: weatherSize)),
         ],
       ),
     );
