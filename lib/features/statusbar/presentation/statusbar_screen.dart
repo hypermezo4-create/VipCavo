@@ -89,25 +89,20 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => _ArrangeLayoutSheet(modules: _boardModules),
+      builder: (_) => _ArrangeLayoutSheet(
+        modules: _boardModules,
+        onSaved: (modules) {
+          if (!mounted) {
+            return;
+          }
+          setState(() => _boardModules = modules);
+        },
+      ),
     );
     if (result == null || !mounted) {
       return;
     }
-    setState(() {
-      _boardModules = result;
-      _isSavingLayout = true;
-    });
-    try {
-      await StatusbarBoardService.writeModules(result);
-      _showMessage('Layout saved');
-    } catch (_) {
-      _showMessage('Layout saved locally');
-    } finally {
-      if (mounted) {
-        setState(() => _isSavingLayout = false);
-      }
-    }
+    setState(() => _boardModules = result);
   }
 
   void _showMessage(String message) {
@@ -208,9 +203,13 @@ class _StatusbarLivePreview extends StatelessWidget {
 }
 
 class _ArrangeLayoutSheet extends StatefulWidget {
-  const _ArrangeLayoutSheet({required this.modules});
+  const _ArrangeLayoutSheet({
+    required this.modules,
+    required this.onSaved,
+  });
 
   final List<StatusbarBoardModuleState> modules;
+  final ValueChanged<List<StatusbarBoardModuleState>> onSaved;
 
   @override
   State<_ArrangeLayoutSheet> createState() => _ArrangeLayoutSheetState();
@@ -218,6 +217,7 @@ class _ArrangeLayoutSheet extends StatefulWidget {
 
 class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
   late List<StatusbarBoardModuleState> _modules;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -284,6 +284,46 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
     );
   }
 
+  Future<void> _saveCurrentLayout() async {
+    if (_isSaving) {
+      return;
+    }
+    final snapshot = _modules.map((module) => module.copyWith()).toList(growable: false);
+    setState(() => _isSaving = true);
+    try {
+      await StatusbarBoardService.writeModules(snapshot);
+      widget.onSaved(snapshot);
+      _showSheetMessage('Layout saved');
+    } catch (_) {
+      widget.onSaved(snapshot);
+      _showSheetMessage('Layout saved locally');
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  void _showSheetMessage(String message) {
+    if (!mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.fromLTRB(18, 0, 18, 112),
+        duration: const Duration(milliseconds: 1200),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        elevation: 0,
+        backgroundColor: const Color(0xFF10335A),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return FractionallySizedBox(
@@ -316,8 +356,8 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
                       ),
                     ),
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(_modules),
-                      child: const Text('Save'),
+                      onPressed: _isSaving ? null : _saveCurrentLayout,
+                      child: Text(_isSaving ? 'Saving...' : 'Save'),
                     ),
                   ],
                 ),
