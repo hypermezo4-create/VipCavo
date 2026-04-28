@@ -1431,7 +1431,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
             onSelected: (value) => Navigator.of(sheetContext).pop(value),
           ),
         );
-        if (!context.mounted) return;
+        if (!pageContext.mounted) return;
         if (selected != null) {
           _handleSettingChanged(setting, selected);
         }
@@ -1461,7 +1461,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
             onSelected: (value) => Navigator.of(sheetContext).pop(value),
           ),
         );
-        if (!context.mounted) return;
+        if (!pageContext.mounted) return;
         if (selected != null) {
           _handleSettingChanged(setting, selected);
         }
@@ -1476,10 +1476,11 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
       title: label,
       valueLabel: _fontDisplayLabel(current),
       onTap: () async {
+        final pageContext = context;
         final options = await _batteryFontOptions(current);
-        if (!context.mounted) return;
+        if (!pageContext.mounted) return;
         final selected = await showModalBottomSheet<String>(
-          context: context,
+          context: pageContext,
           useSafeArea: true,
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
@@ -1490,7 +1491,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
             onSelected: (value) => Navigator.of(sheetContext).pop(value),
           ),
         );
-        if (!context.mounted) return;
+        if (!pageContext.mounted) return;
         if (selected != null) {
           _handleSettingChanged(setting, selected);
         }
