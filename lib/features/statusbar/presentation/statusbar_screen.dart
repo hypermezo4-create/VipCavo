@@ -20,6 +20,7 @@ import 'package:deadzon/features/statusbar/statusbar_models.dart';
 import 'package:deadzon/features/statusbar/statusbar_section_configs.dart';
 import 'package:deadzon/features/statusbar/statusbar_strings.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class StatusbarScreen extends StatefulWidget {
@@ -961,6 +962,7 @@ class StatusbarDetailScreen extends StatefulWidget {
 }
 
 class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
+  static const MethodChannel _channel = MethodChannel('deadzon/mezo_settings');
   static const List<String> _batteryOrderedKeys = <String>[
     'elem_bat_element_visible',
     'battery_indicator_style',
@@ -996,6 +998,28 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     'text_bat_color_mark_4',
     'battery_percent_mark_zoom',
     'battery_percent_mark_division',
+  ];
+  static const List<_NetworkIconStyleBinding> _networkIconStyles = <_NetworkIconStyleBinding>[
+    _NetworkIconStyleBinding(
+      title: 'Signal icon style',
+      settingsKey: 'android.theme.customization.signal_icon',
+      packageHintTokens: <String>['signal', 'mobile', 'cell'],
+    ),
+    _NetworkIconStyleBinding(
+      title: 'Wi-Fi icon style',
+      settingsKey: 'android.theme.customization.wifi_icon',
+      packageHintTokens: <String>['wifi', 'wi-fi'],
+    ),
+    _NetworkIconStyleBinding(
+      title: 'VoWiFi icon style',
+      settingsKey: 'android.theme.customization.vowifi_icon',
+      packageHintTokens: <String>['vowifi', 'wfc', 'wifi_call'],
+    ),
+    _NetworkIconStyleBinding(
+      title: 'VoLTE icon style',
+      settingsKey: 'android.theme.customization.volte_icon',
+      packageHintTokens: <String>['volte', 'ims', 'lte'],
+    ),
   ];
   late final List<StatusBarSettingItem> _settings;
   final Map<String, Object?> _values = <String, Object?>{};
@@ -1579,15 +1603,10 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          const _BatterySectionCard(
+          _BatterySectionCard(
             title: 'Icon style',
-            subtitle: 'Legacy overlay style pickers are preserved for future flow wiring.',
-            children: <Widget>[
-              _LegacyStyleTile(title: 'Signal icon style'),
-              _LegacyStyleTile(title: 'Wi-Fi icon style'),
-              _LegacyStyleTile(title: 'VoWiFi icon style'),
-              _LegacyStyleTile(title: 'VoLTE icon style'),
-            ],
+            subtitle: 'Choose the visual style for signal and connection icons.',
+            children: _networkIconStyles.map((binding) => _networkIconStyleTile(binding)).toList(),
           ),
         ],
       ),
@@ -1677,6 +1696,108 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
         }
       },
     );
+  }
+
+  Widget _networkIconStyleTile(_NetworkIconStyleBinding binding) {
+    final currentPackage = _stringSettingValueFromKey(binding.settingsKey, 'com.android.systemui');
+    return _BatterySelectTile(
+      title: binding.title,
+      valueLabel: _networkStyleLabel(currentPackage),
+      onTap: () async {
+        final pageContext = context;
+        final options = await _networkStyleOptions(binding, currentPackage);
+        if (!pageContext.mounted) return;
+        final selected = await showModalBottomSheet<String>(
+          context: pageContext,
+          useSafeArea: true,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (sheetContext) => _BatteryOptionSheet(
+            title: binding.title,
+            selectedValue: currentPackage,
+            options: options,
+            onSelected: (value) => Navigator.of(sheetContext).pop(value),
+          ),
+        );
+        if (!pageContext.mounted) return;
+        if (selected == null || selected == currentPackage) return;
+
+        final setting = _settings.firstWhere(
+          (item) => item.legacyKey == binding.settingsKey,
+          orElse: () => StatusBarSettingItem(
+            legacyKey: binding.settingsKey,
+            controlType: StatusBarControlType.select,
+            defaultValue: 'com.android.systemui',
+            intentAction: 'my.intent.action.REFRESH_SYSTEMUI',
+          ),
+        );
+        _handleSettingChanged(setting, selected);
+      },
+    );
+  }
+
+  Future<List<StatusBarOption>> _networkStyleOptions(
+    _NetworkIconStyleBinding binding,
+    String currentPackage,
+  ) async {
+    final options = <StatusBarOption>[
+      const StatusBarOption(label: 'Choose', value: 'com.android.systemui'),
+    ];
+    final payload = await _readInstalledPackages();
+    if (payload != null) {
+      final discovered = <StatusBarOption>[];
+      for (final item in payload) {
+        if (item is! Map<Object?, Object?>) continue;
+        final packageName = '${item['packageName'] ?? ''}'.trim();
+        final label = '${item['name'] ?? packageName}'.trim();
+        if (packageName.isEmpty || packageName == 'com.android.systemui') continue;
+        if (_isMatchingNetworkOverlay(packageName, binding.packageHintTokens)) {
+          discovered.add(StatusBarOption(label: label.isEmpty ? packageName : label, value: packageName));
+        }
+      }
+      discovered.sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
+      options.addAll(discovered);
+    }
+    if (options.every((entry) => entry.value != currentPackage)) {
+      options.add(StatusBarOption(label: _networkStyleLabel(currentPackage), value: currentPackage));
+    }
+    return options;
+  }
+
+  Future<List<Object?>?> _readInstalledPackages() async {
+    try {
+      return await _channel.invokeMethod<List<Object?>>('getInstalledPackages');
+    } on PlatformException {
+      return null;
+    } on MissingPluginException {
+      return null;
+    }
+  }
+
+  bool _isMatchingNetworkOverlay(String packageName, List<String> hintTokens) {
+    final normalized = packageName.toLowerCase();
+    if (!(normalized.contains('overlay') || normalized.contains('theme') || normalized.contains('icon'))) {
+      return false;
+    }
+    for (final token in hintTokens) {
+      if (normalized.contains(token)) return true;
+    }
+    return false;
+  }
+
+  String _stringSettingValueFromKey(String key, String fallback) {
+    final raw = _values[key];
+    if (raw is String && raw.trim().isNotEmpty) return raw.trim();
+    return fallback;
+  }
+
+  String _networkStyleLabel(String packageName) {
+    if (packageName == 'com.android.systemui') return 'Choose';
+    final chunks = packageName.split('.');
+    final raw = chunks.isEmpty ? packageName : chunks.last;
+    final cleaned = raw.replaceAll('_', ' ').replaceAll('-', ' ').trim();
+    if (cleaned.isEmpty) return 'Choose';
+    return cleaned[0].toUpperCase() + cleaned.substring(1);
   }
 
   Widget _netspeedSlider(StatusBarSettingItem? setting) {
@@ -4018,24 +4139,16 @@ class _BatteryPreview extends StatelessWidget {
   }
 }
 
-class _LegacyStyleTile extends StatelessWidget {
-  const _LegacyStyleTile({required this.title});
+class _NetworkIconStyleBinding {
+  const _NetworkIconStyleBinding({
+    required this.title,
+    required this.settingsKey,
+    required this.packageHintTokens,
+  });
 
   final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Opacity(
-      opacity: 0.72,
-      child: IgnorePointer(
-        child: _BatterySelectTile(
-          title: title,
-          valueLabel: 'Coming soon',
-          onTap: () {},
-        ),
-      ),
-    );
-  }
+  final String settingsKey;
+  final List<String> packageHintTokens;
 }
 
 class _StaticColorTools {
