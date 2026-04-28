@@ -381,7 +381,7 @@ class _SectionCard extends StatelessWidget {
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-            child: Text(title, style: TextStyle(fontSize: DesignTokens.sectionTitle, fontWeight: FontWeight.w760, color: Theme.of(context).colorScheme.primary)),
+            child: Text(title, style: TextStyle(fontSize: DesignTokens.sectionTitle, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.primary)),
           ),
           const Divider(height: 1),
           ...children.expand((Widget child) => <Widget>[child, const Divider(height: 1)]).toList()..removeLast(),
