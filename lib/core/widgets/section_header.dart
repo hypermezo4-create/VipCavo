@@ -1,3 +1,4 @@
+import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 
 class SectionHeader extends StatelessWidget {
@@ -22,6 +23,7 @@ class SectionHeader extends StatelessWidget {
             color: Colors.white,
             fontWeight: FontWeight.w700,
             letterSpacing: -0.2,
+            fontSize: DesignTokens.sectionTitle,
           ),
         ),
         if (subtitle != null) ...<Widget>[
@@ -31,6 +33,7 @@ class SectionHeader extends StatelessWidget {
             style: textTheme.bodyMedium?.copyWith(
               color: Colors.white.withValues(alpha: 0.74),
               height: 1.35,
+              fontSize: DesignTokens.rowSubtitle,
             ),
           ),
         ],

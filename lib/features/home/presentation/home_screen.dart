@@ -22,7 +22,7 @@ class HomeScreen extends StatelessWidget {
     _QuickAccess('Control center', 'Quick toggles board and grouped utility actions', Icons.tune_rounded, '/control-center'),
     _QuickAccess('Notifications', 'Heads-up, compact icons, and stack behavior', Icons.notifications_active_rounded, '/notifications'),
     _QuickAccess('Lockscreen', 'Clock and shortcuts composition', Icons.lock_outline_rounded, '/lockscreen'),
-    _QuickAccess('More tools', 'Extra ROM utility features for future phases', Icons.auto_awesome_rounded, '/more-tools'),
+    _QuickAccess('More tools', 'Extra ROM utility features', Icons.auto_awesome_rounded, '/more-tools'),
   ];
 
   @override
@@ -32,7 +32,7 @@ class HomeScreen extends StatelessWidget {
       child: SafeArea(
         child: ListView(
           physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-          padding: DesignTokens.pagePadding,
+          padding: EdgeInsets.fromLTRB(18, 12, 18, MediaQuery.paddingOf(context).bottom + 140),
           children: <Widget>[
             const PremiumTopBar(
               title: AppIdentity.appName,
@@ -96,13 +96,13 @@ class _IdentityHero extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(AppIdentity.appName, style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w800)),
-                SizedBox(height: 8),
-                Text('Developer: ${AppIdentity.developer}', style: TextStyle(color: Colors.white70)),
-                Text('Build: ${AppIdentity.buildLabel}', style: TextStyle(color: Colors.white70)),
-                Text('ROM: ${AppIdentity.romLabel}', style: TextStyle(color: Colors.white70)),
-                Text('Version: ${AppIdentity.versionLabel}', style: TextStyle(color: Colors.white70)),
-                Text('Track: ${AppIdentity.currentTrack}', style: TextStyle(color: Colors.white70)),
+                Text(AppIdentity.appName, style: TextStyle(color: Colors.white, fontSize: 31, fontWeight: FontWeight.w800)),
+                SizedBox(height: 6),
+                Text('Developer: ${AppIdentity.developer}', style: TextStyle(color: Colors.white70, fontSize: 12.5)),
+                Text('Build: ${AppIdentity.buildLabel}', style: TextStyle(color: Colors.white70, fontSize: 12.5)),
+                Text('ROM: ${AppIdentity.romLabel}', style: TextStyle(color: Colors.white70, fontSize: 12.5)),
+                Text('Version: ${AppIdentity.versionLabel}', style: TextStyle(color: Colors.white70, fontSize: 12.5)),
+                Text('Track: ${AppIdentity.currentTrack}', style: TextStyle(color: Colors.white70, fontSize: 12.5)),
               ],
             ),
           ),
@@ -134,8 +134,8 @@ class _EntryCard extends StatelessWidget {
           backgroundColor: DeadzonThemeTokens.accent(context).withValues(alpha: 0.18),
           child: Icon(entry.icon, color: DeadzonThemeTokens.iconAccent(context)),
         ),
-        title: Text(entry.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-        subtitle: Text(entry.subtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.72))),
+        title: Text(entry.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16.1)),
+        subtitle: Text(entry.subtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.72), fontSize: 12.4)),
         trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white70),
       ),
     );

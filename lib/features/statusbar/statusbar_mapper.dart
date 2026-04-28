@@ -53,7 +53,7 @@ class StatusBarMapper {
       title: curated?.title ?? _polishTitle(extracted.title),
       subtitle: polishedSubtitle,
       controlType: extracted.controlType,
-      group: curated?.group ?? extracted.group,
+      group: _polishGroup(curated?.group ?? extracted.group),
       defaultValue: extracted.defaultValue,
       min: extracted.min,
       max: extracted.max,
@@ -94,6 +94,17 @@ class StatusBarMapper {
       return 'Battery icon theme';
     }
     return title;
+  }
+
+  static String? _polishGroup(String? group) {
+    if (group == null || group.trim().isEmpty) {
+      return group;
+    }
+    final value = group.toLowerCase();
+    if (value.contains('source-preserved') || value.contains('legacy fragment') || value.contains('android.theme')) {
+      return 'Advanced';
+    }
+    return group;
   }
 
   static final Map<String, List<StatusBarSettingItem>> _mapped = <String, List<StatusBarSettingItem>>{

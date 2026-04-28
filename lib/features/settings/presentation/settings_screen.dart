@@ -1,5 +1,6 @@
 import 'package:deadzon/core/constants/app_identity.dart';
 import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
+import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/features/settings/presentation/widgets/deadzone_color_picker_dialog.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +29,7 @@ class SettingsScreen extends StatelessWidget {
       child: SafeArea(
         child: ListView(
           physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 138),
+          padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.paddingOf(context).bottom + 140),
           children: <Widget>[
             _HeaderCard(accent: theme.accentColor),
             const SizedBox(height: 14),
@@ -212,13 +213,12 @@ class SettingsScreen extends StatelessWidget {
   Future<void> _showThemePicker(BuildContext context, DeadzonThemeController controller) async {
     final selected = await showModalBottomSheet<ThemeMode>(
       context: context,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).cardColor,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      backgroundColor: const Color(0xEE0A1626),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (context) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 18),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
@@ -329,16 +329,16 @@ class _HeaderCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text('DeadZone Tools', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+                      Text('DeadZone Tools', style: TextStyle(fontSize: DesignTokens.detailTitle, fontWeight: FontWeight.w800)),
                       SizedBox(height: 2),
-                      Text('Settings & ROM preferences'),
+                      Text('Settings & ROM preferences', style: TextStyle(fontSize: DesignTokens.pageSubtitle)),
                     ],
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(color: accent.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(999)),
-                  child: Text(AppIdentity.currentTrack, style: TextStyle(color: accent, fontWeight: FontWeight.w700)),
+                  child: Text(AppIdentity.currentTrack, style: TextStyle(color: accent, fontWeight: FontWeight.w700, fontSize: DesignTokens.valueChip)),
                 ),
               ],
             ),
@@ -353,8 +353,8 @@ class _HeaderCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text('Settings', style: TextStyle(fontWeight: FontWeight.w700)),
-                    Text('Appearance & preferences'),
+                    Text('Settings', style: TextStyle(fontWeight: FontWeight.w700, fontSize: DesignTokens.rowTitle)),
+                    Text('Appearance & preferences', style: TextStyle(fontSize: DesignTokens.rowSubtitle)),
                   ],
                 ),
               ],
@@ -381,7 +381,7 @@ class _SectionCard extends StatelessWidget {
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-            child: Text(title, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.primary)),
+            child: Text(title, style: TextStyle(fontSize: DesignTokens.sectionTitle, fontWeight: FontWeight.w760, color: Theme.of(context).colorScheme.primary)),
           ),
           const Divider(height: 1),
           ...children.expand((Widget child) => <Widget>[child, const Divider(height: 1)]).toList()..removeLast(),
@@ -411,23 +411,23 @@ class _SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       child: Row(
         children: <Widget>[
           Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(color: iconColor.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(12)),
-            child: Icon(icon, color: iconColor),
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(color: iconColor.withValues(alpha: 0.22), borderRadius: BorderRadius.circular(11)),
+            child: Icon(icon, color: iconColor, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 3),
-                Text(subtitle, style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72))),
+                Text(title, style: const TextStyle(fontSize: DesignTokens.rowTitle, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 2),
+                Text(subtitle, style: TextStyle(fontSize: DesignTokens.rowSubtitle, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72))),
               ],
             ),
           ),
@@ -458,10 +458,10 @@ class _ThemeModeRow extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           child: Row(
             children: <Widget>[
-              Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600))),
+              Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: DesignTokens.buttonText))),
               Icon(selected ? Icons.check_circle_rounded : Icons.circle_outlined, color: selected ? Theme.of(context).colorScheme.primary : null),
             ],
           ),

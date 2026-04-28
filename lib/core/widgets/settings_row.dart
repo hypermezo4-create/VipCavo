@@ -1,3 +1,4 @@
+import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 
 class SettingsRow extends StatelessWidget {
@@ -22,31 +23,31 @@ class SettingsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final textColor = Theme.of(context).colorScheme.onSurface;
     final row = Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 2.5),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           CircleAvatar(
-            radius: 20,
+            radius: 18,
             backgroundColor: iconColor.withValues(alpha: 0.2),
-            child: Icon(icon, color: iconColor),
+            child: Icon(icon, color: iconColor, size: 18),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
                   title,
-                  style: TextStyle(color: textColor, fontWeight: FontWeight.w700),
+                  style: TextStyle(color: textColor, fontWeight: FontWeight.w680, fontSize: DesignTokens.rowTitle),
                 ),
                 if (subtitle != null) ...<Widget>[
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 1),
                   Text(
                     subtitle!,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: textColor.withValues(alpha: 0.72), height: 1.25),
+                    style: TextStyle(color: textColor.withValues(alpha: 0.68), height: 1.25, fontSize: DesignTokens.rowSubtitle),
                   ),
                 ],
               ],
