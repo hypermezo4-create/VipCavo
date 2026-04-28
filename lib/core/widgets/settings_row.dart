@@ -39,7 +39,7 @@ class SettingsRow extends StatelessWidget {
               children: <Widget>[
                 Text(
                   title,
-                  style: TextStyle(color: textColor, fontWeight: FontWeight.w680, fontSize: DesignTokens.rowTitle),
+                  style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: DesignTokens.rowTitle),
                 ),
                 if (subtitle != null) ...<Widget>[
                   const SizedBox(height: 1),
