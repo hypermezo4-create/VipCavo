@@ -1082,6 +1082,9 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     if (widget.section.id == 'clock') {
       return _buildClockScreen(context);
     }
+    if (widget.section.id == 'netspeed') {
+      return _buildNetspeedScreen(context);
+    }
 
     final grouped = <String, List<StatusBarSettingItem>>{};
     for (final setting in _settings) {
@@ -1392,6 +1395,173 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
       title: label,
       value: current,
       onChanged: (next) => _handleSettingChanged(setting, next),
+    );
+  }
+
+  Widget _buildNetspeedScreen(BuildContext context) {
+    final byKey = <String, StatusBarSettingItem>{
+      for (final setting in _settings) setting.legacyKey: setting,
+    };
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF050B1A),
+      appBar: AppBar(title: const Text('Netspeed')),
+      body: ListView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.paddingOf(context).bottom + 140),
+        children: <Widget>[
+          if (_isLoadingStoredValues)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: LinearProgressIndicator(
+                minHeight: 2,
+                color: const Color(0xFF8DE8FF),
+                backgroundColor: Colors.white.withValues(alpha: 0.12),
+              ),
+            ),
+          _NetspeedPreview(values: _values),
+          const SizedBox(height: 14),
+          _BatterySectionCard(
+            title: 'Visibility & mode',
+            subtitle: 'Control how netspeed is shown in the status bar.',
+            children: <Widget>[
+              _netspeedSelect(byKey['status_bar_show_network_speed']),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _BatterySectionCard(
+            title: 'Text style',
+            subtitle: 'Adjust typography, spacing, and vertical alignment.',
+            children: <Widget>[
+              _netspeedSlider(byKey['net_speed_zoom']),
+              _netspeedSlider(byKey['net_speed_division']),
+              _netspeedSlider(byKey['net_speed_height']),
+              _netspeedColor(byKey['net_speed_color']),
+              _netspeedFont(byKey['net_speed_typefase']),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _BatterySectionCard(
+            title: 'Update behavior',
+            subtitle: 'Keep interval values aligned with old Mezo behavior.',
+            children: <Widget>[
+              _netspeedSlider(byKey['status_bar_network_speed_interval']),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _netspeedSlider(StatusBarSettingItem? setting) {
+    if (setting == null) return const SizedBox.shrink();
+    final min = setting.min ?? 0;
+    final max = setting.max ?? 100;
+    final defaultValue = (setting.defaultValue as num?)?.toDouble() ?? min;
+    final value = ((_values[setting.legacyKey] as num?)?.toDouble() ?? defaultValue).clamp(min, max).toDouble();
+    return _BatterySliderTile(
+      title: setting.title ?? setting.legacyKey,
+      subtitle: setting.subtitle,
+      value: value,
+      min: min,
+      max: max,
+      onChanged: (next) => _handleSettingChanged(setting, next.round()),
+      onReset: () => _handleSettingChanged(setting, defaultValue.round()),
+    );
+  }
+
+  Widget _netspeedSelect(StatusBarSettingItem? setting) {
+    if (setting == null || setting.options.isEmpty) return const SizedBox.shrink();
+    final fallback = setting.defaultValue?.toString() ?? setting.options.first.value;
+    final current = _stringSettingValue(setting, fallback);
+    final selectedOption = setting.options.where((option) => option.value == current);
+    final valueLabel = selectedOption.isEmpty ? setting.options.first.label : selectedOption.first.label;
+    return _BatterySelectTile(
+      title: setting.title ?? setting.legacyKey,
+      subtitle: setting.subtitle,
+      valueLabel: valueLabel,
+      onTap: () async {
+        final selected = await showModalBottomSheet<String>(
+          context: context,
+          useSafeArea: true,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (sheetContext) => _BatteryOptionSheet(
+            title: setting.title ?? setting.legacyKey,
+            selectedValue: current,
+            options: setting.options,
+            onSelected: (value) => Navigator.of(sheetContext).pop(value),
+          ),
+        );
+        if (!context.mounted) return;
+        if (selected != null) {
+          _handleSettingChanged(setting, selected);
+        }
+      },
+    );
+  }
+
+  Widget _netspeedColor(StatusBarSettingItem? setting) {
+    if (setting == null) return const SizedBox.shrink();
+    final fallback = (setting.defaultValue as String?) ?? '#00000000';
+    final current = _stringSettingValue(setting, fallback);
+    final currentInt = _colorFromHex(current, _colorFromHex(fallback, 0));
+    final defaultInt = _colorFromHex(fallback, 0);
+
+    return _BatteryColorTile(
+      title: setting.title ?? setting.legacyKey,
+      subtitle: setting.subtitle,
+      colorValue: currentInt,
+      onTap: () async {
+        final selected = await showModalBottomSheet<int>(
+          context: context,
+          useSafeArea: true,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (sheetContext) => _BatteryColorSheet(
+            title: setting.title ?? setting.legacyKey,
+            current: currentInt,
+            defaultValue: defaultInt,
+            onSelected: (value) => Navigator.of(sheetContext).pop(value),
+          ),
+        );
+        if (!context.mounted) return;
+        if (selected != null) {
+          final hex = '#${selected.toUnsigned(32).toRadixString(16).padLeft(8, '0').toUpperCase()}';
+          _handleSettingChanged(setting, hex);
+        }
+      },
+    );
+  }
+
+  Widget _netspeedFont(StatusBarSettingItem? setting) {
+    if (setting == null) return const SizedBox.shrink();
+    final current = _stringSettingValue(setting, 'Default');
+    return _BatterySelectTile(
+      title: setting.title ?? setting.legacyKey,
+      subtitle: setting.subtitle,
+      valueLabel: _fontDisplayLabel(current),
+      onTap: () async {
+        final pageContext = context;
+        final options = await _batteryFontOptions(current);
+        if (!pageContext.mounted) return;
+        final selected = await showModalBottomSheet<String>(
+          context: pageContext,
+          useSafeArea: true,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (sheetContext) => _BatteryOptionSheet(
+            title: setting.title ?? setting.legacyKey,
+            selectedValue: current,
+            options: options,
+            onSelected: (value) => Navigator.of(sheetContext).pop(value),
+          ),
+        );
+        if (!pageContext.mounted) return;
+        if (selected != null) {
+          _handleSettingChanged(setting, selected);
+        }
+      },
     );
   }
 
@@ -3380,6 +3550,65 @@ class _PreviewDot extends StatelessWidget {
   }
 }
 
+class _NetspeedPreview extends StatelessWidget {
+  const _NetspeedPreview({required this.values});
+
+  final Map<String, Object?> values;
+
+  @override
+  Widget build(BuildContext context) {
+    final mode = (values['status_bar_show_network_speed'] as String?) ?? '1';
+    final textSize = ((values['net_speed_zoom'] as num?) ?? 12).toDouble().clamp(8, 26).toDouble();
+    final spacing = ((values['net_speed_division'] as num?) ?? 20).toDouble().clamp(0, 40).toDouble();
+    final offset = ((values['net_speed_height'] as num?) ?? 50).toDouble();
+    final colorHex = (values['net_speed_color'] as String?) ?? '#00000000';
+    final colorValue = _StaticColorTools.fromHex(colorHex, 0xFFFFFFFF);
+    final fontValue = (values['net_speed_typefase'] as String?) ?? 'Default';
+
+    final sample = switch (mode) {
+      '0' => 'Hidden',
+      '2' => '↑ 4.8 KB/s\n↓ 12.4 KB/s',
+      '3' => '12.4 KB/s',
+      _ => '↑↓ 12.4 KB/s',
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: Colors.black.withValues(alpha: 0.22),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        children: <Widget>[
+          const Icon(Icons.speed_rounded, color: Color(0xFF8DE8FF), size: 18),
+          SizedBox(width: (spacing / 5).clamp(6, 18).toDouble()),
+          Transform.translate(
+            offset: Offset(0, (offset - 50) / 20),
+            child: Text(
+              sample,
+              style: _StaticColorTools.fontFor(
+                fontValue,
+                TextStyle(
+                  color: Color(colorValue),
+                  fontSize: textSize,
+                  fontWeight: FontWeight.w700,
+                  height: 1.05,
+                ),
+              ),
+            ),
+          ),
+          const Spacer(),
+          Text(
+            'Static preview',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.58), fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _BatteryPreview extends StatelessWidget {
   const _BatteryPreview({required this.values});
 
@@ -3430,6 +3659,34 @@ class _BatteryPreview extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _StaticColorTools {
+  static int fromHex(String hex, int fallback) {
+    final value = hex.replaceAll('#', '');
+    try {
+      if (value.length == 6) return int.parse('FF$value', radix: 16);
+      if (value.length == 8) return int.parse(value, radix: 16);
+    } catch (_) {
+      return fallback;
+    }
+    return fallback;
+  }
+
+  static TextStyle fontFor(String value, TextStyle fallback) {
+    switch (value) {
+      case 'inter':
+        return GoogleFonts.inter(textStyle: fallback);
+      case 'din':
+        return GoogleFonts.getFont('Roboto Condensed', textStyle: fallback);
+      case 'mono':
+        return GoogleFonts.robotoMono(textStyle: fallback);
+      case 'roboto':
+        return GoogleFonts.roboto(textStyle: fallback);
+      default:
+        return fallback;
+    }
   }
 }
 
