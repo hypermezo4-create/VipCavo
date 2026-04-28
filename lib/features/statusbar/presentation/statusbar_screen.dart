@@ -1085,6 +1085,9 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     if (widget.section.id == 'netspeed') {
       return _buildNetspeedScreen(context);
     }
+    if (widget.section.id == 'network') {
+      return _buildNetworkScreen(context);
+    }
 
     final grouped = <String, List<StatusBarSettingItem>>{};
     for (final setting in _settings) {
@@ -1462,6 +1465,217 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildNetworkScreen(BuildContext context) {
+    final byKey = <String, StatusBarSettingItem>{
+      for (final setting in _settings) setting.legacyKey: setting,
+    };
+    return Scaffold(
+      backgroundColor: const Color(0xFF050B1A),
+      appBar: AppBar(
+        title: const Text('Network'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(30),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: Text(
+              'Customize SIM, Wi-Fi, and mobile indicators.',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.72), fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+          ),
+        ),
+      ),
+      body: ListView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.paddingOf(context).bottom + 140),
+        children: <Widget>[
+          if (_isLoadingStoredValues)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: LinearProgressIndicator(
+                minHeight: 2,
+                color: const Color(0xFF8DE8FF),
+                backgroundColor: Colors.white.withValues(alpha: 0.12),
+              ),
+            ),
+          _NetworkPreview(values: _values),
+          const SizedBox(height: 14),
+          _BatterySectionCard(
+            title: 'Visibility',
+            subtitle: 'Show or hide each network cluster icon.',
+            children: <Widget>[
+              _networkToggle(byKey['elem_net_element_visible']),
+              _networkToggle(byKey['elem_wifi_element_visible']),
+              _networkToggle(byKey['vpn_visible']),
+              _networkToggle(byKey['vowifi_visible']),
+              _networkToggle(byKey['roam_visible']),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _BatterySectionCard(
+            title: 'Colors',
+            subtitle: 'ARGB color controls with alpha support preserved.',
+            children: <Widget>[
+              _networkColor(byKey['sim_one_color']),
+              _networkColor(byKey['sim_two_color']),
+              _networkColor(byKey['wifiview_color']),
+              _networkColor(byKey['airplaneview_color']),
+              _networkColor(byKey['mobile_type_color']),
+              _networkColor(byKey['mobile_inout_color']),
+              _networkColor(byKey['vpn_color']),
+              _networkColor(byKey['vowifi_color']),
+              _networkColor(byKey['roam_color']),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _BatterySectionCard(
+            title: 'SIM and network type',
+            subtitle: 'SIM icon, mobile type, network arrows, font, and rotation.',
+            children: <Widget>[
+              _networkSlider(byKey['simview_zoom']),
+              _networkSlider(byKey['simview_scale']),
+              _networkSlider(byKey['simview_division']),
+              _networkSlider(byKey['mobile_type_zoom']),
+              _networkSlider(byKey['mobile_type_division']),
+              _networkSlider(byKey['mobile_inout_zoom']),
+              _networkSlider(byKey['mobile_inout_scale']),
+              _networkSlider(byKey['mobile_inout_division']),
+              _networkFont(byKey['mobile_type_typefase']),
+              _networkToggle(byKey['sim_type_position']),
+              _networkSlider(byKey['sim_type_margin']),
+              _networkToggle(byKey['elem_net1_rotate']),
+              _networkToggle(byKey['elem_net2_rotate']),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _BatterySectionCard(
+            title: 'Wi-Fi',
+            subtitle: 'Wi-Fi icon and Wi-Fi arrows dimensions.',
+            children: <Widget>[
+              _networkSlider(byKey['wifiview_zoom']),
+              _networkSlider(byKey['wifiview_scale']),
+              _networkSlider(byKey['wifiview_division']),
+              _networkSlider(byKey['airplaneview_zoom']),
+              _networkSlider(byKey['airplaneview_scale']),
+              _networkSlider(byKey['airplaneview_division']),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _BatterySectionCard(
+            title: 'Extra icons',
+            subtitle: 'VoLTE/VPN, VoWiFi, and roaming icon sizing.',
+            children: <Widget>[
+              _networkSlider(byKey['vpn_zoom']),
+              _networkSlider(byKey['vpn_scale']),
+              _networkSlider(byKey['vpn_division']),
+              _networkSlider(byKey['vowifi_zoom']),
+              _networkSlider(byKey['vowifi_scale']),
+              _networkSlider(byKey['vowifi_division']),
+              _networkSlider(byKey['roam_zoom']),
+              _networkSlider(byKey['roam_scale']),
+              _networkSlider(byKey['roam_division']),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const _BatterySectionCard(
+            title: 'Icon style',
+            subtitle: 'Legacy overlay style pickers are preserved for future flow wiring.',
+            children: <Widget>[
+              _LegacyStyleTile(title: 'Signal icon style'),
+              _LegacyStyleTile(title: 'Wi-Fi icon style'),
+              _LegacyStyleTile(title: 'VoWiFi icon style'),
+              _LegacyStyleTile(title: 'VoLTE icon style'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _networkToggle(StatusBarSettingItem? setting) {
+    if (setting == null) return const SizedBox.shrink();
+    final defaultValue = setting.defaultValue as bool? ?? false;
+    final current = (_values[setting.legacyKey] as bool?) ?? defaultValue;
+    return _BatteryToggleTile(
+      title: setting.title ?? setting.legacyKey,
+      value: current,
+      onChanged: (next) => _handleSettingChanged(setting, next),
+    );
+  }
+
+  Widget _networkSlider(StatusBarSettingItem? setting) {
+    if (setting == null) return const SizedBox.shrink();
+    final min = setting.min ?? 0;
+    final max = setting.max ?? 100;
+    final defaultValue = (setting.defaultValue as num?)?.toDouble() ?? min;
+    final value = ((_values[setting.legacyKey] as num?)?.toDouble() ?? defaultValue).clamp(min, max).toDouble();
+    return _BatterySliderTile(
+      title: setting.title ?? setting.legacyKey,
+      value: value,
+      min: min,
+      max: max,
+      onChanged: (next) => _handleSettingChanged(setting, next.round()),
+      onReset: () => _handleSettingChanged(setting, defaultValue.round()),
+    );
+  }
+
+  Widget _networkColor(StatusBarSettingItem? setting) {
+    if (setting == null) return const SizedBox.shrink();
+    final defaultValue = (setting.defaultValue as int?) ?? 0x00000000;
+    final current = _colorIntValue(setting, defaultValue);
+    return _BatteryColorTile(
+      title: setting.title ?? setting.legacyKey,
+      colorValue: current,
+      onTap: () async {
+        final selected = await showModalBottomSheet<int>(
+          context: context,
+          useSafeArea: true,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (sheetContext) => _BatteryColorSheet(
+            title: setting.title ?? setting.legacyKey,
+            current: current,
+            defaultValue: defaultValue,
+            onSelected: (value) => Navigator.of(sheetContext).pop(value),
+          ),
+        );
+        if (!context.mounted) return;
+        if (selected != null) {
+          _handleSettingChanged(setting, selected);
+        }
+      },
+    );
+  }
+
+  Widget _networkFont(StatusBarSettingItem? setting) {
+    if (setting == null) return const SizedBox.shrink();
+    final current = _stringSettingValue(setting, 'Default');
+    return _BatterySelectTile(
+      title: setting.title ?? setting.legacyKey,
+      valueLabel: _fontDisplayLabel(current),
+      onTap: () async {
+        final pageContext = context;
+        final options = await _batteryFontOptions(current);
+        if (!pageContext.mounted) return;
+        final selected = await showModalBottomSheet<String>(
+          context: pageContext,
+          useSafeArea: true,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (sheetContext) => _BatteryOptionSheet(
+            title: setting.title ?? setting.legacyKey,
+            selectedValue: current,
+            options: options,
+            onSelected: (value) => Navigator.of(sheetContext).pop(value),
+          ),
+        );
+        if (!pageContext.mounted) return;
+        if (selected != null) {
+          _handleSettingChanged(setting, selected);
+        }
+      },
     );
   }
 
@@ -3684,6 +3898,73 @@ class _NetspeedPreview extends StatelessWidget {
   }
 }
 
+class _NetworkPreview extends StatelessWidget {
+  const _NetworkPreview({required this.values});
+
+  final Map<String, Object?> values;
+
+  @override
+  Widget build(BuildContext context) {
+    final simVisible = (values['elem_net_element_visible'] as bool?) ?? true;
+    final wifiVisible = (values['elem_wifi_element_visible'] as bool?) ?? true;
+    final vpnVisible = (values['vpn_visible'] as bool?) ?? true;
+    final vowifiVisible = (values['vowifi_visible'] as bool?) ?? true;
+    final roamVisible = (values['roam_visible'] as bool?) ?? true;
+
+    final simColor = Color((values['sim_one_color'] as int?) ?? 0xFF8DE8FF);
+    final wifiColor = Color((values['wifiview_color'] as int?) ?? 0xFF90FFAC);
+    final vpnColor = Color((values['vpn_color'] as int?) ?? 0xFFB9A3FF);
+    final vowifiColor = Color((values['vowifi_color'] as int?) ?? 0xFF76A7FF);
+    final roamColor = Color((values['roam_color'] as int?) ?? 0xFFFFC66D);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[
+            const Color(0xFF153347).withValues(alpha: 0.62),
+            const Color(0xFF0B1B2E).withValues(alpha: 0.34),
+          ],
+        ),
+        border: Border.all(color: const Color(0xFF8DE8FF).withValues(alpha: 0.24)),
+      ),
+      child: Row(
+        children: <Widget>[
+          if (simVisible) ...<Widget>[
+            Icon(Icons.sim_card_rounded, color: simColor, size: 18),
+            const SizedBox(width: 6),
+            Icon(Icons.sim_card_rounded, color: simColor.withValues(alpha: 0.75), size: 18),
+          ],
+          if (wifiVisible) ...<Widget>[
+            const SizedBox(width: 8),
+            Icon(Icons.wifi_rounded, color: wifiColor, size: 18),
+          ],
+          if (vpnVisible) ...<Widget>[
+            const SizedBox(width: 8),
+            Icon(Icons.verified_rounded, color: vpnColor, size: 16),
+          ],
+          if (vowifiVisible) ...<Widget>[
+            const SizedBox(width: 8),
+            Icon(Icons.wifi_calling_3_rounded, color: vowifiColor, size: 16),
+          ],
+          if (roamVisible) ...<Widget>[
+            const SizedBox(width: 8),
+            Icon(Icons.travel_explore_rounded, color: roamColor, size: 16),
+          ],
+          const Spacer(),
+          Text(
+            '5G',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.82), fontWeight: FontWeight.w700, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _BatteryPreview extends StatelessWidget {
   const _BatteryPreview({required this.values});
 
@@ -3732,6 +4013,26 @@ class _BatteryPreview extends StatelessWidget {
             style: TextStyle(color: Colors.white, fontSize: percentSize.clamp(10, 22).toDouble()),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _LegacyStyleTile extends StatelessWidget {
+  const _LegacyStyleTile({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: 0.72,
+      child: IgnorePointer(
+        child: _BatterySelectTile(
+          title: title,
+          valueLabel: 'Coming soon',
+          onTap: () {},
+        ),
       ),
     );
   }
