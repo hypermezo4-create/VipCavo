@@ -8,7 +8,7 @@ class GlassCard extends StatelessWidget {
   const GlassCard({
     required this.child,
     super.key,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.all(15),
     this.onTap,
     this.borderRadius = DesignTokens.radiusCard,
   });
@@ -23,20 +23,20 @@ class GlassCard extends StatelessWidget {
     final card = ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        filter: ImageFilter.blur(sigmaX: 7, sigmaY: 7),
         child: AnimatedContainer(
           duration: DesignTokens.motionFast,
           curve: DesignTokens.motionCurve,
           padding: padding,
           decoration: BoxDecoration(
-            color: DeadzonThemeTokens.cardTint(context).withValues(alpha: 0.18),
+            color: DeadzonThemeTokens.cardTint(context).withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(color: DeadzonThemeTokens.border(context)),
             boxShadow: <BoxShadow>[
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.14),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 14,
+                offset: const Offset(0, 8),
               ),
             ],
           ),

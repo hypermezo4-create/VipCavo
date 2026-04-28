@@ -17,7 +17,7 @@ class DeadzonShell extends StatefulWidget {
   State<DeadzonShell> createState() => _DeadzonShellState();
 }
 
-class _DeadzonShellState extends State<DeadzonShell> {
+class _DeadzonShellState extends State<DeadzonShell> with SingleTickerProviderStateMixin {
   static const String _lastTabIndexKey = 'deadzone_last_tab_index';
 
   static const List<DeadzonFloatingTabItem> _items = <DeadzonFloatingTabItem>[
@@ -30,26 +30,42 @@ class _DeadzonShellState extends State<DeadzonShell> {
   bool _restoredLastTab = false;
   int? _rememberedIndex;
   bool _showStartupOverlay = true;
+  late final AnimationController _entranceController;
+  late final Animation<double> _shellOpacity;
+  late final Animation<Offset> _shellSlide;
+  late final Animation<double> _navOpacity;
+  late final Animation<Offset> _navSlide;
 
   @override
   void initState() {
     super.initState();
+    _entranceController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1160));
+    _shellOpacity = CurvedAnimation(parent: _entranceController, curve: const Interval(0.44, 0.9, curve: Curves.easeOut));
+    _shellSlide = Tween<Offset>(begin: const Offset(0, 0.04), end: Offset.zero).animate(
+      CurvedAnimation(parent: _entranceController, curve: const Interval(0.44, 0.92, curve: Curves.easeOutCubic)),
+    );
+    _navOpacity = CurvedAnimation(parent: _entranceController, curve: const Interval(0.66, 1, curve: Curves.easeOut));
+    _navSlide = Tween<Offset>(begin: const Offset(0, 0.14), end: Offset.zero).animate(
+      CurvedAnimation(parent: _entranceController, curve: const Interval(0.66, 1, curve: Curves.easeOutCubic)),
+    );
+    _entranceController.forward().whenComplete(() {
+      if (mounted) {
+        setState(() => _showStartupOverlay = false);
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) => _restoreLastTab());
-    _startEntranceAnimation();
-  }
-
-  Future<void> _startEntranceAnimation() async {
-    await Future<void>.delayed(const Duration(milliseconds: 1100));
-    if (!mounted) {
-      return;
-    }
-    setState(() => _showStartupOverlay = false);
   }
 
   @override
   void didUpdateWidget(covariant DeadzonShell oldWidget) {
     super.didUpdateWidget(oldWidget);
     _rememberCurrentTab();
+  }
+
+  @override
+  void dispose() {
+    _entranceController.dispose();
+    super.dispose();
   }
 
   Future<void> _restoreLastTab() async {
@@ -104,25 +120,21 @@ class _DeadzonShellState extends State<DeadzonShell> {
       children: <Widget>[
         Scaffold(
           extendBody: true,
-          body: AnimatedSlide(
-            duration: const Duration(milliseconds: 520),
-            curve: Curves.easeOutCubic,
-            offset: _showStartupOverlay ? const Offset(0, 0.028) : Offset.zero,
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 520),
-              curve: Curves.easeOut,
-              opacity: _showStartupOverlay ? 0 : 1,
-              child: widget.navigationShell,
+          body: FadeTransition(opacity: _shellOpacity, child: SlideTransition(position: _shellSlide, child: widget.navigationShell)),
+          bottomNavigationBar: FadeTransition(
+            opacity: _navOpacity,
+            child: SlideTransition(
+              position: _navSlide,
+              child: DeadzonFloatingTabBar(
+                currentIndex: widget.navigationShell.currentIndex,
+                items: _items,
+                accentColor: theme.accentColor,
+                backgroundTint: DeadzonThemeTokens.navBackground(context),
+                onTap: (index) {
+                  _goToTab(index);
+                },
+              ),
             ),
-          ),
-          bottomNavigationBar: DeadzonFloatingTabBar(
-            currentIndex: widget.navigationShell.currentIndex,
-            items: _items,
-            accentColor: theme.accentColor,
-            backgroundTint: DeadzonThemeTokens.navBackground(context),
-            onTap: (index) {
-              _goToTab(index);
-            },
           ),
         ),
         IgnorePointer(
@@ -174,29 +186,35 @@ class _StartupEntranceOverlayState extends State<_StartupEntranceOverlay> with S
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: const Color(0xFF040A16),
+      color: const Color(0xFF030913),
       child: AnimatedBuilder(
         animation: _controller,
         builder: (context, child) {
           return DecoratedBox(
             decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: <Color>[Color(0xFF051A31), Color(0xFF091226), Color(0xFF091A1B)],
-              ),
+              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: <Color>[Color(0xFF04142B), Color(0xFF071024), Color(0xFF071818)]),
             ),
             child: Center(
               child: Stack(
                 alignment: Alignment.center,
                 children: <Widget>[
+                  Container(
+                    width: 250,
+                    height: 250,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: <Color>[Color(0x6658E8FF), Color(0x0022BAAF)],
+                      ),
+                    ),
+                  ),
                   Transform.scale(
                     scale: _ringScale.value,
                     child: Opacity(
                       opacity: _ringOpacity.value,
                       child: Container(
-                        width: 172,
-                        height: 172,
+                        width: 168,
+                        height: 168,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(color: const Color(0xFF7CF3DA).withValues(alpha: 0.48), width: 1.5),
@@ -218,15 +236,7 @@ class _StartupEntranceOverlayState extends State<_StartupEntranceOverlay> with S
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: const <Widget>[
-                          Text(
-                            'DeadZone',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 38,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.3,
-                            ),
-                          ),
+                          Text('DeadZone', style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w800, letterSpacing: 0.2)),
                           SizedBox(height: 8),
                           Text(
                             'ROM Hub',

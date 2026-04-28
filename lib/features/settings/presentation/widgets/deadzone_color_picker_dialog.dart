@@ -52,20 +52,20 @@ class _DeadZoneColorPickerDialogState extends State<DeadZoneColorPickerDialog> {
       backgroundColor: Colors.transparent,
       child: Container(
         decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(24),
+          color: cardColor.withValues(alpha: 0.96),
+          borderRadius: BorderRadius.circular(28),
           border: Border.all(color: borderColor),
           boxShadow: <BoxShadow>[BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.1), blurRadius: 28, offset: const Offset(0, 16))],
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Row(
                 children: <Widget>[
                   Expanded(
-                    child: Text(widget.title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
+                    child: Text(widget.title, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, fontSize: 22)),
                   ),
                   IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded)),
                 ],
@@ -74,8 +74,8 @@ class _DeadZoneColorPickerDialogState extends State<DeadZoneColorPickerDialog> {
               Flexible(
                 child: SingleChildScrollView(
                   child: Wrap(
-                    spacing: 12,
-                    runSpacing: 14,
+                    spacing: 10,
+                    runSpacing: 12,
                     children: widget.options.map((DeadzoneColorOption option) {
                       final selected = option.id == _selectedId;
                       return GestureDetector(
@@ -86,13 +86,13 @@ class _DeadZoneColorPickerDialogState extends State<DeadZoneColorPickerDialog> {
                           });
                         },
                         child: SizedBox(
-                          width: 72,
+                          width: 68,
                           child: Column(
                             children: <Widget>[
                               AnimatedContainer(
                                 duration: const Duration(milliseconds: 180),
-                                width: 56,
-                                height: 56,
+                                width: 52,
+                                height: 52,
                                 decoration: BoxDecoration(
                                   color: option.color,
                                   borderRadius: BorderRadius.circular(14),
@@ -100,7 +100,7 @@ class _DeadZoneColorPickerDialogState extends State<DeadZoneColorPickerDialog> {
                                 ),
                                 child: selected ? const Icon(Icons.check_rounded, color: Colors.white, size: 24) : null,
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 5),
                               Text(option.label, maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodySmall),
                             ],
                           ),
@@ -114,8 +114,8 @@ class _DeadZoneColorPickerDialogState extends State<DeadZoneColorPickerDialog> {
               Row(
                 children: <Widget>[
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(color: _selected.color, borderRadius: BorderRadius.circular(12), border: Border.all(color: borderColor)),
                   ),
                   const SizedBox(width: 10),

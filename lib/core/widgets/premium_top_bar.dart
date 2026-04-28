@@ -1,3 +1,4 @@
+import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 
 class PremiumTopBar extends StatelessWidget {
@@ -22,6 +23,7 @@ class PremiumTopBar extends StatelessWidget {
                 color: textColor,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.3,
+                fontSize: DesignTokens.mainTitle,
               ),
         ),
         const SizedBox(height: 6),
@@ -30,6 +32,7 @@ class PremiumTopBar extends StatelessWidget {
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: textColor.withValues(alpha: 0.74),
                 height: 1.35,
+                fontSize: DesignTokens.pageSubtitle,
               ),
         ),
       ],

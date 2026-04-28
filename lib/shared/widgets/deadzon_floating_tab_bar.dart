@@ -1,3 +1,4 @@
+import 'package:deadzon/core/theme/design_tokens.dart';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -32,13 +33,13 @@ class DeadzonFloatingTabBar extends StatelessWidget {
     final borderColor = isLight ? Colors.black.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.2);
 
     return SafeArea(
-      minimum: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      minimum: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(36),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
-            height: 74,
+            height: 70,
             decoration: BoxDecoration(
               color: backgroundTint.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(36),
@@ -56,9 +57,9 @@ class DeadzonFloatingTabBar extends StatelessWidget {
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeOutCubic,
                       left: currentIndex * width + 8,
-                      top: 8,
+                      top: 7,
                       width: width - 16,
-                      height: 58,
+                      height: 56,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
                           color: accentColor.withValues(alpha: 0.25),
@@ -81,13 +82,13 @@ class DeadzonFloatingTabBar extends StatelessWidget {
                               style: TextStyle(
                                 color: selected ? accentColor : idleColor,
                                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                                fontSize: 11,
+                                fontSize: DesignTokens.navLabel,
                               ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: <Widget>[
-                                  Icon(item.icon, color: selected ? accentColor : idleColor, size: selected ? 22 : 20),
-                                  const SizedBox(height: 4),
+                                  Icon(item.icon, color: selected ? accentColor : idleColor, size: selected ? 21 : 19),
+                                  const SizedBox(height: 3),
                                   Text(item.label),
                                 ],
                               ),
