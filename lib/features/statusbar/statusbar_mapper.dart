@@ -12,29 +12,88 @@ class StatusBarMapper {
     if (extracted.isEmpty) {
       return curated;
     }
-    // Prefer source-extracted old Mezo definitions for duplicate keys because they
-    // preserve real defaults, entry values, and intent actions. Curated rows are
-    // still appended when they add extra controls not present in the source map.
-    return _mergeByLegacyKey(extracted, curated);
+    return _mergeByLegacyKeyAndPolish(extracted, curated);
   }
 
-  static List<StatusBarSettingItem> _mergeByLegacyKey(
-    List<StatusBarSettingItem> curated,
+  static List<StatusBarSettingItem> _mergeByLegacyKeyAndPolish(
     List<StatusBarSettingItem> extracted,
+    List<StatusBarSettingItem> curated,
   ) {
-    final seen = <String>{};
+    final curatedByKey = <String, StatusBarSettingItem>{
+      for (final item in curated) item.legacyKey: item,
+    };
     final merged = <StatusBarSettingItem>[];
-    for (final item in curated) {
-      merged.add(item);
+    final seen = <String>{};
+
+    for (final item in extracted) {
+      final curatedMatch = curatedByKey[item.legacyKey];
+      merged.add(_mergedItem(item, curatedMatch));
       seen.add(item.legacyKey);
     }
-    for (final item in extracted) {
+
+    for (final item in curated) {
       if (seen.contains(item.legacyKey)) {
         continue;
       }
       merged.add(item);
     }
     return merged;
+  }
+
+  static StatusBarSettingItem _mergedItem(
+    StatusBarSettingItem extracted,
+    StatusBarSettingItem? curated,
+  ) {
+    final subtitle = curated?.subtitle ?? extracted.subtitle;
+    final polishedSubtitle = _isInternalSubtitle(subtitle) ? null : subtitle;
+    final options = _preferOptions(extracted, curated);
+
+    return StatusBarSettingItem(
+      legacyKey: extracted.legacyKey,
+      title: curated?.title ?? _polishTitle(extracted.title),
+      subtitle: polishedSubtitle,
+      controlType: extracted.controlType,
+      group: curated?.group ?? extracted.group,
+      defaultValue: extracted.defaultValue,
+      min: extracted.min,
+      max: extracted.max,
+      options: options,
+      step: extracted.step,
+      preferenceType: extracted.preferenceType,
+      intentAction: extracted.intentAction,
+      entriesReference: extracted.entriesReference,
+      entryValuesReference: extracted.entryValuesReference,
+      xmlReference: extracted.xmlReference,
+      layoutReferences: extracted.layoutReferences,
+      drawableReferences: extracted.drawableReferences,
+    );
+  }
+
+  static List<StatusBarOption> _preferOptions(StatusBarSettingItem extracted, StatusBarSettingItem? curated) {
+    if (curated != null && curated.options.isNotEmpty) {
+      final extractedDefaultOnly = extracted.options.length == 1 && extracted.options.first.label == 'Default';
+      if (extracted.options.isEmpty || extractedDefaultOnly) {
+        return curated.options;
+      }
+    }
+    return extracted.options;
+  }
+
+  static bool _isInternalSubtitle(String? subtitle) {
+    if (subtitle == null || subtitle.trim().isEmpty) return false;
+    final value = subtitle.toLowerCase();
+    return value.contains('source-preserved') ||
+        value.contains('depends on') ||
+        value.contains('legacy fragment') ||
+        value.contains('android.theme');
+  }
+
+  static String? _polishTitle(String? title) {
+    if (title == null) return null;
+    if (title == 'Android.Theme.Customization.Battery Icon') {
+      return 'Battery icon theme';
+    }
+    return title;
   }
 
   static final Map<String, List<StatusBarSettingItem>> _mapped = <String, List<StatusBarSettingItem>>{

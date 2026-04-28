@@ -1405,7 +1405,19 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF050B1A),
-      appBar: AppBar(title: const Text('Netspeed')),
+      appBar: AppBar(
+        title: const Text('Netspeed'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(30),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: Text(
+              'Customize the speed indicator.',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.72), fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+          ),
+        ),
+      ),
       body: ListView(
         physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.paddingOf(context).bottom + 140),
@@ -1422,16 +1434,16 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
           _NetspeedPreview(values: _values),
           const SizedBox(height: 14),
           _BatterySectionCard(
-            title: 'Visibility & mode',
-            subtitle: 'Control how netspeed is shown in the status bar.',
+            title: 'Visibility',
+            subtitle: 'Control how the speed indicator appears.',
             children: <Widget>[
               _netspeedSelect(byKey['status_bar_show_network_speed']),
             ],
           ),
           const SizedBox(height: 12),
           _BatterySectionCard(
-            title: 'Text style',
-            subtitle: 'Adjust typography, spacing, and vertical alignment.',
+            title: 'Text appearance',
+            subtitle: 'Size, spacing, position, color, and font.',
             children: <Widget>[
               _netspeedSlider(byKey['net_speed_zoom']),
               _netspeedSlider(byKey['net_speed_division']),
@@ -1442,8 +1454,8 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
           ),
           const SizedBox(height: 12),
           _BatterySectionCard(
-            title: 'Update behavior',
-            subtitle: 'Keep interval values aligned with old Mezo behavior.',
+            title: 'Units / behavior',
+            subtitle: 'Keep refresh interval aligned with old Mezo behavior.',
             children: <Widget>[
               _netspeedSlider(byKey['status_bar_network_speed_interval']),
             ],
@@ -1460,8 +1472,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     final defaultValue = (setting.defaultValue as num?)?.toDouble() ?? min;
     final value = ((_values[setting.legacyKey] as num?)?.toDouble() ?? defaultValue).clamp(min, max).toDouble();
     return _BatterySliderTile(
-      title: setting.title ?? setting.legacyKey,
-      subtitle: setting.subtitle,
+      title: _netspeedLabel(setting.legacyKey, setting.title),
       value: value,
       min: min,
       max: max,
@@ -1477,8 +1488,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     final selectedOption = setting.options.where((option) => option.value == current);
     final valueLabel = selectedOption.isEmpty ? setting.options.first.label : selectedOption.first.label;
     return _BatterySelectTile(
-      title: setting.title ?? setting.legacyKey,
-      subtitle: setting.subtitle,
+      title: _netspeedLabel(setting.legacyKey, setting.title),
       valueLabel: valueLabel,
       onTap: () async {
         final selected = await showModalBottomSheet<String>(
@@ -1509,8 +1519,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     final defaultInt = _colorFromHex(fallback, 0);
 
     return _BatteryColorTile(
-      title: setting.title ?? setting.legacyKey,
-      subtitle: setting.subtitle,
+      title: _netspeedLabel(setting.legacyKey, setting.title),
       colorValue: currentInt,
       onTap: () async {
         final selected = await showModalBottomSheet<int>(
@@ -1538,8 +1547,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     if (setting == null) return const SizedBox.shrink();
     final current = _stringSettingValue(setting, 'Default');
     return _BatterySelectTile(
-      title: setting.title ?? setting.legacyKey,
-      subtitle: setting.subtitle,
+      title: _netspeedLabel(setting.legacyKey, setting.title),
       valueLabel: _fontDisplayLabel(current),
       onTap: () async {
         final pageContext = context;
@@ -1563,6 +1571,27 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
         }
       },
     );
+  }
+
+  String _netspeedLabel(String key, String? fallback) {
+    switch (key) {
+      case 'status_bar_show_network_speed':
+        return 'Show network speed';
+      case 'net_speed_zoom':
+        return 'Text size';
+      case 'net_speed_division':
+        return 'Spacing';
+      case 'net_speed_height':
+        return 'Vertical position';
+      case 'net_speed_color':
+        return 'Text color';
+      case 'status_bar_network_speed_interval':
+        return 'Refresh interval';
+      case 'net_speed_typefase':
+        return 'Font';
+      default:
+        return fallback ?? key;
+    }
   }
 
   Widget _clockSlider(StatusBarSettingItem? setting, String label) {
@@ -2740,6 +2769,20 @@ class _BatteryHeroCard extends StatelessWidget {
   }
 }
 
+String? _cleanVisibleSubtitle(String? subtitle) {
+  if (subtitle == null) return null;
+  final trimmed = subtitle.trim();
+  if (trimmed.isEmpty) return null;
+  final value = trimmed.toLowerCase();
+  if (value.contains('source-preserved') ||
+      value.contains('depends on') ||
+      value.contains('legacy fragment') ||
+      value.contains('android.theme')) {
+    return null;
+  }
+  return trimmed;
+}
+
 class _BatterySectionCard extends StatelessWidget {
   const _BatterySectionCard({required this.title, required this.subtitle, required this.children});
 
@@ -2749,14 +2792,17 @@ class _BatterySectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final sectionSubtitle = _cleanVisibleSubtitle(subtitle);
     return MezoGlassPanel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(title, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 3),
-          Text(subtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.66), fontSize: 12)),
-          const SizedBox(height: 10),
+          Text(title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+          if (sectionSubtitle != null) ...<Widget>[
+            const SizedBox(height: 4),
+            Text(sectionSubtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 12.5)),
+          ],
+          const SizedBox(height: 12),
           for (var i = 0; i < children.length; i++) ...<Widget>[
             children[i],
             if (i != children.length - 1) Divider(height: 18, color: Colors.white.withValues(alpha: 0.08)),
@@ -2777,6 +2823,7 @@ class _BatteryToggleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final visibleSubtitle = _cleanVisibleSubtitle(subtitle);
     return Row(
       children: <Widget>[
         Expanded(
@@ -2784,7 +2831,8 @@ class _BatteryToggleTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-              if (subtitle != null) Text(subtitle!, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
+              if (visibleSubtitle != null)
+                Text(visibleSubtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
             ],
           ),
         ),
@@ -2837,6 +2885,7 @@ class _BatterySelectTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final visibleSubtitle = _cleanVisibleSubtitle(subtitle);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
@@ -2849,16 +2898,17 @@ class _BatterySelectTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                  if (subtitle != null) Text(subtitle!, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
+                  if (visibleSubtitle != null)
+                    Text(visibleSubtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
                 ],
               ),
             ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
+                color: const Color(0xFF102938).withValues(alpha: 0.82),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+                border: Border.all(color: const Color(0xFF8DE8FF).withValues(alpha: 0.25)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -2886,6 +2936,7 @@ class _BatteryColorTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final visibleSubtitle = _cleanVisibleSubtitle(subtitle);
     return Row(
       children: <Widget>[
         Expanded(
@@ -2893,7 +2944,8 @@ class _BatteryColorTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-              if (subtitle != null) Text(subtitle!, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
+              if (visibleSubtitle != null)
+                Text(visibleSubtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
             ],
           ),
         ),
@@ -2959,9 +3011,9 @@ class _BatteryOptionSheet extends StatelessWidget {
       child: Container(
         constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.78),
         decoration: BoxDecoration(
-          color: const Color(0xFF0B1522).withValues(alpha: 0.98),
+          color: const Color(0xFF071320).withValues(alpha: 0.98),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+          border: Border.all(color: const Color(0xFF8DE8FF).withValues(alpha: 0.22)),
         ),
         padding: EdgeInsets.fromLTRB(16, 14, 16, MediaQuery.paddingOf(context).bottom + 16),
         child: Column(
@@ -2983,9 +3035,9 @@ class _BatteryOptionSheet extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.06),
+                        color: const Color(0xFF0F2434).withValues(alpha: 0.8),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+                        border: Border.all(color: const Color(0xFF8DE8FF).withValues(alpha: 0.2)),
                       ),
                       child: Row(
                         children: <Widget>[
@@ -3034,9 +3086,9 @@ class _BatteryColorSheet extends StatelessWidget {
     return SafeArea(
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF0B1522).withValues(alpha: 0.98),
+          color: const Color(0xFF071320).withValues(alpha: 0.98),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+          border: Border.all(color: const Color(0xFF8DE8FF).withValues(alpha: 0.22)),
         ),
         padding: EdgeInsets.fromLTRB(16, 14, 16, MediaQuery.paddingOf(context).bottom + 18),
         child: Column(
@@ -3565,19 +3617,33 @@ class _NetspeedPreview extends StatelessWidget {
     final colorValue = _StaticColorTools.fromHex(colorHex, 0xFFFFFFFF);
     final fontValue = (values['net_speed_typefase'] as String?) ?? 'Default';
 
+    final interval = ((values['status_bar_network_speed_interval'] as num?) ?? 1000).toInt();
     final sample = switch (mode) {
-      '0' => 'Hidden',
-      '2' => '↑ 4.8 KB/s\n↓ 12.4 KB/s',
+      '0' => '--',
+      '2' => '↑ 24 KB/s\n↓ 128 KB/s',
       '3' => '12.4 KB/s',
       _ => '↑↓ 12.4 KB/s',
+    };
+    final modeLabel = switch (mode) {
+      '0' => 'Hidden',
+      '1' => 'One line',
+      '2' => 'Two lines',
+      _ => 'Default',
     };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        color: Colors.black.withValues(alpha: 0.22),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: <Color>[
+            const Color(0xFF153347).withValues(alpha: 0.62),
+            const Color(0xFF0B1B2E).withValues(alpha: 0.34),
+          ],
+        ),
+        border: Border.all(color: const Color(0xFF8DE8FF).withValues(alpha: 0.24)),
       ),
       child: Row(
         children: <Widget>[
@@ -3599,9 +3665,18 @@ class _NetspeedPreview extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          Text(
-            'Static preview',
-            style: TextStyle(color: Colors.white.withValues(alpha: 0.58), fontSize: 11),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              Text(
+                modeLabel,
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 11, fontWeight: FontWeight.w600),
+              ),
+              Text(
+                '${interval}ms',
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.58), fontSize: 11),
+              ),
+            ],
           ),
         ],
       ),
