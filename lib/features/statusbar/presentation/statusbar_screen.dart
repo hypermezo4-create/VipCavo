@@ -4290,7 +4290,11 @@ class _NotificationIconsPreview extends StatelessWidget {
                       .map(
                         (icon) => Padding(
                           padding: EdgeInsets.symmetric(horizontal: spacing + 1.5),
-                          child: Icon(icon, size: iconSize, color: tint.withValues(alpha: tint.alpha == 0 ? 0.9 : 1)),
+                          child: Icon(
+                            icon,
+                            size: iconSize,
+                            color: tint.withValues(alpha: (tint.a * 255.0).round().clamp(0, 255) == 0 ? 0.9 : 1),
+                          ),
                         ),
                       )
                       .toList(),
