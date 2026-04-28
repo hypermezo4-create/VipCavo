@@ -33,9 +33,9 @@ const Map<String, StatusbarDetailContent> statusbarDetailContent = <String, Stat
   'netspeed': StatusbarDetailContent(
     title: 'Netspeed',
     highlights: <String>[
-      'Switch between traffic display modes and tune refresh behavior.',
-      'Refine speed text sizing, spacing, and color for dense top bars.',
-      'Keep traffic telemetry clean and readable on compact devices.',
+      'Choose display style, text size, spacing, and vertical position.',
+      'Tune color, font, and refresh interval with old Mezo-compatible values.',
+      'Preview a static sample style without any live traffic polling.',
     ],
   ),
   'network': StatusbarDetailContent(
