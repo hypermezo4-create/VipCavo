@@ -1112,6 +1112,9 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     if (widget.section.id == 'network') {
       return _buildNetworkScreen(context);
     }
+    if (widget.section.id == 'notification_icons') {
+      return _buildNotificationIconsScreen(context);
+    }
 
     final grouped = <String, List<StatusBarSettingItem>>{};
     for (final setting in _settings) {
@@ -1607,6 +1610,56 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
             title: 'Icon style',
             subtitle: 'Choose the visual style for signal and connection icons.',
             children: _networkIconStyles.map((binding) => _networkIconStyleTile(binding)).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNotificationIconsScreen(BuildContext context) {
+    final byKey = <String, StatusBarSettingItem>{
+      for (final setting in _settings) setting.legacyKey: setting,
+    };
+    return Scaffold(
+      backgroundColor: const Color(0xFF050B1A),
+      appBar: AppBar(
+        title: const Text('Notification icons'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(30),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: Text(
+              'Adjust notification icon appearance.',
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.72), fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+          ),
+        ),
+      ),
+      body: ListView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.paddingOf(context).bottom + 140),
+        children: <Widget>[
+          if (_isLoadingStoredValues)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: LinearProgressIndicator(
+                minHeight: 2,
+                color: const Color(0xFF8DE8FF),
+                backgroundColor: Colors.white.withValues(alpha: 0.12),
+              ),
+            ),
+          _NotificationIconsPreview(values: _values),
+          const SizedBox(height: 14),
+          _BatterySectionCard(
+            title: 'Appearance',
+            subtitle: 'Tune icon order, tint, size, scale, and spacing.',
+            children: <Widget>[
+              _clockToggle(byKey['reverse_notification_sorting_order'], 'Reverse notification order'),
+              _clockColor(byKey['notif_icon_color'], 'Notification icon color'),
+              _clockSlider(byKey['notif_icon_zoom'], 'Notification icon size'),
+              _clockSlider(byKey['notif_icon_scale'], 'Notification icon scale'),
+              _clockSlider(byKey['notif_icon_division'], 'Notification icon spacing'),
+            ],
           ),
         ],
       ),
@@ -4176,6 +4229,95 @@ class _StaticColorTools {
       default:
         return fallback;
     }
+  }
+}
+
+class _NotificationIconsPreview extends StatelessWidget {
+  const _NotificationIconsPreview({required this.values});
+
+  final Map<String, Object?> values;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorRaw = values['notif_icon_color'];
+    final tint = switch (colorRaw) {
+      final int value => Color(value.toUnsigned(32)),
+      final num value => Color(value.toInt().toUnsigned(32)),
+      final String value => _parseHex(value),
+      _ => const Color(0xFFB7F5FF),
+    };
+    final scale = (((values['notif_icon_scale'] as num?) ?? 100).toDouble() / 100).clamp(0, 1.5).toDouble();
+    final zoom = (((values['notif_icon_zoom'] as num?) ?? 100).toDouble() / 100).clamp(0.1, 1.5).toDouble();
+    final spacing = (((values['notif_icon_division'] as num?) ?? 0).toDouble() / 8).clamp(-6.25, 6.25).toDouble();
+    final iconSize = (12.5 * zoom * scale).clamp(8, 20).toDouble();
+    final rowIcons = <IconData>[
+      Icons.notifications_active_rounded,
+      Icons.chat_bubble_rounded,
+      Icons.mail_rounded,
+      Icons.alarm_rounded,
+    ];
+    final reverse = (values['reverse_notification_sorting_order'] as bool?) ?? false;
+    final shownIcons = reverse ? rowIcons.reversed.toList() : rowIcons;
+
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const SectionHeader(
+            title: 'Preview',
+            subtitle: 'Static notification row style preview.',
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              color: const Color(0xFF102231).withValues(alpha: 0.72),
+              border: Border.all(color: const Color(0xFF8DE8FF).withValues(alpha: 0.2)),
+            ),
+            child: Row(
+              children: <Widget>[
+                const Expanded(
+                  child: Text(
+                    '8:45',
+                    style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w700, letterSpacing: 0.5),
+                  ),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: shownIcons
+                      .map(
+                        (icon) => Padding(
+                          padding: EdgeInsets.symmetric(horizontal: spacing + 1.5),
+                          child: Icon(icon, size: iconSize, color: tint.withValues(alpha: tint.alpha == 0 ? 0.9 : 1)),
+                        ),
+                      )
+                      .toList(),
+                ),
+                const SizedBox(width: 6),
+                const Icon(Icons.signal_cellular_alt_rounded, size: 13, color: Colors.white60),
+                const SizedBox(width: 3),
+                const Icon(Icons.wifi_rounded, size: 13, color: Colors.white60),
+                const SizedBox(width: 3),
+                const Icon(Icons.battery_full_rounded, size: 13, color: Colors.white60),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static Color _parseHex(String hex) {
+    final value = hex.replaceAll('#', '');
+    if (value.length == 6) {
+      return Color(int.parse('FF$value', radix: 16));
+    }
+    if (value.length == 8) {
+      return Color(int.parse(value, radix: 16));
+    }
+    return const Color(0xFFB7F5FF);
   }
 }
 
