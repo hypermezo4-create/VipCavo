@@ -1431,7 +1431,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
             onSelected: (value) => Navigator.of(sheetContext).pop(value),
           ),
         );
-        if (!pageContext.mounted) return;
+        if (!context.mounted) return;
         if (selected != null) {
           _handleSettingChanged(setting, selected);
         }
@@ -1461,7 +1461,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
             onSelected: (value) => Navigator.of(sheetContext).pop(value),
           ),
         );
-        if (!pageContext.mounted) return;
+        if (!context.mounted) return;
         if (selected != null) {
           _handleSettingChanged(setting, selected);
         }
