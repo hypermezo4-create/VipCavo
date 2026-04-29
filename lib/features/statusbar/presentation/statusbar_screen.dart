@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:deadzon/core/services/deadzone_font_service.dart';
 import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/core/utils/deadzone_color_utils.dart';
@@ -2370,35 +2371,13 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
   }
 
   Future<List<StatusBarOption>> _batteryFontOptions(String current) async {
-    const fontsPath = '/product/media/fonts/';
-    final options = <StatusBarOption>[const StatusBarOption(label: 'Default', value: 'Default')];
-    try {
-      final directory = Directory(fontsPath);
-      if (await directory.exists()) {
-        final files = await directory.list().where((entity) => entity is File).cast<File>().toList();
-        final names = files
-            .map((file) => file.path.split('/').last)
-            .where((name) => name.isNotEmpty)
-            .toSet()
-            .toList()
-          ..sort();
-        for (final name in names) {
-          options.add(StatusBarOption(label: name, value: '$fontsPath$name'));
-        }
-      }
-    } catch (_) {
-      // Source path may not be accessible on all devices.
-    }
-    if (current != 'Default' && current.isNotEmpty && !options.any((option) => option.value == current)) {
-      options.add(StatusBarOption(label: _fontDisplayLabel(current), value: current));
-    }
-    return options;
+    final choices = await DeadZoneFontService.listFonts(currentValue: current);
+    return choices
+        .map((choice) => StatusBarOption(label: choice.label, value: choice.value))
+        .toList(growable: false);
   }
 
-  String _fontDisplayLabel(String value) {
-    if (value == 'Default' || value.isEmpty) return 'Default';
-    return value.split('/').last;
-  }
+  String _fontDisplayLabel(String value) => DeadZoneFontService.displayLabel(value);
 
   bool get _supportsLivePreview =>
       widget.section.id == 'battery' || widget.section.id == 'clock';
