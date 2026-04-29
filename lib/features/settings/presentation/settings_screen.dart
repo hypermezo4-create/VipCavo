@@ -79,7 +79,7 @@ class SettingsScreen extends StatelessWidget {
             child: Column(children: <Widget>[
               const DeadZoneSectionHeader(title: 'Backgrounds'),
               DeadZoneColorRow(
-                icon: Icons.sunny_rounded,
+                icon: Icons.wb_sunny_rounded,
                 title: 'Light background',
                 subtitle: theme.selectedLightBackground.label,
                 color: theme.selectedLightBackground.color,
