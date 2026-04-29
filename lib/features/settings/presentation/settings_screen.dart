@@ -55,8 +55,7 @@ class SettingsScreen extends StatelessWidget {
                   DeadZoneColorRow(
                     icon: Icons.palette_rounded,
                     title: 'Primary color',
-                    subtitle: theme.selectedAccent.label,
-                    color: theme.selectedAccent.color,
+                    argb: theme.selectedAccent.color.toARGB32(),
                     onTap: () => _pickColor(context, title: 'Accent Color', options: DeadzonThemeController.accentOptions, selectedId: theme.selectedAccentId, onSelected: theme.setAccentColor),
                   ),
                   DeadZoneSelectRow(
@@ -81,15 +80,13 @@ class SettingsScreen extends StatelessWidget {
               DeadZoneColorRow(
                 icon: Icons.wb_sunny_rounded,
                 title: 'Light background',
-                subtitle: theme.selectedLightBackground.label,
-                color: theme.selectedLightBackground.color,
+                argb: theme.selectedLightBackground.color.toARGB32(),
                 onTap: () => _pickColor(context, title: 'Light Background Color', options: DeadzonThemeController.lightBackgroundOptions, selectedId: theme.selectedLightBackgroundId, onSelected: theme.setLightBackground),
               ),
               DeadZoneColorRow(
                 icon: Icons.brightness_2_rounded,
                 title: 'Dark background',
-                subtitle: theme.selectedDarkBackground.label,
-                color: theme.selectedDarkBackground.color,
+                argb: theme.selectedDarkBackground.color.toARGB32(),
                 onTap: () => _pickColor(context, title: 'Dark Background Color', options: DeadzonThemeController.darkBackgroundOptions, selectedId: theme.selectedDarkBackgroundId, onSelected: theme.setDarkBackground),
               ),
             ]),
@@ -148,20 +145,6 @@ class SettingsScreen extends StatelessWidget {
       actions: <Widget>[TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')), FilledButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
     ),
   );
-}
-
-class DeadZoneColorRow extends StatelessWidget {
-  const DeadZoneColorRow({required this.icon, required this.title, required this.subtitle, required this.color, required this.onTap, super.key});
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return DeadZoneNavigationRow(icon: icon, title: title, subtitle: subtitle, onTap: onTap, trailing: Container(width: 22, height: 22, decoration: BoxDecoration(color: color, shape: BoxShape.circle, border: Border.all(color: Theme.of(context).dividerColor))));
-  }
 }
 
 class DeadZoneOptionItem<T> {
