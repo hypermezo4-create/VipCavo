@@ -1198,7 +1198,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
           for (final entry in grouped.entries) ...<Widget>[
             SectionHeader(
               title: _groupTitle(entry.key),
-              subtitle: _groupSubtitle(entry.key),
+              subtitle: _groupSubtitle(entry.key) ?? 'Default section controls.',
             ),
             const SizedBox(height: 8),
             GlassCard(
@@ -1704,7 +1704,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
           for (final entry in grouped.entries) ...<Widget>[
             _BatterySectionCard(
               title: _groupTitle(entry.key),
-              subtitle: _groupSubtitle(entry.key),
+              subtitle: _groupSubtitle(entry.key) ?? 'Default section controls.',
               children: <Widget>[
                 for (var i = 0; i < entry.value.length; i++) ...<Widget>[
                   _SettingControl(
