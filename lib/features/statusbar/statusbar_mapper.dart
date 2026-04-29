@@ -1210,6 +1210,16 @@ class StatusBarMapper {
         max: 200,
       ),
       const StatusBarSettingItem(
+        legacyKey: 'status_icon_scale',
+        title: 'Status icon scale',
+        subtitle: 'Adjust icon scale for utility indicators',
+        controlType: StatusBarControlType.slider,
+        group: StatusBarStrings.groupStyle,
+        defaultValue: 100.0,
+        min: 50,
+        max: 150,
+      ),
+      const StatusBarSettingItem(
         legacyKey: 'status_icon_division',
         title: 'Status icon spacing',
         subtitle: 'Control spacing between utility icons',
@@ -1278,6 +1288,14 @@ class StatusBarMapper {
         group: StatusBarStrings.groupColor,
         defaultValue: '#B7C6FF',
       ),
+      const StatusBarSettingItem(
+        legacyKey: 'status_date_typefase',
+        title: 'Date font',
+        subtitle: 'Choose statusbar date font family',
+        controlType: StatusBarControlType.select,
+        group: StatusBarStrings.groupTypography,
+        defaultValue: 'Default',
+      ),
     ],
     'weather': <StatusBarSettingItem>[
       const StatusBarSettingItem(
@@ -1324,16 +1342,16 @@ class StatusBarMapper {
         group: StatusBarStrings.groupColor,
         defaultValue: '#8DE8FF',
       ),
+      const StatusBarSettingItem(
+        legacyKey: 'status_weather_typefase',
+        title: 'Weather font',
+        subtitle: 'Choose weather label font family',
+        controlType: StatusBarControlType.select,
+        group: StatusBarStrings.groupTypography,
+        defaultValue: 'Default',
+      ),
     ],
     'prompt_icon': <StatusBarSettingItem>[
-      const StatusBarSettingItem(
-        legacyKey: 'statusbar_prompt_enable',
-        title: 'Show prompt icon',
-        subtitle: 'Enable prompt indicator in status row',
-        controlType: StatusBarControlType.toggle,
-        group: StatusBarStrings.groupVisibility,
-        defaultValue: true,
-      ),
       const StatusBarSettingItem(
         legacyKey: 'elem_prompt_scale',
         title: 'Prompt size',
@@ -1353,14 +1371,6 @@ class StatusBarMapper {
         defaultValue: 0.0,
         min: -50,
         max: 50,
-      ),
-      const StatusBarSettingItem(
-        legacyKey: 'statusbar_prompt_color',
-        title: 'Prompt color',
-        subtitle: 'Apply accent color to prompt icon',
-        controlType: StatusBarControlType.color,
-        group: StatusBarStrings.groupColor,
-        defaultValue: '#E2B4FF',
       ),
     ],
     'background': <StatusBarSettingItem>[
