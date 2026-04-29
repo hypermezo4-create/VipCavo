@@ -29,7 +29,7 @@ class MountStudioScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<MountStudioController>();
-    final contentBottomPadding = (controller.currentTab == 4 ? 320.0 : 252.0) + MediaQuery.paddingOf(context).bottom;
+    final contentBottomPadding = (controller.currentTab == 4 ? 340.0 : 272.0) + MediaQuery.paddingOf(context).bottom;
 
     return Container(
       decoration: const BoxDecoration(gradient: DesignTokens.baseGradient),
@@ -228,7 +228,7 @@ class _SegmentTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 38,
+      height: 44,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 2),
         itemCount: tabs.length,
@@ -283,7 +283,7 @@ class _BottomActionBar extends StatelessWidget {
         border: Border.all(color: DeadzonThemeTokens.border(context)),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[

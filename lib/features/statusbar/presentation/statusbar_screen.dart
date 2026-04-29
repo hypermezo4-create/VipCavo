@@ -5,6 +5,7 @@ import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/core/utils/deadzone_color_utils.dart';
 import 'package:deadzon/core/widgets/deadzone_color_picker_sheet.dart';
+import 'package:deadzon/core/widgets/deadzone_font_picker_sheet.dart';
 import 'package:deadzon/core/widgets/deadzone_settings_widgets.dart';
 import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
@@ -1753,17 +1754,11 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
       title: setting.title ?? setting.legacyKey,
       colorValue: current,
       onTap: () async {
-        final selected = await showModalBottomSheet<int>(
+        final selected = await showDeadZoneColorPicker(
           context: context,
-          useSafeArea: true,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (sheetContext) => _BatteryColorSheet(
-            title: setting.title ?? setting.legacyKey,
-            current: current,
-            defaultValue: defaultValue,
-            onSelected: (value) => Navigator.of(sheetContext).pop(value),
-          ),
+          initialArgb: current,
+          defaultArgb: defaultValue,
+          title: setting.title ?? setting.legacyKey,
         );
         if (!context.mounted) return;
         if (selected != null) {
@@ -1781,19 +1776,10 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
       valueLabel: _fontDisplayLabel(current),
       onTap: () async {
         final pageContext = context;
-        final options = await _batteryFontOptions(current);
-        if (!pageContext.mounted) return;
-        final selected = await showModalBottomSheet<String>(
+        final selected = await showDeadZoneFontPicker(
           context: pageContext,
-          useSafeArea: true,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (sheetContext) => _BatteryOptionSheet(
-            title: setting.title ?? setting.legacyKey,
-            selectedValue: current,
-            options: options,
-            onSelected: (value) => Navigator.of(sheetContext).pop(value),
-          ),
+          title: setting.title ?? setting.legacyKey,
+          currentValue: current,
         );
         if (!pageContext.mounted) return;
         if (selected != null) {
@@ -1991,19 +1977,10 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
       valueLabel: _fontDisplayLabel(current),
       onTap: () async {
         final pageContext = context;
-        final options = await _batteryFontOptions(current);
-        if (!pageContext.mounted) return;
-        final selected = await showModalBottomSheet<String>(
+        final selected = await showDeadZoneFontPicker(
           context: pageContext,
-          useSafeArea: true,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (sheetContext) => _BatteryOptionSheet(
-            title: setting.title ?? setting.legacyKey,
-            selectedValue: current,
-            options: options,
-            onSelected: (value) => Navigator.of(sheetContext).pop(value),
-          ),
+          title: setting.title ?? setting.legacyKey,
+          currentValue: current,
         );
         if (!pageContext.mounted) return;
         if (selected != null) {
@@ -2058,17 +2035,11 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
       title: label,
       colorValue: current,
       onTap: () async {
-        final selected = await showModalBottomSheet<int>(
+        final selected = await showDeadZoneColorPicker(
           context: context,
-          useSafeArea: true,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (sheetContext) => _BatteryColorSheet(
-            title: label,
-            current: current,
-            defaultValue: defaultValue,
-            onSelected: (value) => Navigator.of(sheetContext).pop(value),
-          ),
+          initialArgb: current,
+          defaultArgb: defaultValue,
+          title: label,
         );
         if (!context.mounted) return;
         if (selected != null) {
@@ -2116,19 +2087,10 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
       valueLabel: _fontDisplayLabel(current),
       onTap: () async {
         final pageContext = context;
-        final options = await _batteryFontOptions(current);
-        if (!pageContext.mounted) return;
-        final selected = await showModalBottomSheet<String>(
+        final selected = await showDeadZoneFontPicker(
           context: pageContext,
-          useSafeArea: true,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (sheetContext) => _BatteryOptionSheet(
-            title: label,
-            selectedValue: current,
-            options: options,
-            onSelected: (value) => Navigator.of(sheetContext).pop(value),
-          ),
+          title: label,
+          currentValue: current,
         );
         if (!pageContext.mounted) return;
         if (selected != null) {
@@ -2204,19 +2166,10 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
       subtitle: _batterySubtitle(setting),
       valueLabel: _fontDisplayLabel(current),
       onTap: () async {
-        final options = await _batteryFontOptions(current);
-        if (!mounted) return;
-        final selected = await showModalBottomSheet<String>(
+        final selected = await showDeadZoneFontPicker(
           context: context,
-          useSafeArea: true,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (sheetContext) => _BatteryOptionSheet(
-            title: _batteryLabel(setting),
-            selectedValue: current,
-            options: options,
-            onSelected: (value) => Navigator.of(sheetContext).pop(value),
-          ),
+          title: _batteryLabel(setting),
+          currentValue: current,
         );
         if (!mounted) return;
         if (selected != null) {
@@ -2263,17 +2216,11 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
       subtitle: _batterySubtitle(setting),
       colorValue: current,
       onTap: () async {
-        final selected = await showModalBottomSheet<int>(
+        final selected = await showDeadZoneColorPicker(
           context: context,
-          useSafeArea: true,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (sheetContext) => _BatteryColorSheet(
-            title: _batteryLabel(setting),
-            current: current,
-            defaultValue: (setting.defaultValue as int?) ?? 0,
-            onSelected: (value) => Navigator.of(sheetContext).pop(value),
-          ),
+          initialArgb: current,
+          defaultArgb: (setting.defaultValue as int?) ?? 0,
+          title: _batteryLabel(setting),
         );
         if (!mounted) return;
         if (selected != null) {
