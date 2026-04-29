@@ -4179,8 +4179,8 @@ class _NotificationIconsPreview extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           const SectionHeader(
-            title: 'Preview',
-            subtitle: 'Static notification row style preview.',
+            title: 'Sample',
+            subtitle: 'Static notification row style sample.',
           ),
           const SizedBox(height: 12),
           Container(

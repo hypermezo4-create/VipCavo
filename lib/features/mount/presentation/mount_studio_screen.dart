@@ -8,7 +8,6 @@ import 'package:deadzon/features/mount/presentation/widgets/mount_color_tab.dart
 import 'package:deadzon/features/mount/presentation/widgets/mount_components_tab.dart';
 import 'package:deadzon/features/mount/presentation/widgets/mount_control_apps_tab.dart';
 import 'package:deadzon/features/mount/presentation/widgets/mount_effects_tab.dart';
-import 'package:deadzon/features/mount/presentation/widgets/mount_live_preview.dart';
 import 'package:deadzon/features/mount/presentation/widgets/mount_profiles_tab.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +17,6 @@ class MountStudioScreen extends StatelessWidget {
   const MountStudioScreen({super.key});
 
   static const List<String> _tabs = <String>[
-    'Preview',
     'Colors',
     'App Effects',
     'Components',
@@ -29,7 +27,7 @@ class MountStudioScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<MountStudioController>();
-    final contentBottomPadding = (controller.currentTab == 4 ? 340.0 : 272.0) + MediaQuery.paddingOf(context).bottom;
+    final contentBottomPadding = (controller.currentTab == 3 ? 340.0 : 272.0) + MediaQuery.paddingOf(context).bottom;
 
     return Container(
       decoration: const BoxDecoration(gradient: DesignTokens.baseGradient),
@@ -61,7 +59,6 @@ class MountStudioScreen extends StatelessWidget {
               right: 16,
               bottom: 12 + MediaQuery.paddingOf(context).bottom,
               child: _BottomActionBar(
-                onPreview: () => controller.setTab(0),
                 onReset: () => _showResetDialog(context, controller),
                 liveApplyEnabled: controller.config.liveApplyEnabled,
                 onLiveApplyChanged: controller.setLiveApplyEnabled,
@@ -84,8 +81,6 @@ class MountStudioScreen extends StatelessWidget {
   Widget _tabContent(BuildContext context, MountStudioController controller) {
     switch (controller.currentTab) {
       case 0:
-        return MountLivePreview(config: controller.config);
-      case 1:
         return MountColorTab(
           config: controller.config,
           paletteLibrary: controller.paletteLibrary,
@@ -106,7 +101,7 @@ class MountStudioScreen extends StatelessWidget {
             }
           },
         );
-      case 2:
+      case 1:
         return MountEffectsTab(
           config: controller.config,
           onChanged: (key, value) {
@@ -128,14 +123,14 @@ class MountStudioScreen extends StatelessWidget {
             }
           },
         );
-      case 3:
+      case 2:
         return MountComponentsTab(
           config: controller.config,
           onTapItem: (key) => _showComponentColorPicker(context, controller, key),
         );
-      case 4:
+      case 3:
         return MountControlAppsTab(controller: controller);
-      case 5:
+      case 4:
         return MountProfilesTab(
           profiles: controller.profiles,
           activeProfileId: controller.config.activeProfileId,
@@ -259,7 +254,6 @@ class _SegmentTabs extends StatelessWidget {
 
 class _BottomActionBar extends StatelessWidget {
   const _BottomActionBar({
-    required this.onPreview,
     required this.onReset,
     required this.onApply,
     required this.liveApplyEnabled,
@@ -267,7 +261,6 @@ class _BottomActionBar extends StatelessWidget {
     required this.accentColor,
   });
 
-  final VoidCallback onPreview;
   final VoidCallback onReset;
   final VoidCallback onApply;
   final bool liveApplyEnabled;
@@ -300,8 +293,6 @@ class _BottomActionBar extends StatelessWidget {
             ),
             Row(
               children: <Widget>[
-                Expanded(child: OutlinedButton(onPressed: onPreview, child: const Text('Preview'))),
-                const SizedBox(width: 8),
                 Expanded(child: OutlinedButton(onPressed: onReset, child: const Text('Reset'))),
                 const SizedBox(width: 8),
                 Expanded(child: FilledButton(onPressed: onApply, child: const Text('Apply'))),
