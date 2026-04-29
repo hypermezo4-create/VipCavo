@@ -3625,7 +3625,9 @@ class _SettingControl extends StatelessWidget {
           ),
         );
       case StatusBarControlType.color:
-        final currentArgb = value is int ? value : DeadzoneColorUtils.parseHex((value as String?) ?? '#00000000', fallbackArgb: 0);
+        final int currentArgb = value is int
+            ? value
+            : DeadzoneColorUtils.parseHex((value as String?) ?? '#00000000', fallbackArgb: 0);
         return SettingsRow(
           icon: Icons.palette_rounded,
           iconColor: const Color(0xFFA1E9DB),
@@ -3687,13 +3689,13 @@ class _SettingControl extends StatelessWidget {
   }
 
   Future<void> _showColorPicker(BuildContext context, int currentArgb) async {
-    final selected = await showDeadZoneColorPicker(context: context, initialArgb: currentArgb, defaultArgb: 0x00000000, title: _title);
-    if (!context.mounted || selected == null) return;
+    final int? selectedArgb = await showDeadZoneColorPicker(context: context, initialArgb: currentArgb, defaultArgb: 0x00000000, title: _title);
+    if (!context.mounted || selectedArgb == null) return;
     if (value is int || setting.defaultValue is int) {
-      onChanged(selected);
+      onChanged(selectedArgb);
       return;
     }
-    onChanged(DeadzoneColorUtils.toArgbHex(selected));
+    onChanged(DeadzoneColorUtils.toArgbHex(selectedArgb));
   }
 
   TextStyle _fontFor(String value, TextStyle fallback) {
