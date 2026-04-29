@@ -329,13 +329,13 @@ class DeadzonThemeTokens {
     return Color.lerp(of(context).selectedDarkBackground.color, of(context).backgroundTint, 0.45)?.withValues(alpha: 0.9) ?? const Color(0xDD0D1B2B);
   }
 
-  static _TokenPalette palette(BuildContext context) {
+  static DeadzonThemePalette palette(BuildContext context) {
     final controller = of(context);
     final isLight = Theme.of(context).brightness == Brightness.light;
     final accent = controller.accentColor;
     if (isLight) {
       final pageBg = Color.lerp(controller.selectedLightBackground.color, const Color(0xFFEAF3FF), 0.36) ?? const Color(0xFFEAF3FF);
-      return _TokenPalette(
+      return DeadzonThemePalette(
         appBackground: pageBg,
         pageBackground: Color.lerp(pageBg, Colors.white, 0.2) ?? pageBg,
         cardBackground: Color.lerp(pageBg, Colors.white, 0.62)!.withValues(alpha: 0.86),
@@ -364,7 +364,7 @@ class DeadzonThemeTokens {
       );
     }
     final pageBg = Color.lerp(controller.selectedDarkBackground.color, const Color(0xFF050C19), 0.44) ?? const Color(0xFF050C19);
-    return _TokenPalette(
+    return DeadzonThemePalette(
       appBackground: pageBg,
       pageBackground: Color.lerp(pageBg, const Color(0xFF030811), 0.35) ?? pageBg,
       cardBackground: Colors.white.withValues(alpha: 0.08),
@@ -394,8 +394,8 @@ class DeadzonThemeTokens {
   }
 }
 
-class _TokenPalette {
-  const _TokenPalette({
+class DeadzonThemePalette {
+  const DeadzonThemePalette({
     required this.appBackground,
     required this.pageBackground,
     required this.cardBackground,

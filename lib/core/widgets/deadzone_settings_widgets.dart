@@ -145,3 +145,67 @@ class DeadZoneSwitchRow extends StatelessWidget {
     );
   }
 }
+
+class DeadZoneSliderRow extends StatelessWidget {
+  const DeadZoneSliderRow({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.onChanged,
+    super.key,
+    this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final double value;
+  final double min;
+  final double max;
+  final ValueChanged<double> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    return Column(
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            _DeadZoneIconChip(icon: icon),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+                Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: onSurface)),
+                if (subtitle != null) Text(subtitle!, style: TextStyle(fontSize: 12, color: onSurface.withValues(alpha: 0.7))),
+              ]),
+            ),
+            DeadZoneValueChip(label: value.toStringAsFixed(0)),
+          ],
+        ),
+        Slider(value: value, min: min, max: max, onChanged: onChanged),
+      ],
+    );
+  }
+}
+
+class DeadZoneSelectRow extends StatelessWidget {
+  const DeadZoneSelectRow({required this.icon, required this.title, required this.valueLabel, required this.onTap, super.key, this.subtitle});
+  final IconData icon;
+  final String title;
+  final String valueLabel;
+  final String? subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return DeadZoneNavigationRow(
+      icon: icon,
+      title: title,
+      subtitle: subtitle ?? valueLabel,
+      trailing: DeadZoneValueChip(label: valueLabel),
+      onTap: onTap,
+    );
+  }
+}
