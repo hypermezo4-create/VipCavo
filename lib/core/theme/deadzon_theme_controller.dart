@@ -324,6 +324,7 @@ class DeadzonThemeTokens {
   static Color sheetBackground(BuildContext context) => palette(context).sheetBackground;
   static Color buttonBackground(BuildContext context) => palette(context).buttonBackground;
   static Color buttonText(BuildContext context) => palette(context).buttonText;
+  static Color shadow(BuildContext context) => palette(context).shadow;
 
   static Color cardTint(BuildContext context) => of(context).cardTint;
 
@@ -375,6 +376,7 @@ class DeadzonThemeTokens {
         sheetBackground: Color.lerp(pageBg, Colors.white, 0.65)!.withValues(alpha: 0.98),
         buttonBackground: accent,
         buttonText: const Color(0xFF08211A),
+        shadow: const Color(0xFF1E2A38).withValues(alpha: 0.16),
       );
     }
     final pageBg = Color.lerp(controller.selectedDarkBackground.color, const Color(0xFF050C19), 0.44) ?? const Color(0xFF050C19);
@@ -406,6 +408,7 @@ class DeadzonThemeTokens {
       sheetBackground: const Color(0xEE0A1626),
       buttonBackground: accent.withValues(alpha: 0.9),
       buttonText: const Color(0xFF02110D),
+      shadow: const Color(0xFF000000).withValues(alpha: 0.34),
     );
   }
 }
@@ -439,6 +442,7 @@ class DeadzonThemePalette {
     required this.sheetBackground,
     required this.buttonBackground,
     required this.buttonText,
+    required this.shadow,
   });
   final Color appBackground;
   final Color pageBackground;
@@ -467,4 +471,5 @@ class DeadzonThemePalette {
   final Color sheetBackground;
   final Color buttonBackground;
   final Color buttonText;
+  final Color shadow;
 }
