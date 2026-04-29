@@ -16,12 +16,12 @@ class DesignTokens {
 
   static const EdgeInsets pagePadding = EdgeInsets.fromLTRB(18, 12, 18, 140);
 
-  static const double mainTitle = 32;
-  static const double detailTitle = 31;
+  static const double mainTitle = 28;
+  static const double detailTitle = 26;
   static const double pageSubtitle = 13.4;
-  static const double sectionTitle = 22;
-  static const double rowTitle = 16.2;
-  static const double rowSubtitle = 12.4;
+  static const double sectionTitle = 14;
+  static const double rowTitle = 15.2;
+  static const double rowSubtitle = 12;
   static const double valueChip = 13;
   static const double buttonText = 14.5;
   static const double navLabel = 11.2;
