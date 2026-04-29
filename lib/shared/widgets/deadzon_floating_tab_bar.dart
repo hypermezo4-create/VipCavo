@@ -41,7 +41,7 @@ class DeadzonFloatingTabBar extends StatelessWidget {
           child: Container(
             height: 70,
             decoration: BoxDecoration(
-              color: backgroundTint.withValues(alpha: 0.93),
+              color: DeadzonThemeTokens.bottomNavBackground(context),
               borderRadius: BorderRadius.circular(36),
               border: Border.all(color: borderColor),
               boxShadow: <BoxShadow>[
@@ -64,7 +64,7 @@ class DeadzonFloatingTabBar extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: DeadzonThemeTokens.bottomNavSelectedBackground(context),
                           borderRadius: BorderRadius.circular(28),
-                          border: Border.all(color: accentColor.withValues(alpha: 0.45)),
+                          border: Border.all(color: DeadzonThemeTokens.border(context)),
                         ),
                       ),
                     ),
@@ -80,14 +80,14 @@ class DeadzonFloatingTabBar extends StatelessWidget {
                               duration: const Duration(milliseconds: 280),
                               curve: Curves.easeOutCubic,
                               style: TextStyle(
-                                color: selected ? DeadzonThemeTokens.bottomNavSelectedText(context) : idleColor,
+                                color: selected ? DeadzonThemeTokens.textAccent(context) : idleColor,
                                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                                 fontSize: DesignTokens.navLabel,
                               ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: <Widget>[
-                                  Icon(item.icon, color: selected ? DeadzonThemeTokens.bottomNavSelectedText(context) : idleColor, size: selected ? 21 : 19),
+                                  Icon(item.icon, color: selected ? DeadzonThemeTokens.iconAccent(context) : idleColor, size: selected ? 21 : 19),
                                   const SizedBox(height: 3),
                                   Text(item.label),
                                 ],

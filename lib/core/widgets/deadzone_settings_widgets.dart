@@ -34,8 +34,9 @@ class DeadZoneSectionHeader extends StatelessWidget {
   final String? subtitle;
   @override
   Widget build(BuildContext context) {
-    final accent = DeadzonThemeTokens.accent(context);
-    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final accent = DeadzonThemeTokens.iconAccent(context);
+    final onSurface = DeadzonThemeTokens.textPrimary(context);
+    final secondary = DeadzonThemeTokens.textSecondary(context);
     return Padding(
       padding: const EdgeInsets.only(top: 6, bottom: 8),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
@@ -59,7 +60,8 @@ class DeadZoneNavigationRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final onSurface = DeadzonThemeTokens.textPrimary(context);
+    final secondary = DeadzonThemeTokens.textSecondary(context);
     return InkWell(
       borderRadius: BorderRadius.circular(18),
       onTap: onTap,
@@ -71,10 +73,10 @@ class DeadZoneNavigationRow extends StatelessWidget {
           Expanded(
             child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
               Text(title, style: TextStyle(fontSize: 15.4, fontWeight: FontWeight.w700, color: onSurface)),
-              Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: onSurface.withValues(alpha: 0.7))),
+              Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: secondary.withValues(alpha: 0.86))),
             ]),
           ),
-          trailing ?? Icon(Icons.chevron_right_rounded, color: onSurface.withValues(alpha: 0.6)),
+          trailing ?? Icon(Icons.chevron_right_rounded, color: DeadzonThemeTokens.iconAccent(context).withValues(alpha: 0.74)),
         ]),
       ),
     );
@@ -131,7 +133,8 @@ class DeadZoneSwitchRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final onSurface = DeadzonThemeTokens.textPrimary(context);
+    final secondary = DeadzonThemeTokens.textSecondary(context);
     return SizedBox(
       height: 68,
       child: Row(children: <Widget>[
@@ -139,9 +142,15 @@ class DeadZoneSwitchRow extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
           Text(title, style: TextStyle(fontSize: 15.2, fontWeight: FontWeight.w600, color: onSurface)),
-          if (subtitle != null) Text(subtitle!, style: TextStyle(fontSize: 12, color: onSurface.withValues(alpha: 0.68))),
+          if (subtitle != null) Text(subtitle!, style: TextStyle(fontSize: 12, color: secondary.withValues(alpha: 0.86))),
         ])),
-        Switch.adaptive(value: value, onChanged: onChanged),
+        SwitchTheme(
+          data: SwitchThemeData(
+            thumbColor: WidgetStateProperty.resolveWith((states) => states.contains(WidgetState.selected) ? DeadzonThemeTokens.switchActive(context) : DeadzonThemeTokens.switchInactive(context)),
+            trackColor: WidgetStateProperty.resolveWith((states) => states.contains(WidgetState.selected) ? DeadzonThemeTokens.switchActive(context).withValues(alpha: 0.46) : DeadzonThemeTokens.switchInactive(context).withValues(alpha: 0.42)),
+          ),
+          child: Switch.adaptive(value: value, onChanged: onChanged),
+        ),
       ]),
     );
   }
@@ -169,7 +178,8 @@ class DeadZoneSliderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final onSurface = DeadzonThemeTokens.textPrimary(context);
+    final secondary = DeadzonThemeTokens.textSecondary(context);
     return Column(
       children: <Widget>[
         Row(
@@ -179,13 +189,20 @@ class DeadZoneSliderRow extends StatelessWidget {
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
                 Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: onSurface)),
-                if (subtitle != null) Text(subtitle!, style: TextStyle(fontSize: 12, color: onSurface.withValues(alpha: 0.7))),
+                if (subtitle != null) Text(subtitle!, style: TextStyle(fontSize: 12, color: secondary.withValues(alpha: 0.86))),
               ]),
             ),
             DeadZoneValueChip(label: value.toStringAsFixed(0)),
           ],
         ),
-        Slider(value: value, min: min, max: max, onChanged: onChanged),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            activeTrackColor: DeadzonThemeTokens.sliderActive(context),
+            thumbColor: DeadzonThemeTokens.sliderActive(context),
+            inactiveTrackColor: DeadzonThemeTokens.sliderInactive(context),
+          ),
+          child: Slider(value: value, min: min, max: max, onChanged: onChanged),
+        ),
       ],
     );
   }

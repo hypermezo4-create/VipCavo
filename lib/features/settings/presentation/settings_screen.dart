@@ -165,12 +165,12 @@ class DeadZoneOptionSheet<T> extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-          Text(title, style: const TextStyle(fontSize: DesignTokens.sectionTitle, fontWeight: FontWeight.w700)),
+          Text(title, style: TextStyle(fontSize: DesignTokens.sectionTitle, fontWeight: FontWeight.w700, color: DeadzonThemeTokens.textPrimary(context))),
           const SizedBox(height: 10),
           ...options.map((option) => ListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text(option.label),
-            trailing: Icon(option.value == selected ? Icons.check_circle_rounded : Icons.circle_outlined),
+            title: Text(option.label, style: TextStyle(color: DeadzonThemeTokens.textPrimary(context))),
+            trailing: Icon(option.value == selected ? Icons.check_circle_rounded : Icons.circle_outlined, color: option.value == selected ? DeadzonThemeTokens.checkboxActive(context) : DeadzonThemeTokens.checkboxInactive(context)),
             onTap: () => Navigator.pop(context, option.value),
           )),
         ]),
