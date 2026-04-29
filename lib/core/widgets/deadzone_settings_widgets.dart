@@ -36,7 +36,6 @@ class DeadZoneSectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final accent = DeadzonThemeTokens.iconAccent(context);
     final onSurface = DeadzonThemeTokens.textPrimary(context);
-    final secondary = DeadzonThemeTokens.textSecondary(context);
     return Padding(
       padding: const EdgeInsets.only(top: 6, bottom: 8),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
@@ -61,7 +60,6 @@ class DeadZoneNavigationRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onSurface = DeadzonThemeTokens.textPrimary(context);
-    final secondary = DeadzonThemeTokens.textSecondary(context);
     return InkWell(
       borderRadius: BorderRadius.circular(18),
       onTap: onTap,
@@ -135,7 +133,6 @@ class DeadZoneSwitchRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onSurface = DeadzonThemeTokens.textPrimary(context);
-    final secondary = DeadzonThemeTokens.textSecondary(context);
     return SizedBox(
       height: 68,
       child: Row(children: <Widget>[
@@ -180,7 +177,6 @@ class DeadZoneSliderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onSurface = DeadzonThemeTokens.textPrimary(context);
-    final secondary = DeadzonThemeTokens.textSecondary(context);
     return Column(
       children: <Widget>[
         Row(
