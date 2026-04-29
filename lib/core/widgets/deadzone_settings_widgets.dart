@@ -99,3 +99,48 @@ class _DeadZoneIconChip extends StatelessWidget {
     );
   }
 }
+
+class DeadZoneValueChip extends StatelessWidget {
+  const DeadZoneValueChip({required this.label, super.key});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = DeadzonThemeTokens.accent(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accent.withValues(alpha: 0.22)),
+      ),
+      child: Text(label, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: accent)),
+    );
+  }
+}
+
+class DeadZoneSwitchRow extends StatelessWidget {
+  const DeadZoneSwitchRow({required this.icon, required this.title, required this.value, required this.onChanged, this.subtitle, super.key});
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    return SizedBox(
+      height: 68,
+      child: Row(children: <Widget>[
+        _DeadZoneIconChip(icon: icon),
+        const SizedBox(width: 10),
+        Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+          Text(title, style: TextStyle(fontSize: 15.2, fontWeight: FontWeight.w600, color: onSurface)),
+          if (subtitle != null) Text(subtitle!, style: TextStyle(fontSize: 12, color: onSurface.withValues(alpha: 0.68))),
+        ])),
+        Switch.adaptive(value: value, onChanged: onChanged),
+      ]),
+    );
+  }
+}
