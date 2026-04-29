@@ -117,8 +117,10 @@ class DeadzonThemeController extends ChangeNotifier {
   Color iconAccentColor = MountDefaults.baseConfig().iconAccentColor;
   Color textAccentColor = MountDefaults.baseConfig().textAccentColor;
   Color switchOnColor = MountDefaults.baseConfig().switchOnColor;
+  Color switchOffColor = MountDefaults.baseConfig().switchOffColor;
   Color sliderColor = MountDefaults.baseConfig().seekbarColor;
   Color checkboxColor = MountDefaults.baseConfig().checkboxOnColor;
+  Color checkboxOffColor = MountDefaults.baseConfig().checkboxOffColor;
   String activeMountProfileId = 'default';
   bool liveApplyEnabled = true;
   ThemeMode themeMode = ThemeMode.system;
@@ -254,8 +256,10 @@ class DeadzonThemeController extends ChangeNotifier {
     iconAccentColor = config.iconAccentColor;
     textAccentColor = config.textAccentColor;
     switchOnColor = config.switchOnColor;
+    switchOffColor = config.switchOffColor;
     sliderColor = config.seekbarColor;
     checkboxColor = config.checkboxOnColor;
+    checkboxOffColor = config.checkboxOffColor;
     activeMountProfileId = config.activeProfileId;
     liveApplyEnabled = config.liveApplyEnabled;
     if (notify) {
@@ -313,6 +317,8 @@ class DeadzonThemeTokens {
   static Color bottomNavSelectedText(BuildContext context) => palette(context).bottomNavSelectedText;
   static Color switchActive(BuildContext context) => palette(context).switchActive;
   static Color switchInactive(BuildContext context) => palette(context).switchInactive;
+  static Color checkboxActive(BuildContext context) => palette(context).checkboxActive;
+  static Color checkboxInactive(BuildContext context) => palette(context).checkboxInactive;
   static Color sliderActive(BuildContext context) => palette(context).sliderActive;
   static Color sliderInactive(BuildContext context) => palette(context).sliderInactive;
   static Color sheetBackground(BuildContext context) => palette(context).sheetBackground;
@@ -361,7 +367,9 @@ class DeadzonThemeTokens {
         bottomNavText: const Color(0xFF3A4D5E),
         bottomNavSelectedText: const Color(0xFF0F2532),
         switchActive: accent,
-        switchInactive: const Color(0xFF89A0B3),
+        switchInactive: controller.switchOffColor.withValues(alpha: 0.92),
+        checkboxActive: controller.checkboxColor,
+        checkboxInactive: controller.checkboxOffColor.withValues(alpha: 0.92),
         sliderActive: accent,
         sliderInactive: const Color(0xFFAAC0D1),
         sheetBackground: Color.lerp(pageBg, Colors.white, 0.65)!.withValues(alpha: 0.98),
@@ -390,7 +398,9 @@ class DeadzonThemeTokens {
       bottomNavText: const Color(0xFFC6DAE6),
       bottomNavSelectedText: const Color(0xFFF2FFFF),
       switchActive: accent,
-      switchInactive: const Color(0xFF3C5367),
+      switchInactive: controller.switchOffColor.withValues(alpha: 0.82),
+      checkboxActive: controller.checkboxColor,
+      checkboxInactive: controller.checkboxOffColor.withValues(alpha: 0.82),
       sliderActive: accent,
       sliderInactive: const Color(0xFF355164),
       sheetBackground: const Color(0xEE0A1626),
@@ -422,6 +432,8 @@ class DeadzonThemePalette {
     required this.bottomNavSelectedText,
     required this.switchActive,
     required this.switchInactive,
+    required this.checkboxActive,
+    required this.checkboxInactive,
     required this.sliderActive,
     required this.sliderInactive,
     required this.sheetBackground,
@@ -448,6 +460,8 @@ class DeadzonThemePalette {
   final Color bottomNavSelectedText;
   final Color switchActive;
   final Color switchInactive;
+  final Color checkboxActive;
+  final Color checkboxInactive;
   final Color sliderActive;
   final Color sliderInactive;
   final Color sheetBackground;

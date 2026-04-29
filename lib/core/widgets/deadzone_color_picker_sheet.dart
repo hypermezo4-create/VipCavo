@@ -1,3 +1,4 @@
+import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/core/utils/deadzone_color_utils.dart';
 import 'package:flutter/material.dart';
 
@@ -76,15 +77,15 @@ class _DeadZoneColorPickerSheetState extends State<DeadZoneColorPickerSheet> {
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xEE0A1721),
+        color: DeadzonThemeTokens.sheetBackground(context),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+        border: Border.all(color: DeadzonThemeTokens.border(context)),
       ),
       padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(context).padding.bottom),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(widget.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
+          Text(widget.title, style: TextStyle(color: DeadzonThemeTokens.textPrimary(context), fontWeight: FontWeight.w700, fontSize: 18)),
           const SizedBox(height: 12),
           _SvSquare(
             hsv: _hsv,
@@ -125,17 +126,17 @@ class _DeadZoneColorPickerSheetState extends State<DeadZoneColorPickerSheet> {
                 decoration: BoxDecoration(
                   color: color,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white24),
+                  border: Border.all(color: DeadzonThemeTokens.border(context)),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: TextField(
                   controller: _hex,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
+                  style: TextStyle(color: DeadzonThemeTokens.textPrimary(context)),
+                  decoration: InputDecoration(
                     labelText: '#AARRGGBB',
-                    labelStyle: TextStyle(color: Colors.white70),
+                    labelStyle: TextStyle(color: DeadzonThemeTokens.textSecondary(context)),
                   ),
                   onSubmitted: (v) {
                     final parsed = DeadzoneColorUtils.parseHex(v, fallbackArgb: _argb);

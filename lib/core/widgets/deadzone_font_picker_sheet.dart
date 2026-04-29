@@ -1,4 +1,5 @@
 import 'package:deadzon/core/services/deadzone_font_service.dart';
+import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:flutter/material.dart';
 
 Future<String?> showDeadZoneFontPicker({
@@ -46,7 +47,7 @@ class _DeadZoneFontPickerSheetState extends State<DeadZoneFontPickerSheet> {
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(widget.title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
+                Text(widget.title, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17, color: DeadzonThemeTokens.textPrimary(context))),
                 const SizedBox(height: 10),
                 if (snapshot.connectionState == ConnectionState.waiting)
                   const Padding(padding: EdgeInsets.all(18), child: CircularProgressIndicator())
@@ -60,7 +61,7 @@ class _DeadZoneFontPickerSheetState extends State<DeadZoneFontPickerSheet> {
                         return ListTile(
                           title: Text(item.label),
                           subtitle: item.exists ? null : const Text('Missing from /product/media/fonts'),
-                          trailing: Icon(item.value == selected ? Icons.check_circle : Icons.circle_outlined),
+                          trailing: Icon(item.value == selected ? Icons.check_circle : Icons.circle_outlined, color: item.value == selected ? DeadzonThemeTokens.checkboxActive(context) : DeadzonThemeTokens.checkboxInactive(context)),
                           onTap: () => Navigator.of(context).pop(item.value),
                         );
                       },
