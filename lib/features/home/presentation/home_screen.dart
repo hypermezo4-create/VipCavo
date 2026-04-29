@@ -35,7 +35,7 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(height: 10),
             DeadZoneSettingsCard(
               child: Row(children: <Widget>[
-                Icon(Icons.verified_rounded, color: DeadzonThemeTokens.accent(context), size: 18), const SizedBox(width: 8),
+                Icon(Icons.verified_rounded, color: DeadzonThemeTokens.iconAccent(context), size: 18), const SizedBox(width: 8),
                 const Expanded(child: Text('Base Alpha • CN 3.0.303', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600))),
               ]),
             ),

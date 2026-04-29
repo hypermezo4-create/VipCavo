@@ -676,7 +676,7 @@ class _StatusbarIconTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: module.module.color.withValues(alpha: 0.78)),
           ),
-          child: Icon(module.module.icon, size: 16, color: Colors.white),
+          child: Icon(module.module.icon, size: 16, color: DeadzonThemeTokens.iconAccent(context)),
         ),
       ),
     );
@@ -717,10 +717,10 @@ class _StudioActionButton extends StatelessWidget {
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: BorderSide(color: const Color(0xFF68DFFF).withValues(alpha: 0.42)),
+          side: BorderSide(color: DeadzonThemeTokens.border(context).withValues(alpha: 0.9)),
         ),
       ),
-      icon: Icon(icon, size: 18, color: const Color(0xFF8DE8FF)),
+      icon: Icon(icon, size: 18, color: DeadzonThemeTokens.iconAccent(context)),
       label: Text(label, style: const TextStyle(fontWeight: FontWeight.w800)),
     );
   }

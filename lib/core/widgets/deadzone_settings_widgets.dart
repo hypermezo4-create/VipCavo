@@ -90,16 +90,17 @@ class DeadZoneIconChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = DeadzonThemeTokens.accent(context);
+    final iconAccent = DeadzonThemeTokens.iconAccent(context);
+    final border = DeadzonThemeTokens.border(context);
     return Container(
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: selected ? 0.16 : 0.1),
+        color: iconAccent.withValues(alpha: selected ? 0.24 : 0.1),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withValues(alpha: selected ? 0.26 : 0.18)),
+        border: Border.all(color: selected ? iconAccent.withValues(alpha: 0.52) : border.withValues(alpha: 0.88)),
       ),
-      child: Icon(icon, size: 21, color: selected ? accent : accent.withValues(alpha: 0.84)),
+      child: Icon(icon, size: 21, color: selected ? iconAccent : iconAccent.withValues(alpha: 0.74)),
     );
   }
 }
