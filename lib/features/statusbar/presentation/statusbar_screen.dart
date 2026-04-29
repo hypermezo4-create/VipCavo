@@ -3475,6 +3475,7 @@ class _SettingControl extends StatelessWidget {
   final bool isResizeSection;
 
   String get _title => setting.title ?? setting.legacyKey;
+  String _fontDisplayLabel(String? value) => DeadZoneFontService.displayLabel(value);
 
   @override
   Widget build(BuildContext context) {
@@ -4053,99 +4054,6 @@ class _StaticColorTools {
       default:
         return fallback;
     }
-  }
-}
-
-class _NotificationIconsPreview extends StatelessWidget {
-  const _NotificationIconsPreview({required this.values});
-
-  final Map<String, Object?> values;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorRaw = values['notif_icon_color'];
-    final tint = switch (colorRaw) {
-      final int value => Color(value.toUnsigned(32)),
-      final num value => Color(value.toInt().toUnsigned(32)),
-      final String value => _parseHex(value),
-      _ => const Color(0xFFB7F5FF),
-    };
-    final scale = (((values['notif_icon_scale'] as num?) ?? 100).toDouble() / 100).clamp(0, 1.5).toDouble();
-    final zoom = (((values['notif_icon_zoom'] as num?) ?? 100).toDouble() / 100).clamp(0.1, 1.5).toDouble();
-    final spacing = (((values['notif_icon_division'] as num?) ?? 0).toDouble() / 8).clamp(-6.25, 6.25).toDouble();
-    final iconSize = (12.5 * zoom * scale).clamp(8, 20).toDouble();
-    final rowIcons = <IconData>[
-      Icons.notifications_active_rounded,
-      Icons.chat_bubble_rounded,
-      Icons.mail_rounded,
-      Icons.alarm_rounded,
-    ];
-    final reverse = (values['reverse_notification_sorting_order'] as bool?) ?? false;
-    final shownIcons = reverse ? rowIcons.reversed.toList() : rowIcons;
-
-    return GlassCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          const SectionHeader(
-            title: 'Sample',
-            subtitle: 'Static notification row style sample.',
-          ),
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: const Color(0xFF102231).withValues(alpha: 0.72),
-              border: Border.all(color: const Color(0xFF8DE8FF).withValues(alpha: 0.2)),
-            ),
-            child: Row(
-              children: <Widget>[
-                const Expanded(
-                  child: Text(
-                    '8:45',
-                    style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w700, letterSpacing: 0.5),
-                  ),
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: shownIcons
-                      .map(
-                        (icon) => Padding(
-                          padding: EdgeInsets.symmetric(horizontal: spacing + 1.5),
-                          child: Icon(
-                            icon,
-                            size: iconSize,
-                            color: tint.withValues(alpha: (tint.a * 255.0).round().clamp(0, 255) == 0 ? 0.9 : 1),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                ),
-                const SizedBox(width: 6),
-                const Icon(Icons.signal_cellular_alt_rounded, size: 13, color: Colors.white60),
-                const SizedBox(width: 3),
-                const Icon(Icons.wifi_rounded, size: 13, color: Colors.white60),
-                const SizedBox(width: 3),
-                const Icon(Icons.battery_full_rounded, size: 13, color: Colors.white60),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static Color _parseHex(String hex) {
-    final value = hex.replaceAll('#', '');
-    if (value.length == 6) {
-      return Color(int.parse('FF$value', radix: 16));
-    }
-    if (value.length == 8) {
-      return Color(int.parse(value, radix: 16));
-    }
-    return const Color(0xFFB7F5FF);
   }
 }
 
