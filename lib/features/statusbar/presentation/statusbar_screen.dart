@@ -2310,13 +2310,6 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     return fallback;
   }
 
-  Future<List<StatusBarOption>> _batteryFontOptions(String current) async {
-    final choices = await DeadZoneFontService.listFonts(currentValue: current);
-    return choices
-        .map((choice) => StatusBarOption(label: choice.label, value: choice.value))
-        .toList(growable: false);
-  }
-
   String _fontDisplayLabel(String value) => DeadZoneFontService.displayLabel(value);
 
   bool get _supportsLivePreview =>
