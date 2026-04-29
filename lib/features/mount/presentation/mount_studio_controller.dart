@@ -61,7 +61,7 @@ class MountStudioController extends ChangeNotifier {
 
     config = await _service.loadConfig();
     final persistedTab = await _service.loadActiveTab();
-    currentTab = persistedTab.clamp(0, 5).toInt();
+    currentTab = persistedTab.clamp(0, 4).toInt();
     final loadedApps = await _service.loadSelectableApps();
     selectableApps = _hydrateSelectableApps(loadedApps, config.selectedPackageNames);
     wallpaperSets = await _service.getWallpaperColors();
