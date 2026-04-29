@@ -27,7 +27,7 @@ class MountStudioScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<MountStudioController>();
-    final contentBottomPadding = (controller.currentTab == 3 ? 340.0 : 272.0) + MediaQuery.paddingOf(context).bottom;
+    final contentBottomPadding = (controller.currentTab == 3 ? 320.0 : 248.0) + MediaQuery.paddingOf(context).bottom;
 
     return Container(
       decoration: const BoxDecoration(gradient: DesignTokens.baseGradient),
@@ -59,7 +59,7 @@ class MountStudioScreen extends StatelessWidget {
               right: 16,
               bottom: 12 + MediaQuery.paddingOf(context).bottom,
               child: _BottomActionBar(
-                onReset: () => _showResetDialog(context, controller),
+                onRestore: () => _showRestoreDialog(context, controller),
                 liveApplyEnabled: controller.config.liveApplyEnabled,
                 onLiveApplyChanged: controller.setLiveApplyEnabled,
                 accentColor: DeadzonThemeTokens.accent(context),
@@ -67,7 +67,7 @@ class MountStudioScreen extends StatelessWidget {
                   await controller.apply();
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Mount V2 saved. App theme applied. Bridge payload ready.')),
+                    const SnackBar(content: Text('Mount applied successfully. Theme tokens and targets are now active.')),
                   );
                 },
               ),
@@ -145,22 +145,22 @@ class MountStudioScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _showResetDialog(BuildContext context, MountStudioController controller) async {
+  Future<void> _showRestoreDialog(BuildContext context, MountStudioController controller) async {
     final shouldReset = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Reset Mount Studio?'),
-        content: const Text('This will restore defaults for color, effects, components, ROM targets, and control apps.'),
+        title: const Text('Restore Mount settings?'),
+        content: const Text('This will restore Mount colors, effects, components, and profiles to the default DeadZone setup.'),
         actions: <Widget>[
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Reset')),
+          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Restore')),
         ],
       ),
     );
     if (shouldReset == true) {
-      await controller.reset();
+      await controller.restoreDefaults();
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mount Studio reset to defaults.')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mount restored to DeadZone defaults.')));
       }
     }
   }
@@ -173,7 +173,7 @@ class MountStudioScreen extends StatelessWidget {
         content: const Text('This will restore the active profile values to their defaults.'),
         actions: <Widget>[
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Reset')),
+          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Restore')),
         ],
       ),
     );
@@ -254,14 +254,14 @@ class _SegmentTabs extends StatelessWidget {
 
 class _BottomActionBar extends StatelessWidget {
   const _BottomActionBar({
-    required this.onReset,
+    required this.onRestore,
     required this.onApply,
     required this.liveApplyEnabled,
     required this.onLiveApplyChanged,
     required this.accentColor,
   });
 
-  final VoidCallback onReset;
+  final VoidCallback onRestore;
   final VoidCallback onApply;
   final bool liveApplyEnabled;
   final ValueChanged<bool> onLiveApplyChanged;
@@ -293,7 +293,7 @@ class _BottomActionBar extends StatelessWidget {
             ),
             Row(
               children: <Widget>[
-                Expanded(child: OutlinedButton(onPressed: onReset, child: const Text('Reset'))),
+                Expanded(child: OutlinedButton(onPressed: onRestore, child: const Text('Restore'))),
                 const SizedBox(width: 8),
                 Expanded(child: FilledButton(onPressed: onApply, child: const Text('Apply'))),
               ],

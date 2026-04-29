@@ -30,6 +30,7 @@ class MountStudioController extends ChangeNotifier {
   final Random _random = Random();
 
   MountConfig config = MountDefaults.baseConfig();
+  MountConfig _lastSavedConfig = MountDefaults.baseConfig();
   List<WallpaperColorSet> wallpaperSets = const <WallpaperColorSet>[];
   List<MountMonetApp> controlApps = MountDefaults.controlApps;
   List<MountSelectableApp> selectableApps = MountDefaults.mockSelectableApps;
@@ -60,6 +61,7 @@ class MountStudioController extends ChangeNotifier {
     notifyListeners();
 
     config = await _service.loadConfig();
+    _lastSavedConfig = config;
     final persistedTab = await _service.loadActiveTab();
     currentTab = persistedTab.clamp(0, 4).toInt();
     final loadedApps = await _service.loadSelectableApps();
@@ -169,7 +171,9 @@ class MountStudioController extends ChangeNotifier {
     );
     await _applyToGlobalIfLive();
     notifyListeners();
-    _persistDebounced();
+    if (config.liveApplyEnabled) {
+      _persistDebounced();
+    }
   }
 
   Future<void> selectPalette(MountPalette palette) async {
@@ -188,7 +192,9 @@ class MountStudioController extends ChangeNotifier {
     );
     await _applyToGlobalIfLive();
     notifyListeners();
-    _persistDebounced();
+    if (config.liveApplyEnabled) {
+      _persistDebounced();
+    }
   }
 
   Future<void> setLiveApplyEnabled(bool enabled) async {
@@ -225,7 +231,9 @@ class MountStudioController extends ChangeNotifier {
     config = config.copyWith(glassOpacity: glassOpacity, blurStrength: blurStrength, accentIntensity: accentIntensity, glowAmount: glowAmount, cornerRadius: cornerRadius, shadowDepth: shadowDepth, borderVisibility: borderVisibility, activeProfileId: 'custom');
     await _applyToGlobalIfLive();
     notifyListeners();
-    _persistDebounced();
+    if (config.liveApplyEnabled) {
+      _persistDebounced();
+    }
   }
 
   Future<void> setComponentColor(String key, Color color) async {
@@ -243,7 +251,9 @@ class MountStudioController extends ChangeNotifier {
     );
     await _applyToGlobalIfLive();
     notifyListeners();
-    await _persist();
+    if (config.liveApplyEnabled) {
+      await _persist();
+    }
   }
 
   Future<void> pullWallpaperColors() async {
@@ -258,13 +268,17 @@ class MountStudioController extends ChangeNotifier {
     }
     config = config.copyWith(wallpaperColors: serializable);
     notifyListeners();
-    await _persist();
+    if (config.liveApplyEnabled) {
+      await _persist();
+    }
   }
 
   Future<void> setScope({bool? statusbar, bool? controlCenter, bool? notifications, bool? lockscreen, bool? settings, bool? launcher, bool? selectedApps}) async {
     config = config.copyWith(scopeStatusbar: statusbar, scopeControlCenter: controlCenter, scopeNotifications: notifications, scopeLockscreen: lockscreen, scopeSettings: settings, scopeLauncher: launcher, scopeSelectedApps: selectedApps, activeProfileId: 'custom');
     notifyListeners();
-    await _persist();
+    if (config.liveApplyEnabled) {
+      await _persist();
+    }
   }
 
   Future<void> setSelectedPackages(List<String> packages) async {
@@ -272,7 +286,9 @@ class MountStudioController extends ChangeNotifier {
     selectableApps = selectableApps.map((app) => app.copyWith(selected: app.installed && selectedSet.contains(app.packageName))).toList();
     config = config.copyWith(selectedPackageNames: packages, scopeSelectedApps: packages.isNotEmpty);
     notifyListeners();
-    await _persist();
+    if (config.liveApplyEnabled) {
+      await _persist();
+    }
   }
 
   Future<void> setMonetEnabled(bool enabled) async {
@@ -386,7 +402,9 @@ class MountStudioController extends ChangeNotifier {
     );
     await _applyToGlobalIfLive();
     notifyListeners();
-    await _persist();
+    if (config.liveApplyEnabled) {
+      await _persist();
+    }
   }
 
   Future<bool> launchMonetPicker() => _service.launchMonetPicker();
@@ -407,6 +425,7 @@ class MountStudioController extends ChangeNotifier {
     );
     config = configToPersist;
     await _service.saveConfig(configToPersist);
+    _lastSavedConfig = configToPersist;
     await _themeController.applyMountConfig(configToPersist, persist: false);
     appThemeApplied = true;
     romConfigSaved = true;
@@ -416,7 +435,7 @@ class MountStudioController extends ChangeNotifier {
       appThemeApplied: appThemeApplied,
       romConfigSaved: romConfigSaved,
     );
-    applyStatusMessage = 'Mount V2 saved. App theme applied. Bridge payload ready.';
+    applyStatusMessage = 'Mount applied successfully. Theme tokens and bridge targets are now active.';
     notifyListeners();
   }
 
@@ -442,7 +461,7 @@ class MountStudioController extends ChangeNotifier {
     await _persist();
   }
 
-  Future<void> reset() async {
+  Future<void> restoreDefaults() async {
     await _service.reset();
     config = MountDefaults.baseConfig();
     controlApps = MountDefaults.controlApps;
@@ -452,5 +471,17 @@ class MountStudioController extends ChangeNotifier {
     await _themeController.resetToDefaults();
     notifyListeners();
     await _persist();
+    _lastSavedConfig = config;
+  }
+
+  Future<void> discardDraftToSaved() async {
+    config = _lastSavedConfig;
+    final selected = config.selectedPackageNames.toSet();
+    selectableApps = selectableApps.map((app) => app.copyWith(selected: app.installed && selected.contains(app.packageName))).toList();
+    if (config.liveApplyEnabled) {
+      await _themeController.applyMountConfig(config, persist: false);
+    }
+    notifyListeners();
   }
 }
+
