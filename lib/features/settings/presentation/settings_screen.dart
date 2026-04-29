@@ -12,8 +12,6 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = context.watch<DeadzonThemeController>();
-    final isLight = Theme.of(context).brightness == Brightness.light;
-
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
