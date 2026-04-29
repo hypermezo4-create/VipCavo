@@ -1122,6 +1122,9 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     if (widget.section.id == 'notification_icons') {
       return _buildNotificationIconsScreen(context);
     }
+    if (widget.section.id == 'status_icons' || widget.section.id == 'date' || widget.section.id == 'weather' || widget.section.id == 'prompt_icon' || widget.section.id == 'background') {
+      return _buildPolishedGroupedScreen(context);
+    }
 
     final grouped = <String, List<StatusBarSettingItem>>{};
     for (final setting in _settings) {
@@ -1668,6 +1671,54 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
               _clockSlider(byKey['notif_icon_division'], 'Notification icon spacing'),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPolishedGroupedScreen(BuildContext context) {
+    final grouped = <String, List<StatusBarSettingItem>>{};
+    for (final setting in _settings) {
+      final groupKey = setting.group ?? 'General';
+      grouped.putIfAbsent(groupKey, () => <StatusBarSettingItem>[]).add(setting);
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF050B1A),
+      appBar: AppBar(title: Text(widget.section.title)),
+      body: ListView(
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.paddingOf(context).bottom + 140),
+        children: <Widget>[
+          if (_isLoadingStoredValues)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: LinearProgressIndicator(
+                minHeight: 2,
+                color: const Color(0xFF8DE8FF),
+                backgroundColor: Colors.white.withValues(alpha: 0.12),
+              ),
+            ),
+          _DetailLivePreview(sectionId: widget.section.id, values: _values),
+          const SizedBox(height: 14),
+          for (final entry in grouped.entries) ...<Widget>[
+            _BatterySectionCard(
+              title: _groupTitle(entry.key),
+              subtitle: _groupSubtitle(entry.key),
+              children: <Widget>[
+                for (var i = 0; i < entry.value.length; i++) ...<Widget>[
+                  _SettingControl(
+                    setting: entry.value[i],
+                    isResizeSection: false,
+                    value: _values[entry.value[i].legacyKey],
+                    onChanged: (value) => _handleSettingChanged(entry.value[i], value),
+                  ),
+                  if (i != entry.value.length - 1) const Divider(height: 18),
+                ],
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
         ],
       ),
     );
