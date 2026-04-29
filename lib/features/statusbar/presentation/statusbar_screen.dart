@@ -1114,11 +1114,13 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     if (widget.section.id == 'network') {
       return _buildNetworkScreen(context);
     }
-    if (widget.section.id == 'notification_icons') {
-      return _buildNotificationIconsScreen(context);
-    }
-    if (widget.section.id == 'status_icons' || widget.section.id == 'date' || widget.section.id == 'weather' || widget.section.id == 'prompt_icon' || widget.section.id == 'background') {
-      return _buildPolishedGroupedScreen(context);
+    if (widget.section.id == 'notification_icons' ||
+        widget.section.id == 'status_icons' ||
+        widget.section.id == 'date' ||
+        widget.section.id == 'weather' ||
+        widget.section.id == 'prompt_icon' ||
+        widget.section.id == 'background') {
+      return _buildFocusedModuleScreen(context);
     }
 
     final grouped = <String, List<StatusBarSettingItem>>{};
@@ -1621,57 +1623,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     );
   }
 
-  Widget _buildNotificationIconsScreen(BuildContext context) {
-    final byKey = <String, StatusBarSettingItem>{
-      for (final setting in _settings) setting.legacyKey: setting,
-    };
-    return Scaffold(
-      backgroundColor: const Color(0xFF050B1A),
-      appBar: AppBar(
-        title: const Text('Notification icons'),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(30),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-            child: Text(
-              'Adjust notification icon appearance.',
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.72), fontSize: 13, fontWeight: FontWeight.w500),
-            ),
-          ),
-        ),
-      ),
-      body: ListView(
-        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-        padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.paddingOf(context).bottom + 140),
-        children: <Widget>[
-          if (_isLoadingStoredValues)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: LinearProgressIndicator(
-                minHeight: 2,
-                color: const Color(0xFF8DE8FF),
-                backgroundColor: Colors.white.withValues(alpha: 0.12),
-              ),
-            ),
-          _NotificationIconsPreview(values: _values),
-          const SizedBox(height: 14),
-          _BatterySectionCard(
-            title: 'Appearance',
-            subtitle: 'Tune icon order, tint, size, scale, and spacing.',
-            children: <Widget>[
-              _clockToggle(byKey['reverse_notification_sorting_order'], 'Reverse notification order'),
-              _clockColor(byKey['notif_icon_color'], 'Notification icon color'),
-              _clockSlider(byKey['notif_icon_zoom'], 'Notification icon size'),
-              _clockSlider(byKey['notif_icon_scale'], 'Notification icon scale'),
-              _clockSlider(byKey['notif_icon_division'], 'Notification icon spacing'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPolishedGroupedScreen(BuildContext context) {
+  Widget _buildFocusedModuleScreen(BuildContext context) {
     final grouped = <String, List<StatusBarSettingItem>>{};
     for (final setting in _settings) {
       final groupKey = setting.group ?? 'General';
@@ -1679,23 +1631,31 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF050B1A),
+      backgroundColor: DeadzonThemeTokens.pageBackground(context),
       appBar: AppBar(title: Text(widget.section.title)),
       body: ListView(
         physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-        padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.paddingOf(context).bottom + 140),
+        padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.paddingOf(context).bottom + 124),
         children: <Widget>[
           if (_isLoadingStoredValues)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: LinearProgressIndicator(
                 minHeight: 2,
-                color: const Color(0xFF8DE8FF),
-                backgroundColor: Colors.white.withValues(alpha: 0.12),
+                color: DeadzonThemeTokens.sliderActive(context),
+                backgroundColor: DeadzonThemeTokens.border(context).withValues(alpha: 0.24),
               ),
             ),
-          _DetailLivePreview(sectionId: widget.section.id, values: _values),
-          const SizedBox(height: 14),
+          if (widget.section.id == 'background') ...<Widget>[
+            _BackgroundModuleEditor(
+              values: _values,
+              onChanged: (key, value) {
+                setState(() => _values[key] = value);
+                StatusbarSettingsRepository.writeLoose(key, value);
+              },
+            ),
+            const SizedBox(height: 12),
+          ],
           for (final entry in grouped.entries) ...<Widget>[
             _BatterySectionCard(
               title: _groupTitle(entry.key),
