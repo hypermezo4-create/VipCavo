@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:deadzon/core/theme/design_tokens.dart';
+import 'package:deadzon/core/utils/deadzone_color_utils.dart';
+import 'package:deadzon/core/widgets/deadzone_color_picker_sheet.dart';
 import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
 import 'package:deadzon/core/widgets/section_header.dart';
@@ -3056,26 +3058,10 @@ class _BackgroundModuleEditor extends StatelessWidget {
   }
 
   Future<void> _showColorPicker(BuildContext context, String key) async {
-    final options = <String>['#00000000', '#142D35', '#1E4C59', '#79E3CB', '#90FFAC', '#FFFFFF'];
-    final picked = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: const Color(0xFF101A1F),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
-      builder: (_) => SafeArea(
-        child: Wrap(
-          children: options
-              .map((hex) => ListTile(
-                    leading: CircleAvatar(backgroundColor: MezoColorChip.fromHex(hex)),
-                    title: Text(hex, style: const TextStyle(color: Colors.white)),
-                    onTap: () => Navigator.pop(context, hex),
-                  ))
-              .toList(),
-        ),
-      ),
-    );
-    if (picked != null) {
-      onChanged(key, picked);
-    }
+    final current = DeadzoneColorUtils.parseHex((values[key] as String?) ?? '#00000000', fallbackArgb: 0);
+    final picked = await showDeadZoneColorPicker(context: context, initialArgb: current, defaultArgb: 0x00000000, title: _prettyKey(key));
+    if (!context.mounted || picked == null) return;
+    onChanged(key, DeadzoneColorUtils.toArgbHex(picked));
   }
 
   static String _prettyKey(String key) => key
@@ -3639,15 +3625,15 @@ class _SettingControl extends StatelessWidget {
           ),
         );
       case StatusBarControlType.color:
-        final selected = (value as String?) ?? '#FFFFFF';
+        final currentArgb = value is int ? value as int : DeadzoneColorUtils.parseHex((value as String?) ?? '#00000000', fallbackArgb: 0);
         return SettingsRow(
           icon: Icons.palette_rounded,
           iconColor: const Color(0xFFA1E9DB),
           title: _title,
           subtitle: setting.subtitle,
           trailing: MezoColorChip(
-            hex: selected,
-            onTap: () => _showColorPicker(context, selected),
+            hex: DeadzoneColorUtils.toArgbHex(currentArgb),
+            onTap: () => _showColorPicker(context, currentArgb),
           ),
         );
     }
@@ -3700,62 +3686,14 @@ class _SettingControl extends StatelessWidget {
     }
   }
 
-  Future<void> _showColorPicker(BuildContext context, String current) async {
-    const swatches = <String>[
-      '#FFFFFF',
-      '#8DE8FF',
-      '#79E3CB',
-      '#90FFAC',
-      '#FFC66D',
-      '#FF8EA8',
-      '#B9A3FF',
-      '#76A7FF',
-    ];
-    final selected = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: const Color(0xFF101B1F),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(_title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 14),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: swatches
-                    .map(
-                      (hex) => InkWell(
-                        onTap: () => Navigator.of(context).pop(hex),
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            color: MezoColorChip.fromHex(hex),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: hex == current ? Colors.white : Colors.white.withValues(alpha: 0.3),
-                              width: hex == current ? 2 : 1,
-                            ),
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-    if (selected != null) {
+  Future<void> _showColorPicker(BuildContext context, int currentArgb) async {
+    final selected = await showDeadZoneColorPicker(context: context, initialArgb: currentArgb, defaultArgb: 0x00000000, title: _title);
+    if (!context.mounted || selected == null) return;
+    if (value is int || setting.defaultValue is int) {
       onChanged(selected);
+      return;
     }
+    onChanged(DeadzoneColorUtils.toArgbHex(selected));
   }
 
   TextStyle _fontFor(String value, TextStyle fallback) {
