@@ -5,6 +5,7 @@ import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/core/utils/deadzone_color_utils.dart';
 import 'package:deadzon/core/widgets/deadzone_color_picker_sheet.dart';
+import 'package:deadzon/core/widgets/deadzone_settings_widgets.dart';
 import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
 import 'package:deadzon/core/widgets/section_header.dart';
@@ -903,6 +904,8 @@ class _SectionCardTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final accent = DeadzonThemeTokens.accent(context);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -911,11 +914,11 @@ class _SectionCardTile extends StatelessWidget {
         child: Ink(
           padding: const EdgeInsets.fromLTRB(12, 12, 10, 10),
           decoration: BoxDecoration(
-            color: const Color(0xFF05070D),
+            color: DeadzonThemeTokens.cardTint(context).withValues(alpha: Theme.of(context).brightness == Brightness.light ? 0.82 : 0.34),
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFF8A24FF).withValues(alpha: 0.72)),
+            border: Border.all(color: DeadzonThemeTokens.border(context)),
             boxShadow: <BoxShadow>[
-              BoxShadow(color: const Color(0xFF792BFF).withValues(alpha: 0.11), blurRadius: 16, offset: const Offset(0, 8)),
+              BoxShadow(color: accent.withValues(alpha: 0.08), blurRadius: 16, offset: const Offset(0, 8)),
             ],
           ),
           child: Column(
@@ -923,18 +926,9 @@ class _SectionCardTile extends StatelessWidget {
             children: <Widget>[
               Row(
                 children: <Widget>[
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(9),
-                      color: const Color(0xFF0C1220),
-                      border: Border.all(color: section.accentColor.withValues(alpha: 0.78)),
-                    ),
-                    child: Icon(section.icon, size: 16, color: Colors.white),
-                  ),
+                  DeadZoneIconChip(icon: section.icon),
                   const Spacer(),
-                  const Icon(Icons.chevron_right_rounded, size: 22, color: Colors.white70),
+                  Icon(Icons.chevron_right_rounded, size: 22, color: onSurface.withValues(alpha: 0.62)),
                 ],
               ),
               const Spacer(),
@@ -942,14 +936,14 @@ class _SectionCardTile extends StatelessWidget {
                 section.title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14.4, height: 1.05),
+                style: TextStyle(color: onSurface, fontWeight: FontWeight.w800, fontSize: 14.4, height: 1.05),
               ),
               const SizedBox(height: 4),
               Text(
                 section.subtitle,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.68), fontSize: 11.0, height: 1.12),
+                style: TextStyle(color: onSurface.withValues(alpha: 0.68), fontSize: 11.0, height: 1.12),
               ),
             ],
           ),
