@@ -17,7 +17,7 @@ class DeadZoneSettingsCard extends StatelessWidget {
         border: Border.all(color: DeadzonThemeTokens.border(context)),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: (isLight ? const Color(0xFFBFD0E8) : Colors.black).withValues(alpha: isLight ? 0.28 : 0.24),
+            color: DeadzonThemeTokens.shadow(context),
             blurRadius: isLight ? 20 : 12,
             offset: const Offset(0, 8),
           ),

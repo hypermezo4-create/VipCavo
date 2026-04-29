@@ -1,3 +1,4 @@
+import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:flutter/material.dart';
 
 class MountGlassCard extends StatelessWidget {
@@ -23,14 +24,14 @@ class MountGlassCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: <Color>[
-            Colors.white.withValues(alpha: 0.12),
-            (tint ?? Colors.white).withValues(alpha: 0.06),
+            DeadzonThemeTokens.cardTint(context).withValues(alpha: 0.5),
+            (tint ?? DeadzonThemeTokens.cardTint(context)).withValues(alpha: 0.24),
           ],
         ),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+        border: Border.all(color: DeadzonThemeTokens.border(context)),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
+            color: DeadzonThemeTokens.shadow(context),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),

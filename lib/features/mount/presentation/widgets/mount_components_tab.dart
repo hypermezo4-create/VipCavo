@@ -1,3 +1,4 @@
+import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/features/mount/domain/mount_config.dart';
 import 'package:deadzon/features/mount/presentation/widgets/mount_glass_card.dart';
 import 'package:flutter/material.dart';
@@ -28,17 +29,17 @@ class MountComponentsTab extends StatelessWidget {
             .map(
               (item) => ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(item.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                title: Text(item.title, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w600)),
                 leading: Container(
                   width: 22,
                   height: 22,
                   decoration: BoxDecoration(
                     color: item.color,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white60),
+                    border: Border.all(color: DeadzonThemeTokens.border(context)),
                   ),
                 ),
-                trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white70),
+                trailing: Icon(Icons.chevron_right_rounded, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7)),
                 onTap: () => onTapItem(item.key),
               ),
             )

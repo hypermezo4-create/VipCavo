@@ -45,7 +45,7 @@ class DeadzonFloatingTabBar extends StatelessWidget {
               borderRadius: BorderRadius.circular(36),
               border: Border.all(color: borderColor),
               boxShadow: <BoxShadow>[
-                BoxShadow(color: Colors.black.withValues(alpha: 0.16), blurRadius: 20, offset: const Offset(0, 8)),
+                BoxShadow(color: DeadzonThemeTokens.shadow(context), blurRadius: 20, offset: const Offset(0, 8)),
               ],
             ),
             child: LayoutBuilder(
