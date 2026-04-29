@@ -202,11 +202,11 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
               ? const Center(child: CircularProgressIndicator())
               : ListView(
                   physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                  padding: EdgeInsets.fromLTRB(18, 12, 18, MediaQuery.paddingOf(context).bottom + 140),
+                  padding: EdgeInsets.fromLTRB(14, 10, 14, MediaQuery.paddingOf(context).bottom + 132),
                   children: <Widget>[
                     const PremiumTopBar(
                       title: 'Statusbar adjustment',
-                      subtitle: 'Premium statusbar control studio',
+                      subtitle: 'Compact statusbar controls',
                     ),
                     const SizedBox(height: 18),
                     _StatusbarLivePreview(modules: _boardModules),
@@ -244,8 +244,8 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
                     ),
                     const SizedBox(height: 22),
                     const SectionHeader(
-                      title: 'Full statusbar settings',
-                      subtitle: 'Detailed controls with compact previews',
+                      title: 'Statusbar sections',
+                      subtitle: 'Compact organized tools'
                     ),
                     const SizedBox(height: 12),
                     _FullSectionGrid(onOpenSection: _openSection),

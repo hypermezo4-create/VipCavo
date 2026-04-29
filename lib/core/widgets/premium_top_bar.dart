@@ -14,7 +14,9 @@ class PremiumTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textColor = Theme.of(context).colorScheme.onSurface;
-    return Column(
+    return Container(
+      padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
+      child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
@@ -26,7 +28,7 @@ class PremiumTopBar extends StatelessWidget {
                 fontSize: DesignTokens.mainTitle,
               ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 3),
         Text(
           subtitle,
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -36,6 +38,6 @@ class PremiumTopBar extends StatelessWidget {
               ),
         ),
       ],
-    );
+    ));
   }
 }
