@@ -29,7 +29,7 @@ class MountStudioScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<MountStudioController>();
-    final contentBottomPadding = (controller.currentTab == 4 ? 300.0 : 236.0) + MediaQuery.paddingOf(context).bottom;
+    final contentBottomPadding = (controller.currentTab == 4 ? 320.0 : 252.0) + MediaQuery.paddingOf(context).bottom;
 
     return Container(
       decoration: const BoxDecoration(gradient: DesignTokens.baseGradient),
@@ -230,14 +230,14 @@ class _SegmentTabs extends StatelessWidget {
     return SizedBox(
       height: 38,
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 2),
         itemCount: tabs.length,
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         itemBuilder: (context, index) {
           final active = current == index;
           return Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: EdgeInsets.only(right: 8, left: index == 0 ? 2 : 0),
             child: ChoiceChip(
               selected: active,
               label: Text(tabs[index]),

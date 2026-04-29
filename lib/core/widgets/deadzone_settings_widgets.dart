@@ -66,7 +66,7 @@ class DeadZoneNavigationRow extends StatelessWidget {
       child: SizedBox(
         height: 64,
         child: Row(children: <Widget>[
-          _DeadZoneIconChip(icon: icon),
+          DeadZoneIconChip(icon: icon),
           const SizedBox(width: 10),
           Expanded(
             child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
@@ -81,9 +81,10 @@ class DeadZoneNavigationRow extends StatelessWidget {
   }
 }
 
-class _DeadZoneIconChip extends StatelessWidget {
-  const _DeadZoneIconChip({required this.icon});
+class DeadZoneIconChip extends StatelessWidget {
+  const DeadZoneIconChip({required this.icon, super.key, this.selected = true});
   final IconData icon;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
@@ -92,11 +93,11 @@ class _DeadZoneIconChip extends StatelessWidget {
       width: 44,
       height: 44,
       decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.16),
+        color: accent.withValues(alpha: selected ? 0.16 : 0.1),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withValues(alpha: 0.26)),
+        border: Border.all(color: accent.withValues(alpha: selected ? 0.26 : 0.18)),
       ),
-      child: Icon(icon, size: 21, color: accent),
+      child: Icon(icon, size: 21, color: selected ? accent : accent.withValues(alpha: 0.84)),
     );
   }
 }
@@ -134,7 +135,7 @@ class DeadZoneSwitchRow extends StatelessWidget {
     return SizedBox(
       height: 68,
       child: Row(children: <Widget>[
-        _DeadZoneIconChip(icon: icon),
+        DeadZoneIconChip(icon: icon),
         const SizedBox(width: 10),
         Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
           Text(title, style: TextStyle(fontSize: 15.2, fontWeight: FontWeight.w600, color: onSurface)),
@@ -173,7 +174,7 @@ class DeadZoneSliderRow extends StatelessWidget {
       children: <Widget>[
         Row(
           children: <Widget>[
-            _DeadZoneIconChip(icon: icon),
+            DeadZoneIconChip(icon: icon),
             const SizedBox(width: 10),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
@@ -205,6 +206,43 @@ class DeadZoneSelectRow extends StatelessWidget {
       title: title,
       subtitle: subtitle ?? valueLabel,
       trailing: DeadZoneValueChip(label: valueLabel),
+      onTap: onTap,
+    );
+  }
+}
+
+class DeadZoneColorRow extends StatelessWidget {
+  const DeadZoneColorRow({
+    required this.icon,
+    required this.title,
+    required this.argb,
+    required this.onTap,
+    super.key,
+    this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final int argb;
+  final String? subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final hex = '#${argb.toRadixString(16).padLeft(8, '0').toUpperCase()}';
+    return DeadZoneNavigationRow(
+      icon: icon,
+      title: title,
+      subtitle: subtitle ?? hex,
+      trailing: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: Color(argb),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: DeadzonThemeTokens.border(context)),
+        ),
+      ),
       onTap: onTap,
     );
   }
