@@ -1,5 +1,6 @@
 import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/core/theme/design_tokens.dart';
+import 'package:deadzon/core/widgets/deadzone_settings_widgets.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
 import 'package:deadzon/features/mount/presentation/mount_studio_controller.dart';
 import 'package:deadzon/features/mount/presentation/widgets/mount_color_tab.dart';
@@ -45,10 +46,12 @@ class MountStudioScreen extends StatelessWidget {
               children: <Widget>[
                 const PremiumTopBar(title: 'Mount Studio', subtitle: 'Monet colors, app effects & bridge targets'),
                 const SizedBox(height: 14),
-                _SegmentTabs(
-                  tabs: _tabs,
-                  current: controller.currentTab,
-                  onTap: controller.setTab,
+                DeadZoneSettingsCard(
+                  child: _SegmentTabs(
+                    tabs: _tabs,
+                    current: controller.currentTab,
+                    onTap: controller.setTab,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 if (controller.loading)
@@ -310,10 +313,13 @@ class _SegmentTabs extends StatelessWidget {
               selected: active,
               label: Text(tabs[index]),
               onSelected: (_) => onTap(index),
-              labelStyle: TextStyle(color: Colors.white.withValues(alpha: active ? 0.98 : 0.72), fontWeight: FontWeight.w600),
+              labelStyle: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: active ? 0.98 : 0.72),
+                fontWeight: FontWeight.w600,
+              ),
               selectedColor: DeadzonThemeTokens.accent(context).withValues(alpha: 0.3),
-              backgroundColor: Colors.white.withValues(alpha: 0.08),
-              side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+              backgroundColor: DeadzonThemeTokens.cardTint(context).withValues(alpha: 0.52),
+              side: BorderSide(color: DeadzonThemeTokens.border(context)),
             ),
           );
         },
@@ -343,9 +349,9 @@ class _BottomActionBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFF10222B).withValues(alpha: 0.94),
+        color: DeadzonThemeTokens.sheetBackground(context).withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+        border: Border.all(color: DeadzonThemeTokens.border(context)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(10),
@@ -356,7 +362,10 @@ class _BottomActionBar extends StatelessWidget {
               dense: true,
               contentPadding: const EdgeInsets.symmetric(horizontal: 6),
               activeThumbColor: accentColor,
-              title: const Text('Live apply to DeadZone', style: TextStyle(fontSize: 13.5)),
+              title: Text(
+                'Live apply to DeadZone',
+                style: TextStyle(fontSize: 13.5, color: Theme.of(context).colorScheme.onSurface),
+              ),
               value: liveApplyEnabled,
               onChanged: onLiveApplyChanged,
             ),
