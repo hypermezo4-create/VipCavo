@@ -1,4 +1,4 @@
-import 'package:deadzon/core/theme/design_tokens.dart';
+import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:flutter/material.dart';
 
 class DeadZoneSettingsCard extends StatelessWidget {
@@ -50,11 +50,12 @@ class DeadZoneSectionHeader extends StatelessWidget {
 }
 
 class DeadZoneNavigationRow extends StatelessWidget {
-  const DeadZoneNavigationRow({required this.icon, required this.title, required this.subtitle, required this.onTap, super.key});
+  const DeadZoneNavigationRow({required this.icon, required this.title, required this.subtitle, required this.onTap, this.trailing, super.key});
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +74,7 @@ class DeadZoneNavigationRow extends StatelessWidget {
               Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: onSurface.withValues(alpha: 0.7))),
             ]),
           ),
-          Icon(Icons.chevron_right_rounded, color: onSurface.withValues(alpha: 0.6)),
+          trailing ?? Icon(Icons.chevron_right_rounded, color: onSurface.withValues(alpha: 0.6)),
         ]),
       ),
     );
