@@ -20,9 +20,9 @@ class SettingsScreen extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: <Color>[
-            (isLight ? theme.selectedLightBackground.color : theme.selectedDarkBackground.color),
-            (isLight ? theme.selectedLightBackground.color : theme.selectedDarkBackground.color).withValues(alpha: 0.96),
-            (isLight ? theme.selectedLightBackground.color : theme.selectedDarkBackground.color).withValues(alpha: 0.92),
+            DeadzonThemeTokens.appBackground(context),
+            DeadzonThemeTokens.pageBackground(context),
+            DeadzonThemeTokens.pageBackground(context).withValues(alpha: 0.92),
           ],
         ),
       ),
@@ -213,7 +213,7 @@ class SettingsScreen extends StatelessWidget {
   Future<void> _showThemePicker(BuildContext context, DeadzonThemeController controller) async {
     final selected = await showModalBottomSheet<ThemeMode>(
       context: context,
-      backgroundColor: const Color(0xEE0A1626),
+      backgroundColor: DeadzonThemeTokens.sheetBackground(context),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (context) {
         return SafeArea(

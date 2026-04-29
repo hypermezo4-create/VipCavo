@@ -129,7 +129,7 @@ class _DeadzonShellState extends State<DeadzonShell> with SingleTickerProviderSt
                 currentIndex: widget.navigationShell.currentIndex,
                 items: _items,
                 accentColor: theme.accentColor,
-                backgroundTint: DeadzonThemeTokens.navBackground(context),
+                backgroundTint: DeadzonThemeTokens.bottomNavBackground(context),
                 onTap: (index) {
                   _goToTab(index);
                 },

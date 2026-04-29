@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:deadzon/core/theme/design_tokens.dart';
+import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/core/utils/deadzone_color_utils.dart';
 import 'package:deadzon/core/widgets/deadzone_color_picker_sheet.dart';
 import 'package:deadzon/core/widgets/glass_card.dart';
@@ -166,13 +167,13 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
       SnackBar(
         content: Text(
           message,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          style: TextStyle(color: DeadzonThemeTokens.textPrimary(context), fontWeight: FontWeight.w700),
         ),
         action: actionLabel == null || onAction == null
             ? null
             : SnackBarAction(
                 label: actionLabel,
-                textColor: const Color(0xFF8DE8FF),
+                textColor: DeadzonThemeTokens.accent(context),
                 onPressed: onAction,
               ),
         behavior: SnackBarBehavior.floating,
@@ -180,7 +181,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
         duration: const Duration(milliseconds: 2200),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         elevation: 0,
-        backgroundColor: const Color(0xFF10335A),
+        backgroundColor: DeadzonThemeTokens.sheetBackground(context),
       ),
     );
   }
@@ -188,11 +189,15 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: <Color>[Color(0xFF071225), Color(0xFF050E1F), Color(0xFF020812)],
+          colors: <Color>[
+            DeadzonThemeTokens.appBackground(context),
+            DeadzonThemeTokens.pageBackground(context),
+            DeadzonThemeTokens.pageBackground(context).withValues(alpha: 0.92),
+          ],
         ),
       ),
       child: SafeArea(

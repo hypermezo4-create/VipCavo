@@ -288,6 +288,30 @@ class DeadzonThemeTokens {
   static DeadzonThemeController of(BuildContext context) => context.read<DeadzonThemeController>();
 
   static Color accent(BuildContext context) => of(context).accentColor;
+  static Color appBackground(BuildContext context) => palette(context).appBackground;
+  static Color pageBackground(BuildContext context) => palette(context).pageBackground;
+  static Color cardBackground(BuildContext context) => palette(context).cardBackground;
+  static Color cardBackgroundStrong(BuildContext context) => palette(context).cardBackgroundStrong;
+  static Color cardBorder(BuildContext context) => palette(context).cardBorder;
+  static Color divider(BuildContext context) => palette(context).divider;
+  static Color textPrimary(BuildContext context) => palette(context).textPrimary;
+  static Color textSecondary(BuildContext context) => palette(context).textSecondary;
+  static Color textMuted(BuildContext context) => palette(context).textMuted;
+  static Color accentSoft(BuildContext context) => palette(context).accentSoft;
+  static Color iconChipBackground(BuildContext context) => palette(context).iconChipBackground;
+  static Color iconChipBorder(BuildContext context) => palette(context).iconChipBorder;
+  static Color bottomNavBackground(BuildContext context) => palette(context).bottomNavBackground;
+  static Color bottomNavBorder(BuildContext context) => palette(context).bottomNavBorder;
+  static Color bottomNavSelectedBackground(BuildContext context) => palette(context).bottomNavSelectedBackground;
+  static Color bottomNavText(BuildContext context) => palette(context).bottomNavText;
+  static Color bottomNavSelectedText(BuildContext context) => palette(context).bottomNavSelectedText;
+  static Color switchActive(BuildContext context) => palette(context).switchActive;
+  static Color switchInactive(BuildContext context) => palette(context).switchInactive;
+  static Color sliderActive(BuildContext context) => palette(context).sliderActive;
+  static Color sliderInactive(BuildContext context) => palette(context).sliderInactive;
+  static Color sheetBackground(BuildContext context) => palette(context).sheetBackground;
+  static Color buttonBackground(BuildContext context) => palette(context).buttonBackground;
+  static Color buttonText(BuildContext context) => palette(context).buttonText;
 
   static Color cardTint(BuildContext context) => of(context).cardTint;
 
@@ -304,4 +328,123 @@ class DeadzonThemeTokens {
     }
     return Color.lerp(of(context).selectedDarkBackground.color, of(context).backgroundTint, 0.45)?.withValues(alpha: 0.9) ?? const Color(0xDD0D1B2B);
   }
+
+  static _TokenPalette palette(BuildContext context) {
+    final controller = of(context);
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final accent = controller.accentColor;
+    if (isLight) {
+      final pageBg = Color.lerp(controller.selectedLightBackground.color, const Color(0xFFEAF3FF), 0.36) ?? const Color(0xFFEAF3FF);
+      return _TokenPalette(
+        appBackground: pageBg,
+        pageBackground: Color.lerp(pageBg, Colors.white, 0.2) ?? pageBg,
+        cardBackground: Color.lerp(pageBg, Colors.white, 0.62)!.withValues(alpha: 0.86),
+        cardBackgroundStrong: Color.lerp(pageBg, Colors.white, 0.78)!.withValues(alpha: 0.92),
+        cardBorder: Color(0xFFB7CBDB).withValues(alpha: 0.6),
+        divider: const Color(0xFF8FA4B5).withValues(alpha: 0.24),
+        textPrimary: const Color(0xFF142433),
+        textSecondary: const Color(0xFF2D4253),
+        textMuted: const Color(0xFF5E7486),
+        accent: accent,
+        accentSoft: accent.withValues(alpha: 0.14),
+        iconChipBackground: accent.withValues(alpha: 0.15),
+        iconChipBorder: accent.withValues(alpha: 0.22),
+        bottomNavBackground: Color.lerp(pageBg, Colors.white, 0.46)!.withValues(alpha: 0.92),
+        bottomNavBorder: const Color(0xFF95AABD).withValues(alpha: 0.35),
+        bottomNavSelectedBackground: accent.withValues(alpha: 0.2),
+        bottomNavText: const Color(0xFF3A4D5E),
+        bottomNavSelectedText: const Color(0xFF0F2532),
+        switchActive: accent,
+        switchInactive: const Color(0xFF89A0B3),
+        sliderActive: accent,
+        sliderInactive: const Color(0xFFAAC0D1),
+        sheetBackground: Color.lerp(pageBg, Colors.white, 0.65)!.withValues(alpha: 0.98),
+        buttonBackground: accent,
+        buttonText: const Color(0xFF08211A),
+      );
+    }
+    final pageBg = Color.lerp(controller.selectedDarkBackground.color, const Color(0xFF050C19), 0.44) ?? const Color(0xFF050C19);
+    return _TokenPalette(
+      appBackground: pageBg,
+      pageBackground: Color.lerp(pageBg, const Color(0xFF030811), 0.35) ?? pageBg,
+      cardBackground: Colors.white.withValues(alpha: 0.08),
+      cardBackgroundStrong: Colors.white.withValues(alpha: 0.11),
+      cardBorder: Colors.white.withValues(alpha: 0.18),
+      divider: Colors.white.withValues(alpha: 0.12),
+      textPrimary: const Color(0xFFF3FBFF),
+      textSecondary: const Color(0xFFCCE0EB),
+      textMuted: const Color(0xFF94ADBE),
+      accent: accent,
+      accentSoft: accent.withValues(alpha: 0.16),
+      iconChipBackground: accent.withValues(alpha: 0.16),
+      iconChipBorder: accent.withValues(alpha: 0.24),
+      bottomNavBackground: Color.lerp(pageBg, const Color(0xFF0D1B2B), 0.5)!.withValues(alpha: 0.92),
+      bottomNavBorder: Colors.white.withValues(alpha: 0.18),
+      bottomNavSelectedBackground: accent.withValues(alpha: 0.24),
+      bottomNavText: const Color(0xFFC6DAE6),
+      bottomNavSelectedText: const Color(0xFFF2FFFF),
+      switchActive: accent,
+      switchInactive: const Color(0xFF3C5367),
+      sliderActive: accent,
+      sliderInactive: const Color(0xFF355164),
+      sheetBackground: const Color(0xEE0A1626),
+      buttonBackground: accent.withValues(alpha: 0.9),
+      buttonText: const Color(0xFF02110D),
+    );
+  }
+}
+
+class _TokenPalette {
+  const _TokenPalette({
+    required this.appBackground,
+    required this.pageBackground,
+    required this.cardBackground,
+    required this.cardBackgroundStrong,
+    required this.cardBorder,
+    required this.divider,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.textMuted,
+    required this.accent,
+    required this.accentSoft,
+    required this.iconChipBackground,
+    required this.iconChipBorder,
+    required this.bottomNavBackground,
+    required this.bottomNavBorder,
+    required this.bottomNavSelectedBackground,
+    required this.bottomNavText,
+    required this.bottomNavSelectedText,
+    required this.switchActive,
+    required this.switchInactive,
+    required this.sliderActive,
+    required this.sliderInactive,
+    required this.sheetBackground,
+    required this.buttonBackground,
+    required this.buttonText,
+  });
+  final Color appBackground;
+  final Color pageBackground;
+  final Color cardBackground;
+  final Color cardBackgroundStrong;
+  final Color cardBorder;
+  final Color divider;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color textMuted;
+  final Color accent;
+  final Color accentSoft;
+  final Color iconChipBackground;
+  final Color iconChipBorder;
+  final Color bottomNavBackground;
+  final Color bottomNavBorder;
+  final Color bottomNavSelectedBackground;
+  final Color bottomNavText;
+  final Color bottomNavSelectedText;
+  final Color switchActive;
+  final Color switchInactive;
+  final Color sliderActive;
+  final Color sliderInactive;
+  final Color sheetBackground;
+  final Color buttonBackground;
+  final Color buttonText;
 }

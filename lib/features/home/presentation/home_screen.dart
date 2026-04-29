@@ -1,5 +1,6 @@
 import 'package:deadzon/core/constants/app_identity.dart';
 import 'package:deadzon/core/services/android_intent_bridge.dart';
+import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/core/widgets/deadzone_settings_widgets.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
 import 'package:flutter/material.dart';
@@ -22,8 +23,10 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bgTop = DeadzonThemeTokens.appBackground(context);
+    final bgBottom = DeadzonThemeTokens.pageBackground(context);
     return Container(
-      decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: <Color>[Color(0xFF071425), Color(0xFF050C19)])),
+      decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: <Color>[bgTop, bgBottom])),
       child: SafeArea(
         child: ListView(
           padding: EdgeInsets.fromLTRB(14, 10, 14, MediaQuery.paddingOf(context).bottom + 132),
@@ -31,9 +34,9 @@ class HomeScreen extends StatelessWidget {
             const PremiumTopBar(title: AppIdentity.appName, subtitle: 'Compact ROM tools hub'),
             const SizedBox(height: 10),
             DeadZoneSettingsCard(
-              child: Row(children: const <Widget>[
-                Icon(Icons.verified_rounded, color: Color(0xFF59E4C0), size: 18), SizedBox(width: 8),
-                Expanded(child: Text('Base Alpha • CN 3.0.303', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600))),
+              child: Row(children: <Widget>[
+                Icon(Icons.verified_rounded, color: DeadzonThemeTokens.accent(context), size: 18), const SizedBox(width: 8),
+                const Expanded(child: Text('Base Alpha • CN 3.0.303', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600))),
               ]),
             ),
             const SizedBox(height: 14),

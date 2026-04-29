@@ -1,4 +1,5 @@
 import 'package:deadzon/core/theme/design_tokens.dart';
+import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -28,9 +29,8 @@ class DeadzonFloatingTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final idleColor = isLight ? const Color(0xFF4A5A63) : Colors.white70;
-    final borderColor = isLight ? Colors.black.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.2);
+    final idleColor = DeadzonThemeTokens.bottomNavText(context);
+    final borderColor = DeadzonThemeTokens.bottomNavBorder(context);
 
     return SafeArea(
       minimum: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -41,11 +41,11 @@ class DeadzonFloatingTabBar extends StatelessWidget {
           child: Container(
             height: 70,
             decoration: BoxDecoration(
-              color: backgroundTint.withValues(alpha: 0.9),
+              color: backgroundTint.withValues(alpha: 0.93),
               borderRadius: BorderRadius.circular(36),
               border: Border.all(color: borderColor),
               boxShadow: <BoxShadow>[
-                BoxShadow(color: Colors.black.withValues(alpha: isLight ? 0.08 : 0.2), blurRadius: 20, offset: const Offset(0, 8)),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.16), blurRadius: 20, offset: const Offset(0, 8)),
               ],
             ),
             child: LayoutBuilder(
@@ -62,7 +62,7 @@ class DeadzonFloatingTabBar extends StatelessWidget {
                       height: 56,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          color: accentColor.withValues(alpha: 0.25),
+                          color: DeadzonThemeTokens.bottomNavSelectedBackground(context),
                           borderRadius: BorderRadius.circular(28),
                           border: Border.all(color: accentColor.withValues(alpha: 0.45)),
                         ),
@@ -80,14 +80,14 @@ class DeadzonFloatingTabBar extends StatelessWidget {
                               duration: const Duration(milliseconds: 280),
                               curve: Curves.easeOutCubic,
                               style: TextStyle(
-                                color: selected ? accentColor : idleColor,
+                                color: selected ? DeadzonThemeTokens.bottomNavSelectedText(context) : idleColor,
                                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                                 fontSize: DesignTokens.navLabel,
                               ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: <Widget>[
-                                  Icon(item.icon, color: selected ? accentColor : idleColor, size: selected ? 21 : 19),
+                                  Icon(item.icon, color: selected ? DeadzonThemeTokens.bottomNavSelectedText(context) : idleColor, size: selected ? 21 : 19),
                                   const SizedBox(height: 3),
                                   Text(item.label),
                                 ],
