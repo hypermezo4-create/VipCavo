@@ -73,7 +73,7 @@ class _MountColorTabState extends State<MountColorTab> {
         MountGlassCard(
           tint: color,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-            const Text('Internal DeadZone Monet Engine', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+            const Text('Accent color studio', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
             const SizedBox(height: 12),
             Row(children: <Widget>[
               Container(width: 44, height: 44, decoration: BoxDecoration(color: color, shape: BoxShape.circle, border: Border.all(color: Colors.white70))),
@@ -166,7 +166,7 @@ class _MountColorTabState extends State<MountColorTab> {
         MountGlassCard(
           tint: color,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-            const Text('Material You tonal chips', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            const Text('Generated tonal palette', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
             const SizedBox(height: 10),
             ...widget.config.generatedPalettes.entries.map((entry) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -194,11 +194,11 @@ class _MountColorTabState extends State<MountColorTab> {
         MountGlassCard(
           tint: color,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-            const Text('Wallpaper extraction', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            const Text('Wallpaper palette', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             if (!wallpaperExtractionAvailable)
               const Text(
-                'Wallpaper extraction unavailable on this ROM.',
+                'Wallpaper palette unavailable on this ROM.',
                 style: TextStyle(color: Colors.white70),
               )
             else

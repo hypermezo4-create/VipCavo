@@ -6,5 +6,4 @@ class AppIdentity {
   static const String versionLabel = 'CN 3.0.303';
   static const String currentTrack = 'V1 Lite';
 
-  // TODO: Keep Android package id com.mezo.deadzon for install/signing compatibility.
 }

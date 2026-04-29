@@ -152,7 +152,7 @@ class MountControlAppsTab extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Text('Bridge Config Viewer', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                const Text('Config preview', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 10),
                 Flexible(
                   child: Container(
@@ -179,7 +179,7 @@ class MountControlAppsTab extends StatelessWidget {
                         onPressed: () async {
                           await Clipboard.setData(ClipboardData(text: prettyJson));
                           if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Bridge payload copied.')));
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Config copied.')));
                           }
                         },
                         icon: const Icon(Icons.copy_rounded),
