@@ -60,6 +60,7 @@ class DeadZoneNavigationRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onSurface = DeadzonThemeTokens.textPrimary(context);
+    final secondary = DeadzonThemeTokens.onSurfaceVariant(context);
     return InkWell(
       borderRadius: BorderRadius.circular(18),
       onTap: onTap,
@@ -133,6 +134,7 @@ class DeadZoneSwitchRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onSurface = DeadzonThemeTokens.textPrimary(context);
+    final secondary = DeadzonThemeTokens.onSurfaceVariant(context);
     return SizedBox(
       height: 68,
       child: Row(children: <Widget>[
@@ -177,6 +179,7 @@ class DeadZoneSliderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onSurface = DeadzonThemeTokens.textPrimary(context);
+    final secondary = DeadzonThemeTokens.onSurfaceVariant(context);
     return Column(
       children: <Widget>[
         Row(
