@@ -68,7 +68,7 @@ class StatusbarSectionConfigs {
     StatusBarSectionDefinition(
       id: 'notification_icons',
       title: 'Notification icons',
-      subtitle: 'Visibility and spacing for compact notification symbols',
+      subtitle: 'Notification icon visibility, size, and spacing',
       icon: Icons.notifications_rounded,
       accentColor: Color(0xFFFFBE87),
       displayOrder: 6,
@@ -80,7 +80,7 @@ class StatusbarSectionConfigs {
     StatusBarSectionDefinition(
       id: 'status_icons',
       title: 'Status icons',
-      subtitle: 'Choose which utility icons stay visible and where',
+      subtitle: 'Utility icon visibility, size, and placement',
       icon: Icons.widgets_rounded,
       accentColor: Color(0xFFA9F4E0),
       displayOrder: 7,
@@ -92,7 +92,7 @@ class StatusbarSectionConfigs {
     StatusBarSectionDefinition(
       id: 'date',
       title: 'Date',
-      subtitle: 'Date format, size, spacing, and accent styling',
+      subtitle: 'Date format, font, color, and spacing',
       icon: Icons.calendar_month_rounded,
       accentColor: Color(0xFFB7C6FF),
       displayOrder: 8,
@@ -104,7 +104,7 @@ class StatusbarSectionConfigs {
     StatusBarSectionDefinition(
       id: 'weather',
       title: 'Weather',
-      subtitle: 'Configure weather text, icon style, and placement',
+      subtitle: 'Weather text, icon, color, and placement',
       icon: Icons.cloud_rounded,
       accentColor: Color(0xFF8DE8FF),
       displayOrder: 9,
@@ -116,7 +116,7 @@ class StatusbarSectionConfigs {
     StatusBarSectionDefinition(
       id: 'prompt_icon',
       title: 'Prompt icon',
-      subtitle: 'Tune prompt icon size, color, and reveal behavior',
+      subtitle: 'Prompt icon style, reveal, color, and size',
       icon: Icons.chat_bubble_outline_rounded,
       accentColor: Color(0xFFE2B4FF),
       displayOrder: 10,
@@ -128,7 +128,7 @@ class StatusbarSectionConfigs {
     StatusBarSectionDefinition(
       id: 'background',
       title: 'Background',
-      subtitle: 'Blend background overlays, blur, and shadow depth',
+      subtitle: 'Statusbar background, blur, tint, and shadow',
       icon: Icons.format_paint_rounded,
       accentColor: Color(0xFF94E0D4),
       displayOrder: 11,

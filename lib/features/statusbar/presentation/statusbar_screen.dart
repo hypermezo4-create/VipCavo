@@ -3520,15 +3520,12 @@ class _SettingControl extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (setting.controlType) {
       case StatusBarControlType.toggle:
-        return SettingsRow(
+        return DeadZoneSwitchRow(
           icon: Icons.toggle_on_rounded,
-          iconColor: const Color(0xFF87EED8),
           title: _title,
           subtitle: setting.subtitle,
-          trailing: Switch(
-            value: (value as bool?) ?? false,
-            onChanged: (next) => onChanged(next),
-          ),
+          value: (value as bool?) ?? false,
+          onChanged: (next) => onChanged(next),
         );
       case StatusBarControlType.slider:
         final min = setting.min ?? 0;
@@ -3545,72 +3542,58 @@ class _SettingControl extends StatelessWidget {
             onReset: () => onChanged(setting.defaultValue),
           );
         }
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            SettingsRow(
-              icon: Icons.tune_rounded,
-              iconColor: const Color(0xFF8FCBFF),
-              title: _title,
-              subtitle: setting.subtitle,
-              trailing: Text(current.toStringAsFixed(0), style: const TextStyle(color: Colors.white70)),
-            ),
-            MezoStepSlider(
-              value: current.clamp(min, max),
-              min: min,
-              max: max,
-              onChanged: (v) => onChanged(v),
-            ),
-          ],
+        return DeadZoneSliderRow(
+          icon: Icons.tune_rounded,
+          title: _title,
+          subtitle: setting.subtitle,
+          value: current.clamp(min, max),
+          min: min,
+          max: max,
+          onChanged: (v) => onChanged(v),
         );
       case StatusBarControlType.select:
         final current = (value as String?) ?? setting.options.first.value;
+        final isFontPicker = _title.toLowerCase().contains('font') || setting.legacyKey.toLowerCase().contains('typefase');
+        if (isFontPicker) {
+          return DeadZoneFontRow(
+            icon: Icons.font_download_rounded,
+            title: _title,
+            subtitle: setting.subtitle,
+            valueLabel: _fontDisplayLabel(current),
+            onTap: () async {
+              final selected = await showDeadZoneFontPicker(
+                context: context,
+                title: _title,
+                currentValue: current,
+              );
+              if (!context.mounted || selected == null) return;
+              onChanged(selected);
+            },
+          );
+        }
         final label = setting.options.firstWhere((option) => option.value == current).label;
-        return SettingsRow(
+        return DeadZoneSelectRow(
           icon: Icons.view_list_rounded,
-          iconColor: const Color(0xFF9FAAFF),
           title: _title,
           subtitle: setting.subtitle,
-          trailing: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () => _showOptionPicker(context, current),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: Colors.white54),
-                ],
-              ),
-            ),
-          ),
+          valueLabel: label,
+          onTap: () => _showOptionPicker(context, current),
         );
       case StatusBarControlType.color:
         final int currentArgb = value is int
             ? value as int
             : DeadzoneColorUtils.parseHex((value as String?) ?? '#00000000', fallbackArgb: 0);
-        return SettingsRow(
+        return DeadZoneColorRow(
           icon: Icons.palette_rounded,
-          iconColor: const Color(0xFFA1E9DB),
           title: _title,
           subtitle: setting.subtitle,
-          trailing: MezoColorChip(
-            hex: DeadzoneColorUtils.toArgbHex(currentArgb),
-            onTap: () => _showColorPicker(context, currentArgb),
-          ),
+          argb: currentArgb,
+          onTap: () => _showColorPicker(context, currentArgb),
         );
     }
   }
 
   Future<void> _showOptionPicker(BuildContext context, String current) async {
-    final isFontPicker = _title.toLowerCase().contains('font');
     final selected = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: const Color(0xFF101B1F),
@@ -3627,24 +3610,11 @@ class _SettingControl extends StatelessWidget {
                 child: Text(_title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
               ),
               for (final option in setting.options)
-                isFontPicker
-                    ? ListTile(
-                        title: Text(
-                          option.label,
-                          style: _fontFor(option.value, const TextStyle(color: Colors.white, fontSize: 15)),
-                        ),
-                        subtitle: Text(
-                          '12:48  Wed',
-                          style: _fontFor(option.value, TextStyle(color: Colors.white.withValues(alpha: 0.62), fontSize: 12)),
-                        ),
-                        trailing: option.value == current ? const Icon(Icons.check_rounded, color: Color(0xFF79E3CB)) : null,
-                        onTap: () => Navigator.of(context).pop(option.value),
-                      )
-                    : ListTile(
-                        title: Text(option.label, style: const TextStyle(color: Colors.white70)),
-                        trailing: option.value == current ? const Icon(Icons.check_rounded, color: Color(0xFF79E3CB)) : null,
-                        onTap: () => Navigator.of(context).pop(option.value),
-                      ),
+                ListTile(
+                  title: Text(option.label, style: const TextStyle(color: Colors.white70)),
+                  trailing: option.value == current ? const Icon(Icons.check_rounded, color: Color(0xFF79E3CB)) : null,
+                  onTap: () => Navigator.of(context).pop(option.value),
+                ),
             ],
           ),
         );
@@ -3666,20 +3636,6 @@ class _SettingControl extends StatelessWidget {
     onChanged(DeadzoneColorUtils.toArgbHex(selectedArgb));
   }
 
-  TextStyle _fontFor(String value, TextStyle fallback) {
-    switch (value) {
-      case 'inter':
-        return GoogleFonts.inter(textStyle: fallback);
-      case 'din':
-        return GoogleFonts.getFont('Roboto Condensed', textStyle: fallback);
-      case 'mono':
-        return GoogleFonts.robotoMono(textStyle: fallback);
-      case 'roboto':
-        return GoogleFonts.roboto(textStyle: fallback);
-      default:
-        return fallback;
-    }
-  }
 }
 
 class _ResizePreview extends StatelessWidget {
