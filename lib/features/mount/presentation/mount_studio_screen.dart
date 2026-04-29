@@ -1,5 +1,6 @@
 import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/core/theme/design_tokens.dart';
+import 'package:deadzon/core/widgets/deadzone_color_picker_sheet.dart';
 import 'package:deadzon/core/widgets/deadzone_settings_widgets.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
 import 'package:deadzon/features/mount/presentation/mount_studio_controller.dart';
@@ -11,11 +12,6 @@ import 'package:deadzon/features/mount/presentation/widgets/mount_live_preview.d
 import 'package:deadzon/features/mount/presentation/widgets/mount_profiles_tab.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-
-int colorChannelTo255(double channel) {
-  return (channel * 255.0).round().clamp(0, 255).toInt();
-}
 
 
 class MountStudioScreen extends StatelessWidget {
@@ -210,82 +206,15 @@ class MountStudioScreen extends StatelessWidget {
       _ => controller.config.textAccentColor,
     };
 
-    final picked = await showDialog<Color>(
+    final int? pickedArgb = await showDeadZoneColorPicker(
       context: context,
-      builder: (context) => _InlineColorDialog(initial: initial),
+      initialArgb: initial.toARGB32(),
+      defaultArgb: initial.toARGB32(),
+      title: 'Pick component color',
     );
-    if (picked != null) {
-      await controller.setComponentColor(componentKey, picked);
+    if (pickedArgb != null) {
+      await controller.setComponentColor(componentKey, Color(pickedArgb));
     }
-  }
-}
-
-class _InlineColorDialog extends StatefulWidget {
-  const _InlineColorDialog({required this.initial});
-
-  final Color initial;
-
-  @override
-  State<_InlineColorDialog> createState() => _InlineColorDialogState();
-}
-
-class _InlineColorDialogState extends State<_InlineColorDialog> {
-  late Color color;
-
-  @override
-  void initState() {
-    super.initState();
-    color = widget.initial;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Pick component color'),
-      content: SizedBox(
-        width: 320,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircleAvatar(radius: 22, backgroundColor: color),
-            Slider(
-              min: 0,
-              max: 255,
-              value: colorChannelTo255(color.r).toDouble(),
-              onChanged: (v) => setState(() {
-                final g = colorChannelTo255(color.g);
-                final b = colorChannelTo255(color.b);
-                color = Color.fromARGB(255, v.round(), g, b);
-              }),
-            ),
-            Slider(
-              min: 0,
-              max: 255,
-              value: colorChannelTo255(color.g).toDouble(),
-              onChanged: (v) => setState(() {
-                final r = colorChannelTo255(color.r);
-                final b = colorChannelTo255(color.b);
-                color = Color.fromARGB(255, r, v.round(), b);
-              }),
-            ),
-            Slider(
-              min: 0,
-              max: 255,
-              value: colorChannelTo255(color.b).toDouble(),
-              onChanged: (v) => setState(() {
-                final r = colorChannelTo255(color.r);
-                final g = colorChannelTo255(color.g);
-                color = Color.fromARGB(255, r, g, v.round());
-              }),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        FilledButton(onPressed: () => Navigator.pop(context, color), child: const Text('Apply')),
-      ],
-    );
   }
 }
 
