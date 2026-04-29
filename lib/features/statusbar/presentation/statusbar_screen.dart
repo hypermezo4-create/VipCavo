@@ -3626,7 +3626,7 @@ class _SettingControl extends StatelessWidget {
         );
       case StatusBarControlType.color:
         final int currentArgb = value is int
-            ? value
+            ? value as int
             : DeadzoneColorUtils.parseHex((value as String?) ?? '#00000000', fallbackArgb: 0);
         return SettingsRow(
           icon: Icons.palette_rounded,
