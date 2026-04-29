@@ -159,7 +159,7 @@ class DeadzonThemeController extends ChangeNotifier {
 
   Future<void> applyMountConfig(MountConfig config, {bool persist = true}) async {
     _setFromConfig(config);
-    _applyAppearanceToThemeFields();
+    _applyAppearanceToThemeFields(fromMount: true);
     if (persist) {
       await _service.saveConfig(config);
     }
@@ -246,7 +246,9 @@ class DeadzonThemeController extends ChangeNotifier {
 
   void _setFromConfig(MountConfig config, {bool notify = true}) {
     _appliedConfig = config;
+    accentColor = config.selectedColor;
     secondaryAccentColor = config.selectedSeedColor;
+    backgroundTint = Color.lerp(const Color(0xFF0B1418), config.cardBackgroundTint, 0.28) ?? const Color(0xFF0B1418);
     cardTint = config.cardBackgroundTint;
     borderColor = Colors.white.withValues(alpha: config.borderVisibility.clamp(0.15, 0.82));
     iconAccentColor = config.iconAccentColor;
@@ -261,14 +263,18 @@ class DeadzonThemeController extends ChangeNotifier {
     }
   }
 
-  void _applyAppearanceToThemeFields({bool notify = true}) {
-    accentColor = selectedAccent.color;
+  void _applyAppearanceToThemeFields({bool notify = true, bool fromMount = false}) {
+    if (!fromMount) {
+      accentColor = selectedAccent.color;
+      switchOnColor = selectedAccent.color;
+      sliderColor = selectedAccent.color;
+      checkboxColor = selectedAccent.color;
+    }
     backgroundTint = Color.lerp(const Color(0xFF0B1418), selectedDarkBackground.color, 0.56) ?? const Color(0xFF0B1418);
-    iconAccentColor = Color.lerp(selectedAccent.color, selectedDarkPalette.color, 0.24) ?? selectedAccent.color;
-    textAccentColor = Color.lerp(selectedAccent.color, Colors.white, 0.25) ?? selectedAccent.color;
-    switchOnColor = selectedAccent.color;
-    sliderColor = selectedAccent.color;
-    checkboxColor = selectedAccent.color;
+    if (!fromMount) {
+      iconAccentColor = Color.lerp(selectedAccent.color, selectedDarkPalette.color, 0.24) ?? selectedAccent.color;
+      textAccentColor = Color.lerp(selectedAccent.color, Colors.white, 0.25) ?? selectedAccent.color;
+    }
     if (notify) {
       notifyListeners();
     }
