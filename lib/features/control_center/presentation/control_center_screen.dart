@@ -145,7 +145,7 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
                       label: style.label,
                       isSelected: style.value == current,
                       accent: accent,
-                      onTap: () => Navigator.pop(context, style.value),
+                      onTap: () => Navigator.of(context).maybePop( style.value),
                     ),
                     const SizedBox(height: 8),
                   ],
@@ -199,8 +199,8 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
         title: const Text('Restart SystemUI'),
         content: const Text('Send the original Mezo refresh action now?'),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Refresh')),
+          TextButton(onPressed: () => Navigator.of(context).maybePop( false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.of(context).maybePop( true), child: const Text('Refresh')),
         ],
       ),
     );
@@ -227,8 +227,8 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
         title: const Text('Reset Control Center'),
         content: const Text('Restore the original Mezo defaults?'),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Reset')),
+          TextButton(onPressed: () => Navigator.of(context).maybePop( false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.of(context).maybePop( true), child: const Text('Reset')),
         ],
       ),
     );

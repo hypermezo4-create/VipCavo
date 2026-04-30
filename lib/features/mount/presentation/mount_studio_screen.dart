@@ -152,8 +152,8 @@ class MountStudioScreen extends StatelessWidget {
         title: const Text('Restore Mount settings?'),
         content: const Text('This will restore Mount colors, effects, components, and profiles to the default DeadZone setup.'),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Restore')),
+          TextButton(onPressed: () => Navigator.of(context).maybePop(false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.of(context).maybePop(true), child: const Text('Restore')),
         ],
       ),
     );
@@ -172,8 +172,8 @@ class MountStudioScreen extends StatelessWidget {
         title: const Text('Reset active profile?'),
         content: const Text('This will restore the active profile values to their defaults.'),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Restore')),
+          TextButton(onPressed: () => Navigator.of(context).maybePop(false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.of(context).maybePop(true), child: const Text('Restore')),
         ],
       ),
     );
