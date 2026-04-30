@@ -1,3 +1,4 @@
+import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/core/widgets/deadzone_settings_widgets.dart';
 import 'package:deadzon/features/mount/domain/mount_config.dart';
 import 'package:deadzon/features/mount/presentation/widgets/mount_glass_card.dart';
@@ -43,7 +44,15 @@ class MountComponentsTab extends StatelessWidget {
               title: item.title,
               subtitle: '#${item.color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
               onTap: () => onTapItem(item.key),
-              trailing: Container(width: 20, height: 20, decoration: BoxDecoration(color: item.color, shape: BoxShape.circle, border: Border.all(color: Colors.white24))),
+              trailing: Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: item.color,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: DeadzonThemeTokens.border(context)),
+                ),
+              ),
             ),
           ),
           DeadZoneAdjustmentRow(
