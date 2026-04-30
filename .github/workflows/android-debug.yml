@@ -45,7 +45,11 @@ jobs:
 
       - name: Publish arm64 release APK to GitHub Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view latest-apk >/dev/null 2>&1 || gh release create latest-apk --title "latest-apk" --notes "Automated latest arm64 release APK"
-          gh release upload latest-apk build/app/outputs/flutter-apk/app-arm64-v8a-release.apk#DeadZone-arm64-v8a-release.apk --clobber
+          gh release view latest-apk >/dev/null 2>&1 || \
+          gh release create latest-apk \
+            --title "Latest APK" \
+            --notes "Automated latest arm64 release APK"
+          APK_PATH="build/app/outputs/flutter-apk/app-arm64-v8a-release.apk"
+          gh release upload latest-apk "$APK_PATH" --clobber

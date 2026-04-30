@@ -15,7 +15,6 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import org.json.JSONObject
-import java.util.concurrent.TimeUnit
 
 class MainActivity : FlutterActivity() {
     private val channelName = "deadzon/mezo_settings"
@@ -59,8 +58,7 @@ class MainActivity : FlutterActivity() {
                             writeInt(
                                 args.storeTypeArg(),
                                 key,
-                                args.intArg("value", 0),
-                                args.boolArg("allowRootFallback", false)
+                                args.intArg("value", 0)
                             )
                         )
                     }
@@ -91,8 +89,7 @@ class MainActivity : FlutterActivity() {
                             writeInt(
                                 args.storeTypeArg(),
                                 key,
-                                if (args.boolArg("value", false)) 1 else 0,
-                                args.boolArg("allowRootFallback", false)
+                                if (args.boolArg("value", false)) 1 else 0
                             )
                         )
                     }
@@ -122,8 +119,7 @@ class MainActivity : FlutterActivity() {
                             writeString(
                                 args.storeTypeArg(),
                                 key,
-                                args.stringArg("value") ?: "",
-                                args.boolArg("allowRootFallback", false)
+                                args.stringArg("value") ?: ""
                             )
                         )
                     }
@@ -215,7 +211,7 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun writeString(storeType: Int, key: String, value: String, allowRootFallback: Boolean): Boolean {
+    private fun writeString(storeType: Int, key: String, value: String): Boolean {
         val resolver = applicationContext.contentResolver
         return try {
             val ok = when (storeType) {
@@ -227,10 +223,10 @@ class MainActivity : FlutterActivity() {
                 notifySettingChanged(storeType, key)
                 true
             } else {
-                if (allowRootFallback) writeStringWithRootFallback(storeType, key, value) else false
+                false
             }
         } catch (_: Exception) {
-            if (allowRootFallback) writeStringWithRootFallback(storeType, key, value) else false
+            false
         }
     }
 
@@ -247,7 +243,7 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun writeInt(storeType: Int, key: String, value: Int, allowRootFallback: Boolean): Boolean {
+    private fun writeInt(storeType: Int, key: String, value: Int): Boolean {
         val resolver = applicationContext.contentResolver
         return try {
             val ok = when (storeType) {
@@ -259,10 +255,10 @@ class MainActivity : FlutterActivity() {
                 notifySettingChanged(storeType, key)
                 true
             } else {
-                if (allowRootFallback) writeStringWithRootFallback(storeType, key, value.toString()) else false
+                false
             }
         } catch (_: Exception) {
-            if (allowRootFallback) writeStringWithRootFallback(storeType, key, value.toString()) else false
+            false
         }
     }
 
@@ -325,38 +321,6 @@ class MainActivity : FlutterActivity() {
         } catch (_: Exception) {
             false
         }
-    }
-
-    private fun storeNameForShell(storeType: Int): String {
-        return when (storeType) {
-            2 -> "global"
-            1 -> "secure"
-            else -> "system"
-        }
-    }
-
-    private fun writeStringWithRootFallback(storeType: Int, key: String, value: String): Boolean {
-        val store = storeNameForShell(storeType)
-        val ok = runRootCommand("settings put $store ${shellQuote(key)} ${shellQuote(value)}")
-        if (ok) {
-            notifySettingChanged(storeType, key)
-        }
-        return ok
-    }
-
-    private fun runRootCommand(command: String): Boolean {
-        return try {
-            val process = ProcessBuilder("su", "-c", command)
-                .redirectErrorStream(true)
-                .start()
-            process.waitFor(3500, TimeUnit.MILLISECONDS) && process.exitValue() == 0
-        } catch (_: Exception) {
-            false
-        }
-    }
-
-    private fun shellQuote(value: String): String {
-        return "'" + value.replace("'", "'\\''") + "'"
     }
 
     private fun openExternalApp(packageName: String?): Boolean {
