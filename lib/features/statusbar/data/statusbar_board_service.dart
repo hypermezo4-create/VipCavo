@@ -70,9 +70,8 @@ class StatusbarBoardService {
   ///
   /// This writes status_bar_elem_position only. It never touches visibility,
   /// show/hide, clock, alarm, battery, notification, or prompt keys. The native
-  /// bridge has a root fallback for ROM builds where WRITE_SETTINGS is not
-  /// enough, so Apply to SystemUI can really persist the old Mezo key.
-  static Future<bool> writeModules(List<StatusbarBoardModuleState> modules, {bool allowRootFallback = false}) async {
+  /// Writes through the normal system/priv-app path only.
+  static Future<bool> writeModules(List<StatusbarBoardModuleState> modules) async {
     final normalized = _ensureUniqueSlotOrdering(modules);
     final encoded = encodeSerializedLayout(normalized);
     final current = await AndroidIntentBridge.readString(
@@ -87,7 +86,6 @@ class StatusbarBoardService {
     return AndroidIntentBridge.writeString(
       statusbarBoardSerializedKey,
       encoded,
-      allowRootFallback: allowRootFallback,
     );
   }
 

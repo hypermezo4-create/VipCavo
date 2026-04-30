@@ -108,20 +108,16 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
     }
     setState(() => _isApplyingLayout = true);
     try {
-      final written = await StatusbarBoardService.writeModules(_boardModules, allowRootFallback: true);
+      final written = await StatusbarBoardService.writeModules(_boardModules);
       if (!written) {
-        _showMessage(
-          'Saved locally only. Allow system write first.',
-          actionLabel: 'Allow',
-          onAction: () { _openWriteSettingsPage(); },
-        );
+        _showMessage('System apply is unavailable in this build. Your layout is saved in DeadZone.');
         return;
       }
 
       final applied = await StatusbarBoardService.applyStatusbarRefresh();
       _showMessage(applied ? 'Apply request sent to SystemUI' : 'Saved, but SystemUI refresh did not respond');
     } catch (_) {
-      _showMessage('Apply failed. Layout kept locally.');
+      _showMessage('System apply is unavailable in this build. Your layout is saved in DeadZone.');
     } finally {
       if (mounted) {
         setState(() => _isApplyingLayout = false);
@@ -388,7 +384,7 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
     final snapshot = _modules.map((module) => module.copyWith()).toList(growable: false);
     setState(() => _isApplying = true);
     try {
-      final written = await StatusbarBoardService.writeModules(snapshot, allowRootFallback: true);
+      final written = await StatusbarBoardService.writeModules(snapshot);
       widget.onSaved(snapshot);
       if (!written) {
         _showSheetMessage(
