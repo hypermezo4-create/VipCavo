@@ -216,7 +216,49 @@ class _DeviceDashboard extends StatelessWidget { const _DeviceDashboard({require
       (icon: Icons.schedule_rounded, label: 'Build time', value: _formatBuildTime(summary['buildTime'])),
       (icon: Icons.phone_android_rounded, label: 'Device', value: _valueText(summary['model'])),
     ];
-    return GlassCard(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[const Text('DeadZone Dashboard', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)), const SizedBox(height: 4), const Text('Ready', style: TextStyle(color: Colors.white70, fontSize: 12)), const SizedBox(height: 12), GridView.builder(shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), itemCount: items.length, gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 8, crossAxisSpacing: 8, childAspectRatio: 1.7), itemBuilder: (_, i) { final item = items[i]; return Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), gradient: LinearGradient(colors: <Color>[Colors.white.withValues(alpha: 0.12), Colors.white.withValues(alpha: 0.05)]), border: Border.all(color: Colors.white30)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[Icon(item.icon, color: Colors.lightBlueAccent.shade100, size: 16), const SizedBox(height: 4), Text(item.label, style: const TextStyle(color: Colors.white70, fontSize: 11.5)), const SizedBox(height: 2), Text(item.value, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))]); }), const SizedBox(height: 10), Align(alignment: Alignment.centerRight, child: FilledButton.icon(onPressed: onOpenHardwareDetails, icon: const Icon(Icons.memory_rounded), label: const Text('Hardware Details')))]));
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Text('DeadZone Dashboard', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 4),
+          const Text('Ready', style: TextStyle(color: Colors.white70, fontSize: 12)),
+          const SizedBox(height: 12),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: items.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 8, crossAxisSpacing: 8, childAspectRatio: 1.7),
+            itemBuilder: (_, i) {
+              final item = items[i];
+              return Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  gradient: LinearGradient(colors: <Color>[Colors.white.withValues(alpha: 0.12), Colors.white.withValues(alpha: 0.05)]),
+                  border: Border.all(color: Colors.white30),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Icon(item.icon, color: Colors.lightBlueAccent.shade100, size: 16),
+                    const SizedBox(height: 4),
+                    Text(item.label, style: const TextStyle(color: Colors.white70, fontSize: 11.5)),
+                    const SizedBox(height: 2),
+                    Text(item.value, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: FilledButton.icon(onPressed: onOpenHardwareDetails, icon: const Icon(Icons.memory_rounded), label: const Text('Hardware Details')),
+          ),
+        ],
+      ),
+    );
   }
 }
 
