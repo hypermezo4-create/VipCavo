@@ -83,6 +83,7 @@ class AndroidIntentBridge {
     int value, {
     int storeType = 0,
     bool refreshStatusbar = false,
+    bool allowRootFallback = false,
   }) async {
     if (key.isEmpty) return false;
     try {
@@ -92,8 +93,9 @@ class AndroidIntentBridge {
           'key': key,
           'value': value,
           'storeType': storeType,
+          'allowRootFallback': allowRootFallback,
         },
-      );
+      ).timeout(const Duration(seconds: 4));
       final ok = result ?? false;
       if (ok && refreshStatusbar) {
         await sendStatusbarRefresh();
@@ -134,6 +136,7 @@ class AndroidIntentBridge {
     bool value, {
     int storeType = 0,
     bool refreshStatusbar = false,
+    bool allowRootFallback = false,
   }) async {
     if (key.isEmpty) return false;
     try {
@@ -143,8 +146,9 @@ class AndroidIntentBridge {
           'key': key,
           'value': value,
           'storeType': storeType,
+          'allowRootFallback': allowRootFallback,
         },
-      );
+      ).timeout(const Duration(seconds: 4));
       final ok = result ?? false;
       if (ok && refreshStatusbar) {
         await sendStatusbarRefresh();
@@ -185,6 +189,7 @@ class AndroidIntentBridge {
     String value, {
     int storeType = 0,
     bool refreshStatusbar = false,
+    bool allowRootFallback = false,
   }) async {
     if (key.isEmpty) return false;
     try {
@@ -194,8 +199,9 @@ class AndroidIntentBridge {
           'key': key,
           'value': value,
           'storeType': storeType,
+          'allowRootFallback': allowRootFallback,
         },
-      );
+      ).timeout(const Duration(seconds: 4));
       final ok = result ?? false;
       if (ok && refreshStatusbar) {
         await sendStatusbarRefresh();

@@ -59,7 +59,8 @@ class MainActivity : FlutterActivity() {
                             writeInt(
                                 args.storeTypeArg(),
                                 key,
-                                args.intArg("value", 0)
+                                args.intArg("value", 0),
+                                args.boolArg("allowRootFallback", false)
                             )
                         )
                     }
@@ -90,7 +91,8 @@ class MainActivity : FlutterActivity() {
                             writeInt(
                                 args.storeTypeArg(),
                                 key,
-                                if (args.boolArg("value", false)) 1 else 0
+                                if (args.boolArg("value", false)) 1 else 0,
+                                args.boolArg("allowRootFallback", false)
                             )
                         )
                     }
@@ -120,7 +122,8 @@ class MainActivity : FlutterActivity() {
                             writeString(
                                 args.storeTypeArg(),
                                 key,
-                                args.stringArg("value") ?: ""
+                                args.stringArg("value") ?: "",
+                                args.boolArg("allowRootFallback", false)
                             )
                         )
                     }
@@ -212,7 +215,7 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun writeString(storeType: Int, key: String, value: String): Boolean {
+    private fun writeString(storeType: Int, key: String, value: String, allowRootFallback: Boolean): Boolean {
         val resolver = applicationContext.contentResolver
         return try {
             val ok = when (storeType) {
@@ -224,10 +227,10 @@ class MainActivity : FlutterActivity() {
                 notifySettingChanged(storeType, key)
                 true
             } else {
-                writeStringWithRootFallback(storeType, key, value)
+                if (allowRootFallback) writeStringWithRootFallback(storeType, key, value) else false
             }
         } catch (_: Exception) {
-            writeStringWithRootFallback(storeType, key, value)
+            if (allowRootFallback) writeStringWithRootFallback(storeType, key, value) else false
         }
     }
 
@@ -244,7 +247,7 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun writeInt(storeType: Int, key: String, value: Int): Boolean {
+    private fun writeInt(storeType: Int, key: String, value: Int, allowRootFallback: Boolean): Boolean {
         val resolver = applicationContext.contentResolver
         return try {
             val ok = when (storeType) {
@@ -256,10 +259,10 @@ class MainActivity : FlutterActivity() {
                 notifySettingChanged(storeType, key)
                 true
             } else {
-                writeStringWithRootFallback(storeType, key, value.toString())
+                if (allowRootFallback) writeStringWithRootFallback(storeType, key, value.toString()) else false
             }
         } catch (_: Exception) {
-            writeStringWithRootFallback(storeType, key, value.toString())
+            if (allowRootFallback) writeStringWithRootFallback(storeType, key, value.toString()) else false
         }
     }
 
@@ -320,7 +323,7 @@ class MainActivity : FlutterActivity() {
             sendBroadcast(intent)
             true
         } catch (_: Exception) {
-            runRootCommand("am broadcast -a ${shellQuote(action)}")
+            false
         }
     }
 
