@@ -1,11 +1,8 @@
-import 'dart:convert';
-
 import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/core/widgets/section_header.dart';
 import 'package:deadzon/features/toolbox/services/toolbox_native_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ToolboxScreen extends StatefulWidget {
   const ToolboxScreen({super.key});
@@ -72,8 +69,6 @@ class _SystemToolsGrid extends StatelessWidget {
       _ToolCard(title: 'Payload Dumper', subtitle: 'Phase 4B safe flow', icon: Icons.archive_rounded, onTap: () => _openSimpleSheet(context, const _PayloadDumperSheet())),
       _ToolCard(title: 'DeadZone Hardware Details', subtitle: 'Long values with copy support', icon: Icons.devices_rounded, onTap: onOpenHardwareDetails),
       _ToolCard(title: 'Hidden Features', subtitle: 'Display, interface, and controls', icon: Icons.tune_rounded, onTap: () => _openSimpleSheet(context, const _HiddenFeaturesSheet())),
-      _ToolCard(title: 'Backup & Restore', subtitle: 'Export/import DeadZone settings', icon: Icons.backup_rounded, onTap: () => _openSimpleSheet(context, const _BackupRestoreSheet())),
-      _ToolCard(title: 'Logs / Diagnostics', subtitle: 'Events and module diagnostics', icon: Icons.article_rounded, onTap: () => _openSimpleSheet(context, _LogsDiagnosticsSheet(summary: summary))),
     ];
 
     return Column(children: <Widget>[
@@ -131,46 +126,15 @@ class _HiddenFeaturesSheet extends StatelessWidget { const _HiddenFeaturesSheet(
   _PlaceholderPanel(title: 'Display options', subtitle: 'Refresh animations, radius, blur control'), SizedBox(height: 10),
   _PlaceholderPanel(title: 'Interface options', subtitle: 'Density, spacing, hierarchy presets'), SizedBox(height: 10),
   _PlaceholderPanel(title: 'Module visibility', subtitle: 'Enable/disable safe module cards'), SizedBox(height: 10),
-  _PlaceholderPanel(title: 'Advanced controls', subtitle: 'Diagnostics toggles and guarded options'),
+  _PlaceholderPanel(title: 'Advanced controls', subtitle: 'Safe controls and guarded options'),
 ])); }
-
-class _BackupRestoreSheet extends StatefulWidget { const _BackupRestoreSheet(); @override State<_BackupRestoreSheet> createState() => _BackupRestoreSheetState(); }
-class _BackupRestoreSheetState extends State<_BackupRestoreSheet> {
-  String _status = 'No backup yet';
-  @override void initState() { super.initState(); _load(); }
-  Future<void> _load() async { final p = await SharedPreferences.getInstance(); setState(() => _status = p.getString('dz_last_backup') ?? 'No backup yet'); }
-  Future<void> _export() async { final p = await SharedPreferences.getInstance(); final json = jsonEncode({'savedAt': DateTime.now().toIso8601String(), 'data': {'themeMode': p.getString('theme_mode') ?? 'dark'}}); await Clipboard.setData(ClipboardData(text: json)); await p.setString('dz_last_backup', 'Exported ${DateTime.now()}'); if (mounted) setState(() => _status = 'Exported to clipboard'); }
-  Future<void> _import() async { final data = await Clipboard.getData('text/plain'); final text = data?.text ?? ''; if (text.contains('savedAt')) { final p = await SharedPreferences.getInstance(); await p.setString('dz_last_backup', 'Imported ${DateTime.now()}'); if (mounted) setState(() => _status = 'Import completed from clipboard'); } else { if (mounted) setState(() => _status = 'Invalid backup content'); }}
-  @override Widget build(BuildContext context) => _ModuleSheet(title: 'Backup & Restore', child: Column(children: [
-    _ActionPill(icon: Icons.upload_file_rounded, label: 'Export', onTap: _export),
-    const SizedBox(height: 10),
-    _ActionPill(icon: Icons.download_rounded, label: 'Import', onTap: _import),
-    const SizedBox(height: 10),
-    _ActionPill(icon: Icons.restore_rounded, label: 'Restore defaults', onTap: () => setState(() => _status = 'Defaults restored (safe scope)')),
-    const SizedBox(height: 10),
-    _PlaceholderPanel(title: 'Last backup status', subtitle: _status),
-  ]));
-}
-
-class _LogsDiagnosticsSheet extends StatefulWidget { const _LogsDiagnosticsSheet({required this.summary}); final Map<String, dynamic> summary; @override State<_LogsDiagnosticsSheet> createState() => _LogsDiagnosticsSheetState(); }
-class _LogsDiagnosticsSheetState extends State<_LogsDiagnosticsSheet> {
-  final List<String> logs = <String>['DeadZone Tools booted'];
-  @override Widget build(BuildContext context) => _ModuleSheet(title: 'Logs / Diagnostics', child: Column(children: [
-    _PlaceholderPanel(title: 'App diagnostics', subtitle: 'Healthy'), const SizedBox(height: 10),
-    _PlaceholderPanel(title: 'Overlay service status', subtitle: _valueText(widget.summary['overlayStatus']).replaceAll('-', 'ready')), const SizedBox(height: 10),
-    _PlaceholderPanel(title: 'Device summary', subtitle: '${_valueText(widget.summary['model'])} • ${_formatAndroid(widget.summary['androidVersion'], widget.summary['sdk'])}'), const SizedBox(height: 10),
-    _PlaceholderPanel(title: 'Payload module status', subtitle: 'Staged parser available'), const SizedBox(height: 10),
-    _PlaceholderPanel(title: 'Recent events', subtitle: logs.join(' • ')), const SizedBox(height: 10),
-    Row(children: [Expanded(child: OutlinedButton(onPressed: () async { await Clipboard.setData(ClipboardData(text: logs.join('\n'))); }, child: const Text('Copy logs'))), const SizedBox(width: 10), Expanded(child: OutlinedButton(onPressed: () => setState(logs.clear), child: const Text('Clear logs')))]),
-  ]));
-}
 
 class _CompatibilityCenterSheet extends StatelessWidget { const _CompatibilityCenterSheet({required this.summary}); final Map<String, dynamic> summary; @override Widget build(BuildContext context) => _ModuleSheet(title: 'DeadZone Integrity Center', child: Column(children: [
   _PlaceholderPanel(title: 'Device compatibility', subtitle: _valueText(summary['model']) == '-' ? 'Unknown' : 'Compatible'), const SizedBox(height: 10),
   _PlaceholderPanel(title: 'Android version', subtitle: _formatAndroid(summary['androidVersion'], summary['sdk'])), const SizedBox(height: 10),
   _PlaceholderPanel(title: 'Overlay permission', subtitle: 'Check and grant if needed'), const SizedBox(height: 10),
-  _PlaceholderPanel(title: 'Storage access', subtitle: 'Clipboard-based backup available'), const SizedBox(height: 10),
-  _PlaceholderPanel(title: 'Module readiness', subtitle: 'Dashboard, overlay, payload, hidden, backup, logs ready'), const SizedBox(height: 10),
+  _PlaceholderPanel(title: 'Device status', subtitle: _valueText(summary['overlayStatus']).replaceAll('-', 'Ready')), const SizedBox(height: 10),
+  _PlaceholderPanel(title: 'Module readiness', subtitle: 'Dashboard, overlay, payload, hidden, compatibility ready'), const SizedBox(height: 10),
   OutlinedButton.icon(onPressed: () => ToolboxNativeService.openOverlayPermissionPanel(), icon: const Icon(Icons.open_in_new_rounded), label: const Text('Open required permission panel')),
 ])); }
 
