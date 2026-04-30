@@ -2,6 +2,7 @@ import 'package:deadzon/core/widgets/glass_card.dart';
 import 'package:deadzon/core/widgets/section_header.dart';
 import 'package:deadzon/features/toolbox/services/toolbox_native_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ToolboxScreen extends StatefulWidget {
   const ToolboxScreen({super.key});
@@ -27,90 +28,168 @@ class _ToolboxScreenState extends State<ToolboxScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Toolbox Studio')),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: <Widget>[
-            _DeviceDashboard(summary: _summary, onOpenHardwareDetails: _openHardwareDetails),
-            const SizedBox(height: 16),
-            _AboutThisDevice(summary: _summary),
-            const SizedBox(height: 16),
-            const SectionHeader(title: 'System Tools', subtitle: 'Targeted recovery modules from Kaorios Toolbox'),
-            const SizedBox(height: 10),
-            const _FpsCpuOverlayCard(),
-            const _ToolCard(title: 'Payload Dumper', subtitle: 'Placeholder UI kept for Phase 2 only.'),
-            const _ToolCard(title: 'Integrity / Features / Spoofing', subtitle: 'Recovered UI structure for configuration management.'),
-            const _ToolCard(title: 'Hidden Features', subtitle: 'Staged advanced cards and import/export placeholders.'),
-          ],
+    final scaler = MediaQuery.textScalerOf(context).clamp(minScaleFactor: 0.9, maxScaleFactor: 1.15);
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(textScaler: scaler),
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Toolbox Studio')),
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: <Color>[Color(0xFF0A0E24), Color(0xFF15173A), Color(0xFF1B2453)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: <Widget>[
+                _DeviceDashboard(summary: _summary, onOpenHardwareDetails: _openHardwareDetails),
+                const SizedBox(height: 16),
+                _AboutThisDevice(summary: _summary),
+                const SizedBox(height: 16),
+                const SectionHeader(title: 'System Tools', subtitle: 'Targeted recovery modules from Kaorios Toolbox'),
+                const SizedBox(height: 10),
+                const _SystemToolsGrid(),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
   Future<void> _openHardwareDetails() async {
-    await showDialog<void>(
+    await showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Hardware Details'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  _kv('Brand', _summary['brand']),
-                  _kv('Manufacturer', _summary['manufacturer']),
-                  _kv('Product', _summary['product']),
-                  _kv('Codename', _summary['codename']),
-                  _kv('Model', _summary['model']),
-                  _kv('Android Version', _summary['androidVersion']),
-                  _kv('SDK', _summary['sdk']),
-                  _kv('Security Patch', _summary['securityPatch']),
-                  _kv('Kernel', _summary['kernel']),
-                  _kv('Build ID', _summary['buildId']),
-                  _kv('Build Display', _summary['buildDisplay']),
-                  _kv('Build Type', _summary['buildType']),
-                  _kv('Build Tags', _summary['buildTags']),
-                  _kv('Build Time', _summary['buildTime']),
-                  _kv('Build Host', _summary['buildHost']),
-                  _kv('Build User', _summary['buildUser']),
-                  _kv('Incremental', _summary['incremental']),
-                  _kv('Radio Version', _summary['radioVersion']),
-                  _kv('Java VM', _summary['javaVm']),
-                  _kv('Locale', _summary['locale']),
-                  _kv('Timezone', _summary['timezone']),
-                  _kv('Fingerprint', _summary['fingerprint']),
-                  _kv('Supported ABIs', _summary['supportedAbis']),
-                  _kv('RAM', _summary['ram']),
-                  _kv('Storage', _summary['storage']),
-                  _kv('Resolution', _summary['resolution']),
-                  _kv('Refresh Rate', _summary['refreshRate']),
-                ],
-              ),
-            ),
+        final scaler = MediaQuery.textScalerOf(context).clamp(minScaleFactor: 0.9, maxScaleFactor: 1.1);
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: scaler),
+          child: DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: 0.82,
+            maxChildSize: 0.94,
+            minChildSize: 0.6,
+            builder: (BuildContext context, ScrollController controller) {
+              return Container(
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                  gradient: LinearGradient(
+                    colors: <Color>[Colors.indigo.shade900.withValues(alpha: 0.95), Colors.black.withValues(alpha: 0.95)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                  child: Column(
+                    children: <Widget>[
+                      Container(
+                        width: 48,
+                        height: 5,
+                        decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text('Hardware Details', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w800, color: Colors.white)),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: ListView(
+                          controller: controller,
+                          children: <Widget>[
+                            _HardwareRow(icon: Icons.business_rounded, label: 'Brand', value: _summary['brand']),
+                            _HardwareRow(icon: Icons.factory_rounded, label: 'Manufacturer', value: _summary['manufacturer']),
+                            _HardwareRow(icon: Icons.widgets_rounded, label: 'Product', value: _summary['product']),
+                            _HardwareRow(icon: Icons.code_rounded, label: 'Codename', value: _summary['codename']),
+                            _HardwareRow(icon: Icons.phone_android_rounded, label: 'Model', value: _summary['model']),
+                            _HardwareRow(icon: Icons.android_rounded, label: 'Android Version', value: _summary['androidVersion']),
+                            _HardwareRow(icon: Icons.numbers_rounded, label: 'SDK', value: _summary['sdk']),
+                            _HardwareRow(icon: Icons.security_rounded, label: 'Security Patch', value: _summary['securityPatch']),
+                            _HardwareRow(icon: Icons.developer_board_rounded, label: 'Kernel', value: _summary['kernel'], copyable: true),
+                            _HardwareRow(icon: Icons.fingerprint_rounded, label: 'Fingerprint', value: _summary['fingerprint'], copyable: true),
+                            _HardwareRow(icon: Icons.settings_ethernet_rounded, label: 'Radio Version', value: _summary['radioVersion'], copyable: true),
+                            _HardwareRow(icon: Icons.badge_rounded, label: 'Build ID', value: _summary['buildId']),
+                            _HardwareRow(icon: Icons.display_settings_rounded, label: 'Build Display', value: _summary['buildDisplay']),
+                            _HardwareRow(icon: Icons.build_circle_rounded, label: 'Build Type', value: _summary['buildType']),
+                            _HardwareRow(icon: Icons.sell_rounded, label: 'Build Tags', value: _summary['buildTags']),
+                            _HardwareRow(icon: Icons.schedule_rounded, label: 'Build Time', value: _summary['buildTime']),
+                            _HardwareRow(icon: Icons.dns_rounded, label: 'Build Host', value: _summary['buildHost']),
+                            _HardwareRow(icon: Icons.person_rounded, label: 'Build User', value: _summary['buildUser']),
+                            _HardwareRow(icon: Icons.update_rounded, label: 'Incremental', value: _summary['incremental']),
+                            _HardwareRow(icon: Icons.memory_rounded, label: 'RAM', value: _summary['ram']),
+                            _HardwareRow(icon: Icons.sd_storage_rounded, label: 'Storage', value: _summary['storage']),
+                            _HardwareRow(icon: Icons.screen_rotation_alt_rounded, label: 'Resolution', value: _summary['resolution']),
+                            _HardwareRow(icon: Icons.speed_rounded, label: 'Refresh Rate', value: _summary['refreshRate']),
+                            _HardwareRow(icon: Icons.terminal_rounded, label: 'Java VM', value: _summary['javaVm']),
+                            _HardwareRow(icon: Icons.language_rounded, label: 'Locale', value: _summary['locale']),
+                            _HardwareRow(icon: Icons.public_rounded, label: 'Timezone', value: _summary['timezone']),
+                            _HardwareRow(icon: Icons.developer_mode_rounded, label: 'Supported ABIs', value: _summary['supportedAbis'], copyable: true),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
-          actions: <Widget>[TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close'))],
         );
       },
     );
   }
+}
 
-  Widget _kv(String label, Object? value) {
+class _HardwareRow extends StatelessWidget {
+  const _HardwareRow({required this.icon, required this.label, required this.value, this.copyable = false});
+
+  final IconData icon;
+  final String label;
+  final Object? value;
+  final bool copyable;
+
+  @override
+  Widget build(BuildContext context) {
     final display = value == null || value.toString().trim().isEmpty ? '-' : value.toString();
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: RichText(
-        text: TextSpan(
-          style: DefaultTextStyle.of(context).style,
-          children: <TextSpan>[
-            TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.w700)),
-            TextSpan(text: display),
-          ],
-        ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white24),
+        color: Colors.white.withValues(alpha: 0.06),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(icon, color: Colors.cyanAccent.shade100, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 3),
+                Text(display, style: const TextStyle(color: Colors.white, fontSize: 14.5, height: 1.35)),
+              ],
+            ),
+          ),
+          if (copyable && display != '-')
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              tooltip: 'Copy',
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: display));
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Copied to clipboard')));
+                }
+              },
+              icon: const Icon(Icons.copy_rounded, size: 18, color: Colors.white70),
+            ),
+        ],
       ),
     );
   }
@@ -128,27 +207,28 @@ class _DeviceDashboard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Text('Device Dashboard', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+          const Text('Device Dashboard', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
           const SizedBox(height: 4),
-          const Text('Kaorios-style diagnostics overview', style: TextStyle(color: Colors.white60, fontSize: 12)),
+          const Text('Kaorios premium diagnostics overview', style: TextStyle(color: Colors.white70, fontSize: 12)),
           const SizedBox(height: 12),
           Wrap(
-            runSpacing: 8,
-            spacing: 8,
+            runSpacing: 10,
+            spacing: 10,
             children: <Widget>[
-              _mini(context, 'Device', summary['model']),
-              _mini(context, 'Android', '${summary['androidVersion'] ?? '-'} (SDK ${summary['sdk'] ?? '-'})'),
-              _mini(context, 'RAM', summary['ram']),
-              _mini(context, 'Storage', summary['storage']),
-              _mini(context, 'Display', '${summary['resolution'] ?? '-'} • ${summary['refreshRate'] ?? '-'}'),
-              _mini(context, 'Build', summary['buildDisplay']),
+              _mini(context, Icons.phone_iphone_rounded, 'Device', summary['model']),
+              _mini(context, Icons.android_rounded, 'Android', '${summary['androidVersion'] ?? '-'} (SDK ${summary['sdk'] ?? '-'})'),
+              _mini(context, Icons.memory_rounded, 'RAM', summary['ram']),
+              _mini(context, Icons.sd_storage_rounded, 'Storage', summary['storage']),
+              _mini(context, Icons.monitor_rounded, 'Display', '${summary['resolution'] ?? '-'} • ${summary['refreshRate'] ?? '-'}'),
+              _mini(context, Icons.construction_rounded, 'Build', summary['buildDisplay']),
             ],
           ),
           const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerRight,
-            child: OutlinedButton.icon(
+            child: FilledButton.icon(
               onPressed: onOpenHardwareDetails,
+              style: FilledButton.styleFrom(backgroundColor: Colors.cyanAccent.withValues(alpha: 0.18)),
               icon: const Icon(Icons.memory_rounded),
               label: const Text('Hardware Details'),
             ),
@@ -158,19 +238,23 @@ class _DeviceDashboard extends StatelessWidget {
     );
   }
 
-  Widget _mini(BuildContext context, String label, Object? value) {
+  Widget _mini(BuildContext context, IconData icon, String label, Object? value) {
     final text = value == null || value.toString().trim().isEmpty ? '-' : value.toString();
+    final isWide = MediaQuery.of(context).size.width > 460;
     return Container(
-      width: MediaQuery.of(context).size.width > 440 ? 190 : 160,
-      padding: const EdgeInsets.all(10),
+      width: isWide ? 196 : (MediaQuery.of(context).size.width - 54) / 2,
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white24),
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(colors: <Color>[Colors.white.withValues(alpha: 0.12), Colors.white.withValues(alpha: 0.05)]),
+        border: Border.all(color: Colors.white30),
+        boxShadow: <BoxShadow>[BoxShadow(color: Colors.indigoAccent.withValues(alpha: 0.25), blurRadius: 14, spreadRadius: -8)],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-        Text(label, style: const TextStyle(color: Colors.white60, fontSize: 11)),
-        const SizedBox(height: 4),
+        Icon(icon, color: Colors.lightBlueAccent.shade100, size: 19),
+        const SizedBox(height: 6),
+        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11.5)),
+        const SizedBox(height: 3),
         Text(text, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
       ]),
     );
@@ -185,47 +269,75 @@ class _AboutThisDevice extends StatelessWidget {
   Widget build(BuildContext context) {
     return GlassCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-        const Text('About This Device', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+        const Text('About This Device', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
         const SizedBox(height: 12),
-        _row('Brand / Manufacturer', '${summary['brand'] ?? '-'} / ${summary['manufacturer'] ?? '-'}'),
-        _row('Product / Codename', '${summary['product'] ?? '-'} / ${summary['codename'] ?? '-'}'),
-        _row('Build', '${summary['buildId'] ?? '-'} (${summary['buildType'] ?? '-'})'),
-        _row('Security', summary['securityPatch']),
-        _row('Kernel', summary['kernel']),
-        _row('Fingerprint', summary['fingerprint']),
-        _row('Locale • Timezone', '${summary['locale'] ?? '-'} • ${summary['timezone'] ?? '-'}'),
+        _row(Icons.badge_rounded, 'Brand / Manufacturer', '${summary['brand'] ?? '-'} / ${summary['manufacturer'] ?? '-'}'),
+        _row(Icons.widgets_rounded, 'Product / Codename', '${summary['product'] ?? '-'} / ${summary['codename'] ?? '-'}'),
+        _row(Icons.build_rounded, 'Build', '${summary['buildId'] ?? '-'} (${summary['buildType'] ?? '-'})'),
+        _row(Icons.verified_user_rounded, 'Security', summary['securityPatch']),
+        _row(Icons.developer_board_rounded, 'Kernel', summary['kernel']),
+        _row(Icons.fingerprint_rounded, 'Fingerprint', summary['fingerprint']),
+        _row(Icons.public_rounded, 'Locale • Timezone', '${summary['locale'] ?? '-'} • ${summary['timezone'] ?? '-'}'),
       ]),
     );
   }
 
-  Widget _row(String label, Object? value) {
+  Widget _row(IconData icon, String label, Object? value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-        SizedBox(width: 130, child: Text(label, style: const TextStyle(color: Colors.white60))),
-        Expanded(child: Text('${value ?? '-'}', style: const TextStyle(color: Colors.white))),
+        Icon(icon, size: 18, color: Colors.cyanAccent.shade100),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+            Text(label, style: const TextStyle(color: Colors.white60, fontSize: 12.5, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 2),
+            Text('${value ?? '-'}', style: const TextStyle(color: Colors.white, height: 1.35)),
+          ]),
+        ),
       ]),
     );
   }
 }
 
-class _ToolCard extends StatelessWidget {
-  const _ToolCard({required this.title, required this.subtitle});
-  final String title;
-  final String subtitle;
+class _SystemToolsGrid extends StatelessWidget {
+  const _SystemToolsGrid();
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: GlassCard(
-        child: ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-          subtitle: Text(subtitle, style: const TextStyle(color: Colors.white70)),
-          trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white60, size: 16),
-        ),
-      ),
+    return GridView.count(
+      crossAxisCount: 2,
+      childAspectRatio: 1.17,
+      mainAxisSpacing: 10,
+      crossAxisSpacing: 10,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      children: const <Widget>[
+        _FpsCpuOverlayCard(),
+        _ToolCard(title: 'Payload Dumper', subtitle: 'Phase 2 placeholder module', icon: Icons.archive_rounded),
+        _ToolCard(title: 'Integrity Suite', subtitle: 'Features and spoofing controls', icon: Icons.shield_rounded),
+        _ToolCard(title: 'Hidden Features', subtitle: 'Premium staged controls', icon: Icons.tune_rounded),
+      ],
+    );
+  }
+}
+
+class _ToolCard extends StatelessWidget {
+  const _ToolCard({required this.title, required this.subtitle, required this.icon});
+  final String title;
+  final String subtitle;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return GlassCard(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+        Icon(icon, color: Colors.white, size: 24),
+        const Spacer(),
+        Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 4),
+        Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+      ]),
     );
   }
 }
@@ -278,122 +390,42 @@ class _FpsCpuOverlayCardState extends State<_FpsCpuOverlayCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: GlassCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            const Text('FPS & CPU Overlay', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 8),
-            if (!canOverlay)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  const Text('Overlay permission is required to show the floating monitor.', style: TextStyle(color: Colors.white70)),
-                  const SizedBox(height: 8),
-                  FilledButton(
-                    onPressed: () async {
-                      await ToolboxNativeService.openOverlayPermissionPanel();
-                      await _refresh();
-                    },
-                    child: const Text('Grant overlay permission'),
-                  ),
-                ],
-              )
-            else ...<Widget>[
-              Wrap(
-                spacing: 8,
-                children: <Widget>[
-                  for (final pos in const <String>['topLeft', 'topCenter', 'topRight', 'bottomLeft'])
-                    ChoiceChip(
-                      label: Text(pos),
-                      selected: position == pos,
-                      onSelected: (_) async {
-                        setState(() => position = pos);
-                        await _applySettings();
-                      },
-                    ),
-                ],
-              ),
-              SwitchListTile(
-                value: showFps,
-                onChanged: (v) async {
-                  setState(() => showFps = v);
-                  await _applySettings();
-                },
-                title: const Text('Show FPS'),
-              ),
-              SwitchListTile(
-                value: showFpsLabel,
-                onChanged: (v) async {
-                  setState(() => showFpsLabel = v);
-                  await _applySettings();
-                },
-                title: const Text('Show FPS label'),
-              ),
-              SwitchListTile(
-                value: reverseFormat,
-                onChanged: (v) async {
-                  setState(() => reverseFormat = v);
-                  await _applySettings();
-                },
-                title: const Text('Reverse format'),
-              ),
-              SwitchListTile(
-                value: showAppName,
-                onChanged: (v) async {
-                  setState(() => showAppName = v);
-                  await _applySettings();
-                },
-                title: const Text('Show app name'),
-              ),
-              SwitchListTile(
-                value: showPackageName,
-                onChanged: (v) async {
-                  setState(() => showPackageName = v);
-                  await _applySettings();
-                },
-                title: const Text('Show package name'),
-              ),
-              SwitchListTile(
-                value: showCpuInfo,
-                onChanged: (v) async {
-                  setState(() => showCpuInfo = v);
-                  await _applySettings();
-                },
-                title: const Text('Show CPU info'),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () async {
-                        await _applySettings();
-                        final ok = await ToolboxNativeService.startFpsOverlay();
-                        if (mounted) setState(() => running = ok);
-                      },
-                      child: const Text('Start overlay'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () async {
-                        await ToolboxNativeService.stopFpsOverlay();
-                        if (mounted) setState(() => running = false);
-                      },
-                      child: const Text('Stop overlay'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(running ? 'Status: Running' : 'Status: Stopped', style: const TextStyle(color: Colors.white70)),
-            ],
-          ],
-        ),
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(children: <Widget>[
+            const Icon(Icons.speed_rounded, color: Colors.cyanAccent),
+            const SizedBox(width: 8),
+            const Expanded(child: Text('FPS & CPU Overlay', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(color: (running ? Colors.green : Colors.orange).withValues(alpha: 0.22), borderRadius: BorderRadius.circular(999)),
+              child: Text(running ? 'Active' : 'Ready', style: const TextStyle(color: Colors.white, fontSize: 11)),
+            ),
+          ]),
+          const SizedBox(height: 6),
+          const Text('Live monitor controls and quick launch.', style: TextStyle(color: Colors.white70, fontSize: 12)),
+          const Spacer(),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: OutlinedButton(
+              onPressed: () async {
+                if (!canOverlay) {
+                  await ToolboxNativeService.openOverlayPermissionPanel();
+                  await _refresh();
+                  return;
+                }
+                await _applySettings();
+                if (!running) {
+                  final ok = await ToolboxNativeService.startFpsOverlay();
+                  if (mounted) setState(() => running = ok);
+                }
+              },
+              child: Text(canOverlay ? (running ? 'Running' : 'Start') : 'Grant Permission'),
+            ),
+          ),
+        ],
       ),
     );
   }
