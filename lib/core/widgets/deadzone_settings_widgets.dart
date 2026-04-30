@@ -8,17 +8,16 @@ class DeadZoneSettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    return Container(
+        return Container(
       padding: padding,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: DeadzonThemeTokens.cardTint(context).withValues(alpha: isLight ? 0.86 : 0.28),
-        border: Border.all(color: DeadzonThemeTokens.border(context)),
+        color: DeadzonThemeTokens.cardBackgroundStrong(context),
+        border: Border.all(color: DeadzonThemeTokens.cardBorder(context)),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: DeadzonThemeTokens.shadow(context),
-            blurRadius: isLight ? 20 : 12,
+            blurRadius: 14,
             offset: const Offset(0, 8),
           ),
         ],
@@ -39,10 +38,10 @@ class DeadZoneSectionHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(top: 6, bottom: 8),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-        Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: accent, letterSpacing: 0.2)),
+        Text(title, style: TextStyle(fontSize: 16.2, fontWeight: FontWeight.w800, color: accent, letterSpacing: 0.2)),
         if (subtitle != null) ...<Widget>[
           const SizedBox(height: 2),
-          Text(subtitle!, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: onSurface.withValues(alpha: 0.68))),
+          Text(subtitle!, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: onSurface.withValues(alpha: 0.76))),
         ],
       ]),
     );
@@ -65,14 +64,14 @@ class DeadZoneNavigationRow extends StatelessWidget {
       borderRadius: BorderRadius.circular(18),
       onTap: onTap,
       child: SizedBox(
-        height: 58,
+        height: 68,
         child: Row(children: <Widget>[
           DeadZoneIconChip(icon: icon),
           const SizedBox(width: 10),
           Expanded(
             child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-              Text(title, style: TextStyle(fontSize: 14.8, fontWeight: FontWeight.w700, color: onSurface)),
-              Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11.8, color: secondary.withValues(alpha: 0.94))),
+              Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: onSurface)),
+              Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, color: secondary.withValues(alpha: 0.96))),
             ]),
           ),
           trailing ?? Icon(Icons.chevron_right_rounded, color: DeadzonThemeTokens.iconAccent(context).withValues(alpha: 0.74)),
@@ -295,7 +294,7 @@ class DeadZoneSelectRow extends StatelessWidget {
       icon: icon,
       title: title,
       subtitle: subtitle ?? valueLabel,
-      trailing: DeadZoneValueChip(label: valueLabel),
+      trailing: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[DeadZoneValueChip(label: valueLabel), const SizedBox(width: 6), Icon(Icons.chevron_right_rounded, color: DeadzonThemeTokens.iconAccent(context).withValues(alpha: 0.74))]),
       onTap: onTap,
     );
   }
@@ -330,7 +329,7 @@ class DeadZoneColorRow extends StatelessWidget {
         decoration: BoxDecoration(
           color: Color(argb),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: DeadzonThemeTokens.border(context)),
+          border: Border.all(color: DeadzonThemeTokens.cardBorder(context)),
         ),
       ),
       onTap: onTap,
@@ -361,7 +360,7 @@ class DeadZoneFontRow extends StatelessWidget {
       icon: icon,
       title: title,
       subtitle: subtitle ?? valueLabel,
-      trailing: DeadZoneValueChip(label: valueLabel),
+      trailing: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[DeadZoneValueChip(label: valueLabel), const SizedBox(width: 6), Icon(Icons.chevron_right_rounded, color: DeadzonThemeTokens.iconAccent(context).withValues(alpha: 0.74))]),
       onTap: onTap,
     );
   }

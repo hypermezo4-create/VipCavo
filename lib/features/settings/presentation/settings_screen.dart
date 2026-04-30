@@ -31,7 +31,7 @@ class SettingsScreen extends StatelessWidget {
             DeadZoneSettingsCard(
               child: Column(
                 children: <Widget>[
-                  DeadZoneNavigationRow(icon: Icons.settings_rounded, title: 'Settings', subtitle: 'General preferences', onTap: () {}, trailing: DeadZoneValueChip(label: AppIdentity.currentTrack)),
+                  DeadZoneNavigationRow(icon: Icons.settings_rounded, title: 'Settings', subtitle: 'Appearance & preferences', onTap: () {}, trailing: DeadZoneValueChip(label: AppIdentity.currentTrack)),
                 ],
               ),
             ),
@@ -39,7 +39,7 @@ class SettingsScreen extends StatelessWidget {
             DeadZoneSettingsCard(
               child: Column(
                 children: <Widget>[
-                  const DeadZoneSectionHeader(title: 'Preferences'),
+                  const DeadZoneSectionHeader(title: 'Appearance & preferences', subtitle: 'Readable controls for theme and app behavior'),
                   DeadZoneSelectRow(icon: Icons.dark_mode_rounded, title: 'Theme', valueLabel: _modeSummary(theme.themeMode), onTap: () => _showThemePicker(context, theme)),
                   DeadZoneNavigationRow(
                     icon: Icons.tune_rounded,
@@ -54,9 +54,16 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 12),
             DeadZoneSettingsCard(
               child: Column(children: <Widget>[
-                const DeadZoneSectionHeader(title: 'Reset'),
+                const DeadZoneSectionHeader(title: 'Maintenance', subtitle: 'Reset app-level values and view build details'),
                 DeadZoneNavigationRow(icon: Icons.restart_alt_rounded, title: 'Reset App Settings', subtitle: 'Restore only app preferences', onTap: () => _showResetAppDialog(context)),
                 DeadZoneNavigationRow(icon: Icons.restore_rounded, title: 'Reset Deadzon Customizations', subtitle: 'No system partition edits in app phase', onTap: () => _showResetCustomizationsDialog(context)),
+              ]),
+            ),
+            const SizedBox(height: 12),
+            DeadZoneSettingsCard(
+              child: Column(children: const <Widget>[
+                DeadZoneSectionHeader(title: 'About', subtitle: 'Build and release information'),
+                _BuildInfoRow(),
               ]),
             ),
           ],
@@ -81,7 +88,7 @@ class SettingsScreen extends StatelessWidget {
         selected: controller.themeMode,
       ),
     );
-    if (selected != null) await controller.setThemeMode(selected);
+    if (selected != null && context.mounted) await controller.setThemeMode(selected);
   }
 
   void _showResetAppDialog(BuildContext context) => showDialog<void>(
@@ -101,6 +108,21 @@ class SettingsScreen extends StatelessWidget {
       actions: <Widget>[TextButton(onPressed: () => Navigator.of(context).maybePop(), child: const Text('Cancel')), FilledButton(onPressed: () => Navigator.of(context).maybePop(), child: const Text('OK'))],
     ),
   );
+}
+
+class _BuildInfoRow extends StatelessWidget {
+  const _BuildInfoRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return DeadZoneNavigationRow(
+      icon: Icons.info_outline_rounded,
+      title: 'ROM Deadzon',
+      subtitle: '${AppIdentity.currentTrack} • ${AppIdentity.versionLabel} • ${AppIdentity.buildLabel}',
+      trailing: DeadZoneValueChip(label: 'Mezo'),
+      onTap: () {},
+    );
+  }
 }
 
 class DeadZoneOptionItem<T> {
