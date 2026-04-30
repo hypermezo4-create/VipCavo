@@ -209,6 +209,78 @@ class DeadZoneSliderRow extends StatelessWidget {
   }
 }
 
+class DeadZoneAdjustmentRow extends StatelessWidget {
+  const DeadZoneAdjustmentRow({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.defaultValue,
+    required this.onChanged,
+    required this.onReset,
+    super.key,
+    this.subtitle,
+    this.step = 1,
+    this.divisions,
+    this.formatValue,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final double value;
+  final double min;
+  final double max;
+  final double defaultValue;
+  final double step;
+  final int? divisions;
+  final ValueChanged<double> onChanged;
+  final VoidCallback onReset;
+  final String Function(double value)? formatValue;
+
+  @override
+  Widget build(BuildContext context) {
+    final onSurface = DeadzonThemeTokens.textPrimary(context);
+    final secondary = DeadzonThemeTokens.textSecondary(context);
+    final safe = value.clamp(min, max).toDouble();
+    final display = formatValue?.call(safe) ?? safe.toStringAsFixed(0);
+    return Column(
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            DeadZoneIconChip(icon: icon),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
+                Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: onSurface)),
+                if (subtitle != null) Text(subtitle!, style: TextStyle(fontSize: 12, color: secondary.withValues(alpha: 0.86))),
+              ]),
+            ),
+            TextButton(onPressed: onReset, child: const Text('Reset')),
+            DeadZoneValueChip(label: display),
+          ],
+        ),
+        Row(children: <Widget>[
+          IconButton(onPressed: () => onChanged((safe - step).clamp(min, max).toDouble()), icon: const Icon(Icons.remove_rounded)),
+          Expanded(
+            child: SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                activeTrackColor: DeadzonThemeTokens.sliderActive(context),
+                thumbColor: DeadzonThemeTokens.sliderThumb(context),
+                overlayColor: DeadzonThemeTokens.sliderOverlay(context),
+                inactiveTrackColor: DeadzonThemeTokens.sliderInactive(context),
+              ),
+              child: Slider(value: safe, min: min, max: max, divisions: divisions, onChanged: onChanged),
+            ),
+          ),
+          IconButton(onPressed: () => onChanged((safe + step).clamp(min, max).toDouble()), icon: const Icon(Icons.add_rounded)),
+        ]),
+      ],
+    );
+  }
+}
+
 class DeadZoneSelectRow extends StatelessWidget {
   const DeadZoneSelectRow({required this.icon, required this.title, required this.valueLabel, required this.onTap, super.key, this.subtitle});
   final IconData icon;
