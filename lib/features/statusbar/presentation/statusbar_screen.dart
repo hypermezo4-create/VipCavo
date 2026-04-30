@@ -108,7 +108,7 @@ class _StatusbarScreenState extends State<StatusbarScreen> {
     }
     setState(() => _isApplyingLayout = true);
     try {
-      final written = await StatusbarBoardService.writeModules(_boardModules);
+      final written = await StatusbarBoardService.writeModules(_boardModules, allowRootFallback: true);
       if (!written) {
         _showMessage(
           'Saved locally only. Allow system write first.',
@@ -388,7 +388,7 @@ class _ArrangeLayoutSheetState extends State<_ArrangeLayoutSheet> {
     final snapshot = _modules.map((module) => module.copyWith()).toList(growable: false);
     setState(() => _isApplying = true);
     try {
-      final written = await StatusbarBoardService.writeModules(snapshot);
+      final written = await StatusbarBoardService.writeModules(snapshot, allowRootFallback: true);
       widget.onSaved(snapshot);
       if (!written) {
         _showSheetMessage(
