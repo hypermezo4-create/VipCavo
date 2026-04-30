@@ -80,14 +80,14 @@ class DeadzonFloatingTabBar extends StatelessWidget {
                               duration: const Duration(milliseconds: 280),
                               curve: Curves.easeOutCubic,
                               style: TextStyle(
-                                color: selected ? DeadzonThemeTokens.textAccent(context) : idleColor,
+                                color: selected ? DeadzonThemeTokens.navSelectedLabel(context) : idleColor,
                                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                                 fontSize: DesignTokens.navLabel,
                               ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: <Widget>[
-                                  Icon(item.icon, color: selected ? DeadzonThemeTokens.iconAccent(context) : idleColor, size: selected ? 21 : 19),
+                                  Icon(item.icon, color: selected ? DeadzonThemeTokens.navSelectedIcon(context) : idleColor, size: selected ? 21 : 19),
                                   const SizedBox(height: 3),
                                   Text(item.label),
                                 ],

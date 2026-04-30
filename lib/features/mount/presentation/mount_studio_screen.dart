@@ -28,8 +28,8 @@ class MountStudioScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = context.watch<MountStudioController>();
     const bottomNavHeight = 92.0;
-    const actionBarHeight = 168.0;
-    const extraSpacing = 28.0;
+    const actionBarHeight = 184.0;
+    const extraSpacing = 40.0;
     final safeBottom = MediaQuery.paddingOf(context).bottom;
     final contentBottomPadding = actionBarHeight + bottomNavHeight + safeBottom + extraSpacing;
 
@@ -73,7 +73,7 @@ class MountStudioScreen extends StatelessWidget {
                     await controller.apply();
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Mount applied successfully. Theme tokens and targets are now active.')),
+                      SnackBar(content: const Text('Mount applied successfully. Theme tokens and targets are now active.'), behavior: SnackBarBehavior.floating, margin: EdgeInsets.fromLTRB(16, 0, 16, bottomNavHeight + actionBarHeight - 18 + safeBottom)),
                     );
                   },
                 ),
@@ -131,7 +131,7 @@ class MountStudioScreen extends StatelessWidget {
           onProfileTap: controller.applyProfile,
           onResetProfile: () => _showResetProfileDialog(context, controller),
           onEditProfile: () {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile editing will be added in the next iteration.')));
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text('Profile editing will be added in the next iteration.'), behavior: SnackBarBehavior.floating, margin: EdgeInsets.fromLTRB(16, 0, 16, bottomNavHeight + actionBarHeight - 18 + MediaQuery.paddingOf(context).bottom)));
           },
         );
       default:
@@ -249,11 +249,11 @@ class _SegmentTabs extends StatelessWidget {
               label: Text(tabs[index]),
               onSelected: (_) => onTap(index),
               labelStyle: TextStyle(
-                color: active ? DeadzonThemeTokens.textPrimary(context) : DeadzonThemeTokens.textSecondary(context),
+                color: active ? DeadzonThemeTokens.navSelectedLabel(context) : DeadzonThemeTokens.textSecondary(context),
                 fontWeight: FontWeight.w600,
               ),
-              selectedColor: DeadzonThemeTokens.accent(context).withValues(alpha: 0.26),
-              backgroundColor: DeadzonThemeTokens.cardBackground(context).withValues(alpha: 0.84),
+              selectedColor: DeadzonThemeTokens.navSelectedPill(context),
+              backgroundColor: DeadzonThemeTokens.cardBackgroundStrong(context),
               side: BorderSide(color: DeadzonThemeTokens.border(context)),
             ),
           );
