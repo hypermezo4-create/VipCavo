@@ -39,7 +39,7 @@ class _ToolboxScreenState extends State<ToolboxScreen> {
             const SizedBox(height: 16),
             const SectionHeader(title: 'System Tools', subtitle: 'Targeted recovery modules from Kaorios Toolbox'),
             const SizedBox(height: 10),
-            const _ToolCard(title: 'FPS & CPU Overlay', subtitle: 'Placeholder UI kept for Phase 2 only.'),
+            const _FpsCpuOverlayCard(),
             const _ToolCard(title: 'Payload Dumper', subtitle: 'Placeholder UI kept for Phase 2 only.'),
             const _ToolCard(title: 'Integrity / Features / Spoofing', subtitle: 'Recovered UI structure for configuration management.'),
             const _ToolCard(title: 'Hidden Features', subtitle: 'Staged advanced cards and import/export placeholders.'),
@@ -224,6 +224,175 @@ class _ToolCard extends StatelessWidget {
           title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
           subtitle: Text(subtitle, style: const TextStyle(color: Colors.white70)),
           trailing: const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white60, size: 16),
+        ),
+      ),
+    );
+  }
+}
+
+class _FpsCpuOverlayCard extends StatefulWidget {
+  const _FpsCpuOverlayCard();
+
+  @override
+  State<_FpsCpuOverlayCard> createState() => _FpsCpuOverlayCardState();
+}
+
+class _FpsCpuOverlayCardState extends State<_FpsCpuOverlayCard> {
+  bool canOverlay = false;
+  bool running = false;
+  String position = 'topRight';
+  bool showFps = true;
+  bool showFpsLabel = true;
+  bool reverseFormat = false;
+  bool showAppName = false;
+  bool showPackageName = false;
+  bool showCpuInfo = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+  }
+
+  Future<void> _refresh() async {
+    final can = await ToolboxNativeService.canDrawOverlays();
+    final isRunning = await ToolboxNativeService.isFpsOverlayRunning();
+    if (!mounted) return;
+    setState(() {
+      canOverlay = can;
+      running = isRunning;
+    });
+  }
+
+  Future<void> _applySettings() async {
+    await ToolboxNativeService.updateFpsOverlaySettings(<String, dynamic>{
+      'position': position,
+      'showFps': showFps,
+      'showFpsLabel': showFpsLabel,
+      'reverseFormat': reverseFormat,
+      'showAppName': showAppName,
+      'showPackageName': showPackageName,
+      'showCpuInfo': showCpuInfo,
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: GlassCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Text('FPS & CPU Overlay', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            if (!canOverlay)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const Text('Overlay permission is required to show the floating monitor.', style: TextStyle(color: Colors.white70)),
+                  const SizedBox(height: 8),
+                  FilledButton(
+                    onPressed: () async {
+                      await ToolboxNativeService.openOverlayPermissionPanel();
+                      await _refresh();
+                    },
+                    child: const Text('Grant overlay permission'),
+                  ),
+                ],
+              )
+            else ...<Widget>[
+              Wrap(
+                spacing: 8,
+                children: <Widget>[
+                  for (final pos in const <String>['topLeft', 'topCenter', 'topRight', 'bottomLeft'])
+                    ChoiceChip(
+                      label: Text(pos),
+                      selected: position == pos,
+                      onSelected: (_) async {
+                        setState(() => position = pos);
+                        await _applySettings();
+                      },
+                    ),
+                ],
+              ),
+              SwitchListTile(
+                value: showFps,
+                onChanged: (v) async {
+                  setState(() => showFps = v);
+                  await _applySettings();
+                },
+                title: const Text('Show FPS'),
+              ),
+              SwitchListTile(
+                value: showFpsLabel,
+                onChanged: (v) async {
+                  setState(() => showFpsLabel = v);
+                  await _applySettings();
+                },
+                title: const Text('Show FPS label'),
+              ),
+              SwitchListTile(
+                value: reverseFormat,
+                onChanged: (v) async {
+                  setState(() => reverseFormat = v);
+                  await _applySettings();
+                },
+                title: const Text('Reverse format'),
+              ),
+              SwitchListTile(
+                value: showAppName,
+                onChanged: (v) async {
+                  setState(() => showAppName = v);
+                  await _applySettings();
+                },
+                title: const Text('Show app name'),
+              ),
+              SwitchListTile(
+                value: showPackageName,
+                onChanged: (v) async {
+                  setState(() => showPackageName = v);
+                  await _applySettings();
+                },
+                title: const Text('Show package name'),
+              ),
+              SwitchListTile(
+                value: showCpuInfo,
+                onChanged: (v) async {
+                  setState(() => showCpuInfo = v);
+                  await _applySettings();
+                },
+                title: const Text('Show CPU info'),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () async {
+                        await _applySettings();
+                        final ok = await ToolboxNativeService.startFpsOverlay();
+                        if (mounted) setState(() => running = ok);
+                      },
+                      child: const Text('Start overlay'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () async {
+                        await ToolboxNativeService.stopFpsOverlay();
+                        if (mounted) setState(() => running = false);
+                      },
+                      child: const Text('Stop overlay'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(running ? 'Status: Running' : 'Status: Stopped', style: const TextStyle(color: Colors.white70)),
+            ],
+          ],
         ),
       ),
     );

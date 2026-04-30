@@ -159,6 +159,10 @@ class MainActivity : FlutterActivity() {
                     "getDeviceSummary" -> result.success(getDeviceSummary())
                     "canDrawOverlays" -> result.success(canDrawOverlays())
                     "openOverlayPermissionPanel" -> result.success(openOverlayPermissionPanel())
+                    "startFpsOverlay" -> result.success(startFpsOverlay())
+                    "stopFpsOverlay" -> result.success(stopFpsOverlay())
+                    "isFpsOverlayRunning" -> result.success(isFpsOverlayRunning())
+                    "updateFpsOverlaySettings" -> result.success(updateFpsOverlaySettings(args))
 
                     else -> result.notImplemented()
                 }
@@ -589,6 +593,49 @@ class MainActivity : FlutterActivity() {
         )
     }
 
+
+    private fun startFpsOverlay(): Boolean {
+        if (!canDrawOverlays()) return false
+        return try {
+            val intent = Intent(this, FpsOverlayService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent) else startService(intent)
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun stopFpsOverlay(): Boolean {
+        return try {
+            stopService(Intent(this, FpsOverlayService::class.java))
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    private fun isFpsOverlayRunning(): Boolean {
+        val prefs = applicationContext.getSharedPreferences("deadzon_overlay_prefs", Context.MODE_PRIVATE)
+        return prefs.getBoolean("fps_overlay_running", false)
+    }
+
+    private fun updateFpsOverlaySettings(args: Map<*, *>?): Boolean {
+        return try {
+            val prefs = applicationContext.getSharedPreferences("deadzon_overlay_prefs", Context.MODE_PRIVATE)
+            prefs.edit().apply {
+                putString("position", args.stringArg("position") ?: "topRight")
+                putBoolean("showFps", args.boolArg("showFps", true))
+                putBoolean("showFpsLabel", args.boolArg("showFpsLabel", true))
+                putBoolean("reverseFormat", args.boolArg("reverseFormat", false))
+                putBoolean("showAppName", args.boolArg("showAppName", false))
+                putBoolean("showPackageName", args.boolArg("showPackageName", false))
+                putBoolean("showCpuInfo", args.boolArg("showCpuInfo", false))
+                apply()
+            }
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
     private fun canDrawOverlays(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) Settings.canDrawOverlays(this) else true
     }
