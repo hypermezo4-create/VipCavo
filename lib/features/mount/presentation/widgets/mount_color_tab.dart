@@ -15,6 +15,23 @@ class MountColorTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const curatedNames = <String>{
+      'Default',
+      'Mint Glass',
+      'Graphite',
+      'Sky',
+      'Rose',
+      'Lime',
+      'Soft Gold',
+      'Ocean',
+      'Violet',
+      'Carbon',
+      'Midnight',
+      'Slate',
+      'Deep Blue',
+      'Dark Teal',
+    };
+    final curatedPalettes = paletteLibrary.where((palette) => curatedNames.contains(palette.name)).toList();
     return Column(children: [
       MountGlassCard(
         tint: config.selectedColor,
@@ -42,17 +59,27 @@ class MountColorTab extends StatelessWidget {
         tint: config.selectedColor,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const DeadZoneSectionHeader(title: 'Palette library'),
-          Wrap(spacing: 8, runSpacing: 8, children: paletteLibrary.map((p) => FilterChip(selected: config.selectedPaletteId == p.id, label: Text(p.name), onSelected: (_) => onPaletteSelected(p), selectedColor: p.primary.withValues(alpha: 0.35), backgroundColor: DeadzonThemeTokens.cardBackground(context), labelStyle: TextStyle(color: DeadzonThemeTokens.textPrimary(context)))).toList()),
+          Wrap(spacing: 8, runSpacing: 8, children: curatedPalettes.map((p) => FilterChip(selected: config.selectedPaletteId == p.id, label: Text(p.name), onSelected: (_) => onPaletteSelected(p), selectedColor: p.primary.withValues(alpha: 0.35), backgroundColor: DeadzonThemeTokens.cardBackground(context), labelStyle: TextStyle(color: DeadzonThemeTokens.textPrimary(context)))).toList()),
         ]),
       ),
     ]);
   }
 
-  Widget _row(String key, String title, Color color, IconData icon) => DeadZoneNavigationRow(
-        icon: icon,
-        title: title,
-        subtitle: '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
-        onTap: () => onTapItem(key),
-        trailing: Container(width: 20, height: 20, decoration: BoxDecoration(color: color, shape: BoxShape.circle, border: Border.all(color: Colors.white24))),
+  Widget _row(String key, String title, Color color, IconData icon) => Builder(
+        builder: (context) => DeadZoneNavigationRow(
+          icon: icon,
+          title: title,
+          subtitle: '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
+          onTap: () => onTapItem(key),
+          trailing: Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(color: DeadzonThemeTokens.border(context)),
+            ),
+          ),
+        ),
       );
 }

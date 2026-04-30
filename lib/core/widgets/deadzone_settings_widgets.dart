@@ -65,14 +65,14 @@ class DeadZoneNavigationRow extends StatelessWidget {
       borderRadius: BorderRadius.circular(18),
       onTap: onTap,
       child: SizedBox(
-        height: 64,
+        height: 58,
         child: Row(children: <Widget>[
           DeadZoneIconChip(icon: icon),
           const SizedBox(width: 10),
           Expanded(
             child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-              Text(title, style: TextStyle(fontSize: 15.4, fontWeight: FontWeight.w700, color: onSurface)),
-              Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: secondary.withValues(alpha: 0.86))),
+              Text(title, style: TextStyle(fontSize: 14.8, fontWeight: FontWeight.w700, color: onSurface)),
+              Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11.8, color: secondary.withValues(alpha: 0.94))),
             ]),
           ),
           trailing ?? Icon(Icons.chevron_right_rounded, color: DeadzonThemeTokens.iconAccent(context).withValues(alpha: 0.74)),
@@ -257,12 +257,12 @@ class DeadZoneAdjustmentRow extends StatelessWidget {
                 if (subtitle != null) Text(subtitle!, style: TextStyle(fontSize: 12, color: secondary.withValues(alpha: 0.86))),
               ]),
             ),
-            TextButton(onPressed: onReset, child: const Text('Reset')),
+            TextButton(onPressed: onReset, style: TextButton.styleFrom(foregroundColor: DeadzonThemeTokens.iconAccent(context)), child: const Text('Reset')),
             DeadZoneValueChip(label: display),
           ],
         ),
         Row(children: <Widget>[
-          IconButton(onPressed: () => onChanged((safe - step).clamp(min, max).toDouble()), icon: const Icon(Icons.remove_rounded)),
+          IconButton(color: DeadzonThemeTokens.iconAccent(context), onPressed: () => onChanged((safe - step).clamp(min, max).toDouble()), icon: const Icon(Icons.remove_rounded)),
           Expanded(
             child: SliderTheme(
               data: SliderTheme.of(context).copyWith(
@@ -274,7 +274,7 @@ class DeadZoneAdjustmentRow extends StatelessWidget {
               child: Slider(value: safe, min: min, max: max, divisions: divisions, onChanged: onChanged),
             ),
           ),
-          IconButton(onPressed: () => onChanged((safe + step).clamp(min, max).toDouble()), icon: const Icon(Icons.add_rounded)),
+          IconButton(color: DeadzonThemeTokens.iconAccent(context), onPressed: () => onChanged((safe + step).clamp(min, max).toDouble()), icon: const Icon(Icons.add_rounded)),
         ]),
       ],
     );

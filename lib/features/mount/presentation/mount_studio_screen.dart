@@ -27,7 +27,11 @@ class MountStudioScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<MountStudioController>();
-    final contentBottomPadding = (controller.currentTab == 3 ? 320.0 : 248.0) + MediaQuery.paddingOf(context).bottom;
+    const bottomNavHeight = 92.0;
+    const actionBarHeight = 168.0;
+    const extraSpacing = 28.0;
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
+    final contentBottomPadding = actionBarHeight + bottomNavHeight + safeBottom + extraSpacing;
 
     return Container(
       decoration: const BoxDecoration(gradient: DesignTokens.baseGradient),
@@ -57,19 +61,22 @@ class MountStudioScreen extends StatelessWidget {
             Positioned(
               left: 16,
               right: 16,
-              bottom: 12 + MediaQuery.paddingOf(context).bottom,
-              child: _BottomActionBar(
-                onRestore: () => _showRestoreDialog(context, controller),
-                liveApplyEnabled: controller.config.liveApplyEnabled,
-                onLiveApplyChanged: controller.setLiveApplyEnabled,
-                accentColor: DeadzonThemeTokens.accent(context),
-                onApply: () async {
-                  await controller.apply();
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Mount applied successfully. Theme tokens and targets are now active.')),
-                  );
-                },
+              bottom: 12 + safeBottom,
+              child: SafeArea(
+                top: false,
+                child: _BottomActionBar(
+                  onRestore: () => _showRestoreDialog(context, controller),
+                  liveApplyEnabled: controller.config.liveApplyEnabled,
+                  onLiveApplyChanged: controller.setLiveApplyEnabled,
+                  accentColor: DeadzonThemeTokens.accent(context),
+                  onApply: () async {
+                    await controller.apply();
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Mount applied successfully. Theme tokens and targets are now active.')),
+                    );
+                  },
+                ),
               ),
             ),
           ],
@@ -227,7 +234,7 @@ class _SegmentTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 44,
+      height: 46,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 2),
         itemCount: tabs.length,
@@ -242,11 +249,11 @@ class _SegmentTabs extends StatelessWidget {
               label: Text(tabs[index]),
               onSelected: (_) => onTap(index),
               labelStyle: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: active ? 0.98 : 0.72),
+                color: active ? DeadzonThemeTokens.textPrimary(context) : DeadzonThemeTokens.textSecondary(context),
                 fontWeight: FontWeight.w600,
               ),
-              selectedColor: DeadzonThemeTokens.accent(context).withValues(alpha: 0.3),
-              backgroundColor: DeadzonThemeTokens.cardTint(context).withValues(alpha: 0.52),
+              selectedColor: DeadzonThemeTokens.accent(context).withValues(alpha: 0.26),
+              backgroundColor: DeadzonThemeTokens.cardBackground(context).withValues(alpha: 0.84),
               side: BorderSide(color: DeadzonThemeTokens.border(context)),
             ),
           );
