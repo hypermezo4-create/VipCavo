@@ -32,7 +32,7 @@ class _ToolboxScreenState extends State<ToolboxScreen> {
     return MediaQuery(
       data: MediaQuery.of(context).copyWith(textScaler: scaler),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Toolbox Studio')),
+        appBar: AppBar(title: const Text('DeadZone Toolbox')),
         body: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -49,7 +49,7 @@ class _ToolboxScreenState extends State<ToolboxScreen> {
                 const SizedBox(height: 16),
                 _AboutThisDevice(summary: _summary),
                 const SizedBox(height: 16),
-                const SectionHeader(title: 'System Tools', subtitle: 'Targeted recovery modules from Kaorios Toolbox'),
+                const SectionHeader(title: 'DeadZone Tools', subtitle: 'Premium DeadZone recovery modules'),
                 const SizedBox(height: 10),
                 const _SystemToolsGrid(),
               ],
@@ -95,7 +95,7 @@ class _ToolboxScreenState extends State<ToolboxScreen> {
                         decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)),
                       ),
                       const SizedBox(height: 12),
-                      const Text('Hardware Details', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w800, color: Colors.white)),
+                      const Text('DeadZone Hardware Details', style: TextStyle(fontSize: 23, fontWeight: FontWeight.w800, color: Colors.white)),
                       const SizedBox(height: 12),
                       Expanded(
                         child: ListView(
@@ -207,9 +207,9 @@ class _DeviceDashboard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Text('Device Dashboard', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
+          const Text('DeadZone Dashboard', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
           const SizedBox(height: 4),
-          const Text('Kaorios premium diagnostics overview', style: TextStyle(color: Colors.white70, fontSize: 12)),
+          const Text('DeadZone premium diagnostics overview', style: TextStyle(color: Colors.white70, fontSize: 12)),
           const SizedBox(height: 12),
           Wrap(
             runSpacing: 10,
@@ -230,7 +230,7 @@ class _DeviceDashboard extends StatelessWidget {
               onPressed: onOpenHardwareDetails,
               style: FilledButton.styleFrom(backgroundColor: Colors.cyanAccent.withValues(alpha: 0.18)),
               icon: const Icon(Icons.memory_rounded),
-              label: const Text('Hardware Details'),
+              label: const Text('DeadZone Hardware Details'),
             ),
           ),
         ],
@@ -269,7 +269,7 @@ class _AboutThisDevice extends StatelessWidget {
   Widget build(BuildContext context) {
     return GlassCard(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-        const Text('About This Device', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+        const Text('DeadZone Device Info', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
         const SizedBox(height: 12),
         _row(Icons.badge_rounded, 'Brand / Manufacturer', '${summary['brand'] ?? '-'} / ${summary['manufacturer'] ?? '-'}'),
         _row(Icons.widgets_rounded, 'Product / Codename', '${summary['product'] ?? '-'} / ${summary['codename'] ?? '-'}'),
