@@ -198,6 +198,10 @@ class MountStudioScreen extends StatelessWidget {
       'checkboxOffColor' => controller.config.checkboxOffColor,
       'cardBackgroundTint' => controller.config.cardBackgroundTint,
       'iconAccentColor' => controller.config.iconAccentColor,
+      'seekbarInactiveColor' => controller.config.componentColors['seekbarInactiveColor'] != null ? Color(controller.config.componentColors['seekbarInactiveColor']!) : controller.config.seekbarColor.withValues(alpha: 0.35),
+      'seekbarThumbColor' => controller.config.componentColors['seekbarThumbColor'] != null ? Color(controller.config.componentColors['seekbarThumbColor']!) : controller.config.seekbarColor,
+      'cardBorderColor' => controller.config.componentColors['cardBorderColor'] != null ? Color(controller.config.componentColors['cardBorderColor']!) : Colors.white24,
+      'shadowColor' => controller.config.componentColors['shadowColor'] != null ? Color(controller.config.componentColors['shadowColor']!) : Colors.black54,
       _ => controller.config.textAccentColor,
     };
 

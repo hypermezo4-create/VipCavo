@@ -321,6 +321,16 @@ class DeadzonThemeTokens {
   static Color checkboxInactive(BuildContext context) => palette(context).checkboxInactive;
   static Color sliderActive(BuildContext context) => palette(context).sliderActive;
   static Color sliderInactive(BuildContext context) => palette(context).sliderInactive;
+  static Color sliderThumb(BuildContext context) => palette(context).sliderThumb;
+  static Color sliderOverlay(BuildContext context) => palette(context).sliderOverlay;
+  static Color progressActive(BuildContext context) => palette(context).progressActive;
+  static Color progressInactive(BuildContext context) => palette(context).progressInactive;
+  static Color backgroundDark(BuildContext context) => of(context).selectedDarkBackground.color;
+  static Color backgroundLight(BuildContext context) => of(context).selectedLightBackground.color;
+  static Color navSurface(BuildContext context) => palette(context).bottomNavBackground;
+  static Color navSelectedPill(BuildContext context) => palette(context).bottomNavSelectedBackground;
+  static Color navSelectedIcon(BuildContext context) => palette(context).bottomNavSelectedText;
+  static Color navSelectedLabel(BuildContext context) => palette(context).bottomNavSelectedText;
   static Color sheetBackground(BuildContext context) => palette(context).sheetBackground;
   static Color buttonBackground(BuildContext context) => palette(context).buttonBackground;
   static Color buttonText(BuildContext context) => palette(context).buttonText;
@@ -373,6 +383,10 @@ class DeadzonThemeTokens {
         checkboxInactive: controller.checkboxOffColor.withValues(alpha: 0.92),
         sliderActive: accent,
         sliderInactive: const Color(0xFFAAC0D1),
+        sliderThumb: controller.seekbarColor,
+        sliderOverlay: controller.seekbarColor.withValues(alpha: 0.22),
+        progressActive: controller.seekbarColor,
+        progressInactive: const Color(0xFFAAC0D1),
         sheetBackground: Color.lerp(pageBg, Colors.white, 0.65)!.withValues(alpha: 0.98),
         buttonBackground: accent,
         buttonText: const Color(0xFF08211A),
@@ -405,6 +419,10 @@ class DeadzonThemeTokens {
       checkboxInactive: controller.checkboxOffColor.withValues(alpha: 0.82),
       sliderActive: accent,
       sliderInactive: const Color(0xFF355164),
+      sliderThumb: controller.seekbarColor,
+      sliderOverlay: controller.seekbarColor.withValues(alpha: 0.22),
+      progressActive: controller.seekbarColor,
+      progressInactive: const Color(0xFF355164),
       sheetBackground: const Color(0xEE0A1626),
       buttonBackground: accent.withValues(alpha: 0.9),
       buttonText: const Color(0xFF02110D),
@@ -439,6 +457,10 @@ class DeadzonThemePalette {
     required this.checkboxInactive,
     required this.sliderActive,
     required this.sliderInactive,
+    required this.sliderThumb,
+    required this.sliderOverlay,
+    required this.progressActive,
+    required this.progressInactive,
     required this.sheetBackground,
     required this.buttonBackground,
     required this.buttonText,
@@ -468,6 +490,10 @@ class DeadzonThemePalette {
   final Color checkboxInactive;
   final Color sliderActive;
   final Color sliderInactive;
+  final Color sliderThumb;
+  final Color sliderOverlay;
+  final Color progressActive;
+  final Color progressInactive;
   final Color sheetBackground;
   final Color buttonBackground;
   final Color buttonText;

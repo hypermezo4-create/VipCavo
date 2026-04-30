@@ -2,7 +2,6 @@ import 'package:deadzon/core/constants/app_identity.dart';
 import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:deadzon/core/widgets/deadzone_settings_widgets.dart';
-import 'package:deadzon/features/settings/presentation/widgets/deadzone_color_picker_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -31,13 +30,7 @@ class SettingsScreen extends StatelessWidget {
             DeadZoneSettingsCard(
               child: Column(
                 children: <Widget>[
-                  DeadZoneNavigationRow(
-                    icon: Icons.settings_rounded,
-                    title: 'Settings',
-                    subtitle: 'Appearance & preferences',
-                    onTap: () {},
-                    trailing: DeadZoneValueChip(label: AppIdentity.currentTrack),
-                  ),
+                  DeadZoneNavigationRow(icon: Icons.settings_rounded, title: 'Settings', subtitle: 'General preferences', onTap: () {}, trailing: DeadZoneValueChip(label: AppIdentity.currentTrack)),
                 ],
               ),
             ),
@@ -45,71 +38,33 @@ class SettingsScreen extends StatelessWidget {
             DeadZoneSettingsCard(
               child: Column(
                 children: <Widget>[
-                  const DeadZoneSectionHeader(title: 'Appearance'),
-                  DeadZoneSelectRow(
-                    icon: Icons.dark_mode_rounded,
-                    title: 'Theme',
-                    valueLabel: _modeSummary(theme.themeMode),
-                    onTap: () => _showThemePicker(context, theme),
-                  ),
-                  DeadZoneColorRow(
-                    icon: Icons.palette_rounded,
-                    title: 'Primary color',
-                    argb: theme.selectedAccent.color.toARGB32(),
-                    onTap: () => _pickColor(context, title: 'Accent Color', options: DeadzonThemeController.accentOptions, selectedId: theme.selectedAccentId, onSelected: theme.setAccentColor),
-                  ),
-                  DeadZoneSelectRow(
-                    icon: Icons.light_mode_rounded,
-                    title: 'Light UI palette',
-                    valueLabel: theme.selectedLightPalette.label,
-                    onTap: () => _pickColor(context, title: 'Light UI Palette', options: DeadzonThemeController.lightPaletteOptions, selectedId: theme.selectedLightPaletteId, onSelected: theme.setLightPalette),
-                  ),
-                  DeadZoneSelectRow(
-                    icon: Icons.nights_stay_rounded,
-                    title: 'Dark UI palette',
-                    valueLabel: theme.selectedDarkPalette.label,
-                    onTap: () => _pickColor(context, title: 'Dark UI Palette', options: DeadzonThemeController.darkPaletteOptions, selectedId: theme.selectedDarkPaletteId, onSelected: theme.setDarkPalette),
+                  const DeadZoneSectionHeader(title: 'Preferences'),
+                  DeadZoneSelectRow(icon: Icons.dark_mode_rounded, title: 'Theme', valueLabel: _modeSummary(theme.themeMode), onTap: () => _showThemePicker(context, theme)),
+                  DeadZoneNavigationRow(
+                    icon: Icons.tune_rounded,
+                    title: 'Customize appearance',
+                    subtitle: 'Open DeadZone Mount Studio',
+                    onTap: () => Navigator.of(context).maybePop(),
+                    trailing: Icon(Icons.chevron_right_rounded, color: DeadzonThemeTokens.iconAccent(context).withValues(alpha: 0.74)),
                   ),
                 ],
               ),
             ),
-          const SizedBox(height: 12),
-          DeadZoneSettingsCard(
-            child: Column(children: <Widget>[
-              const DeadZoneSectionHeader(title: 'Backgrounds'),
-              DeadZoneColorRow(
-                icon: Icons.wb_sunny_rounded,
-                title: 'Light background',
-                argb: theme.selectedLightBackground.color.toARGB32(),
-                onTap: () => _pickColor(context, title: 'Light Background Color', options: DeadzonThemeController.lightBackgroundOptions, selectedId: theme.selectedLightBackgroundId, onSelected: theme.setLightBackground),
-              ),
-              DeadZoneColorRow(
-                icon: Icons.brightness_2_rounded,
-                title: 'Dark background',
-                argb: theme.selectedDarkBackground.color.toARGB32(),
-                onTap: () => _pickColor(context, title: 'Dark Background Color', options: DeadzonThemeController.darkBackgroundOptions, selectedId: theme.selectedDarkBackgroundId, onSelected: theme.setDarkBackground),
-              ),
-            ]),
-          ),
-          const SizedBox(height: 12),
-          DeadZoneSettingsCard(
-            child: Column(children: <Widget>[
-              const DeadZoneSectionHeader(title: 'Reset'),
-              DeadZoneNavigationRow(icon: Icons.restart_alt_rounded, title: 'Reset App Settings', subtitle: 'Restore only app preferences', onTap: () => _showResetAppDialog(context)),
-              DeadZoneNavigationRow(icon: Icons.restore_rounded, title: 'Reset Deadzon Customizations', subtitle: 'No system partition edits in app phase', onTap: () => _showResetCustomizationsDialog(context)),
-            ]),
-          ),
-        ]),
+            const SizedBox(height: 12),
+            DeadZoneSettingsCard(
+              child: Column(children: <Widget>[
+                const DeadZoneSectionHeader(title: 'Reset'),
+                DeadZoneNavigationRow(icon: Icons.restart_alt_rounded, title: 'Reset App Settings', subtitle: 'Restore only app preferences', onTap: () => _showResetAppDialog(context)),
+                DeadZoneNavigationRow(icon: Icons.restore_rounded, title: 'Reset Deadzon Customizations', subtitle: 'No system partition edits in app phase', onTap: () => _showResetCustomizationsDialog(context)),
+              ]),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   static String _modeSummary(ThemeMode mode) => switch (mode) {ThemeMode.system => 'System', ThemeMode.light => 'Light', ThemeMode.dark => 'Dark'};
-
-  Future<void> _pickColor(BuildContext context, {required String title, required List<DeadzoneColorOption> options, required String selectedId, required Future<void> Function(String id) onSelected}) async {
-    final picked = await showDialog<String>(context: context, builder: (context) => DeadZoneColorPickerDialog(title: title, options: options, selectedId: selectedId));
-    if (picked != null) await onSelected(picked);
-  }
 
   Future<void> _showThemePicker(BuildContext context, DeadzonThemeController controller) async {
     final selected = await showModalBottomSheet<ThemeMode>(
@@ -133,7 +88,7 @@ class SettingsScreen extends StatelessWidget {
     builder: (context) => AlertDialog(
       title: const Text('Reset App Settings'),
       content: const Text('Reset app preferences to defaults?'),
-      actions: <Widget>[TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')), FilledButton(onPressed: () async {Navigator.pop(context); await context.read<DeadzonThemeController>().resetAppPreferences();}, child: const Text('Reset'))],
+      actions: <Widget>[TextButton(onPressed: () => Navigator.of(context).maybePop(), child: const Text('Cancel')), FilledButton(onPressed: () async {Navigator.of(context).maybePop(); await context.read<DeadzonThemeController>().resetAppPreferences();}, child: const Text('Reset'))],
     ),
   );
 
@@ -142,7 +97,7 @@ class SettingsScreen extends StatelessWidget {
     builder: (context) => AlertDialog(
       title: const Text('Reset Deadzon Customizations'),
       content: const Text('This resets in-app customization values only.'),
-      actions: <Widget>[TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')), FilledButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+      actions: <Widget>[TextButton(onPressed: () => Navigator.of(context).maybePop(), child: const Text('Cancel')), FilledButton(onPressed: () => Navigator.of(context).maybePop(), child: const Text('OK'))],
     ),
   );
 }
@@ -167,12 +122,7 @@ class DeadZoneOptionSheet<T> extends StatelessWidget {
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
           Text(title, style: TextStyle(fontSize: DesignTokens.sectionTitle, fontWeight: FontWeight.w700, color: DeadzonThemeTokens.textPrimary(context))),
           const SizedBox(height: 10),
-          ...options.map((option) => ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(option.label, style: TextStyle(color: DeadzonThemeTokens.textPrimary(context))),
-            trailing: Icon(option.value == selected ? Icons.check_circle_rounded : Icons.circle_outlined, color: option.value == selected ? DeadzonThemeTokens.checkboxActive(context) : DeadzonThemeTokens.checkboxInactive(context)),
-            onTap: () => Navigator.pop(context, option.value),
-          )),
+          ...options.map((option) => ListTile(contentPadding: EdgeInsets.zero, title: Text(option.label, style: TextStyle(color: DeadzonThemeTokens.textPrimary(context))), trailing: Icon(option.value == selected ? Icons.check_circle_rounded : Icons.circle_outlined, color: option.value == selected ? DeadzonThemeTokens.checkboxActive(context) : DeadzonThemeTokens.checkboxInactive(context)), onTap: () => Navigator.of(context).maybePop(option.value))),
         ]),
       ),
     );
