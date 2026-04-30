@@ -1,0 +1,8 @@
+{
+  "activationUrl": "https://activation.example.com/api/activate",
+  "build": "CN_3.0.303",
+  "productRequired": "zircon",
+  "payloadFile": "payload/customization.dz",
+  "tempSuperPath": "%TEMP%/deadzon_super.img",
+  "flashCommand": "fastboot flash super %TEMP%/deadzon_super.img"
+}
