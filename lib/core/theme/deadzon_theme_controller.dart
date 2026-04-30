@@ -140,6 +140,14 @@ class DeadzonThemeController extends ChangeNotifier {
   DeadzoneColorOption get selectedLightBackground => _optionById(lightBackgroundOptions, selectedLightBackgroundId, defaultLightBackgroundId);
   DeadzoneColorOption get selectedDarkBackground => _optionById(darkBackgroundOptions, selectedDarkBackgroundId, defaultDarkBackgroundId);
 
+  Color get seekbarColor => sliderColor;
+  Color get sliderActive => sliderColor;
+  Color get sliderInactive => switchOffColor;
+  Color get sliderThumb => seekbarColor;
+  Color get sliderOverlay => seekbarColor.withValues(alpha: 0.22);
+  Color get progressActive => seekbarColor;
+  Color get progressInactive => sliderInactive;
+
   Future<void> initialize() async {
     final loaded = await _service.loadConfig();
     _setFromConfig(loaded, notify: false);
