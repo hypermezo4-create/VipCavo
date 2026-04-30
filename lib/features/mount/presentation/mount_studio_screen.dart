@@ -84,22 +84,8 @@ class MountStudioScreen extends StatelessWidget {
         return MountColorTab(
           config: controller.config,
           paletteLibrary: controller.paletteLibrary,
-          wallpaperSets: controller.wallpaperSets,
-          onSeedChanged: controller.setSeedColor,
           onPaletteSelected: controller.selectPalette,
-          onPullWallpaperColors: controller.pullWallpaperColors,
-          onToggleFavorite: controller.toggleFavorite,
-          onResetColor: controller.resetSeedColor,
-          onRandomColor: controller.randomizeColor,
-          onOpenSystemWallpaperStyle: () async {
-            final launched = await controller.launchMonetPicker();
-            if (!context.mounted) return;
-            if (!launched) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Wallpaper & Style app not found on this ROM.')));
-            }
-          },
+          onTapItem: (key) => _showComponentColorPicker(context, controller, key),
         );
       case 1:
         return MountEffectsTab(
@@ -127,6 +113,7 @@ class MountStudioScreen extends StatelessWidget {
         return MountComponentsTab(
           config: controller.config,
           onTapItem: (key) => _showComponentColorPicker(context, controller, key),
+          onShadowDepthChanged: (value) => controller.setSlider(shadowDepth: value),
         );
       case 3:
         return MountControlAppsTab(controller: controller);
@@ -191,6 +178,7 @@ class MountStudioScreen extends StatelessWidget {
     String componentKey,
   ) async {
     final initial = switch (componentKey) {
+      'selectedColor' => controller.config.selectedColor,
       'seekbarColor' => controller.config.seekbarColor,
       'switchOnColor' => controller.config.switchOnColor,
       'switchOffColor' => controller.config.switchOffColor,
@@ -202,6 +190,14 @@ class MountStudioScreen extends StatelessWidget {
       'seekbarThumbColor' => controller.config.componentColors['seekbarThumbColor'] != null ? Color(controller.config.componentColors['seekbarThumbColor']!) : controller.config.seekbarColor,
       'cardBorderColor' => controller.config.componentColors['cardBorderColor'] != null ? Color(controller.config.componentColors['cardBorderColor']!) : Colors.white24,
       'shadowColor' => controller.config.componentColors['shadowColor'] != null ? Color(controller.config.componentColors['shadowColor']!) : Colors.black54,
+      'backgroundDark' => const Color(0xFF0D1218),
+      'backgroundLight' => const Color(0xFFF3F7FB),
+      'navSurface' => controller.config.cardBackgroundTint.withValues(alpha: 0.9),
+      'navPill' => controller.config.selectedColor.withValues(alpha: 0.35),
+      'navIcon' => controller.config.iconAccentColor,
+      'stateSuccess' => const Color(0xFF43C58D),
+      'stateWarning' => const Color(0xFFE8B04E),
+      'stateError' => const Color(0xFFE46868),
       _ => controller.config.textAccentColor,
     };
 
@@ -212,7 +208,11 @@ class MountStudioScreen extends StatelessWidget {
       title: 'Pick component color',
     );
     if (pickedArgb != null) {
-      await controller.setComponentColor(componentKey, Color(pickedArgb));
+      if (componentKey == 'selectedColor') {
+        await controller.setSeedColor(Color(pickedArgb));
+      } else {
+        await controller.setComponentColor(componentKey, Color(pickedArgb));
+      }
     }
   }
 }

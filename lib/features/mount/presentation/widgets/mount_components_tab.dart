@@ -4,10 +4,16 @@ import 'package:deadzon/features/mount/presentation/widgets/mount_glass_card.dar
 import 'package:flutter/material.dart';
 
 class MountComponentsTab extends StatelessWidget {
-  const MountComponentsTab({required this.config, required this.onTapItem, super.key});
+  const MountComponentsTab({
+    required this.config,
+    required this.onTapItem,
+    required this.onShadowDepthChanged,
+    super.key,
+  });
 
   final MountConfig config;
   final ValueChanged<String> onTapItem;
+  final ValueChanged<double> onShadowDepthChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +33,35 @@ class MountComponentsTab extends StatelessWidget {
 
     return MountGlassCard(
       tint: config.selectedColor,
-      child: Column(children: items.map((item) => DeadZoneColorRow(icon: item.icon, title: item.title, argb: item.color.toARGB32(), onTap: () => onTapItem(item.key))).toList()),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const DeadZoneSectionHeader(title: 'Component color system', subtitle: 'Tune controls, cards, chips and depth accents.'),
+          ...items.map(
+            (item) => DeadZoneNavigationRow(
+              icon: item.icon,
+              title: item.title,
+              subtitle: '#${item.color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
+              onTap: () => onTapItem(item.key),
+              trailing: Container(width: 20, height: 20, decoration: BoxDecoration(color: item.color, shape: BoxShape.circle, border: Border.all(color: Colors.white24))),
+            ),
+          ),
+          DeadZoneAdjustmentRow(
+            icon: Icons.layers_rounded,
+            title: 'Shadow intensity',
+            subtitle: 'Controls mount depth amount.',
+            value: config.shadowDepth,
+            min: 0,
+            max: 1,
+            defaultValue: 0.45,
+            divisions: 100,
+            step: 0.01,
+            onChanged: onShadowDepthChanged,
+            onReset: () => onShadowDepthChanged(0.45),
+            formatValue: (v) => '${(v * 100).round()}%',
+          ),
+        ],
+      ),
     );
   }
 }
