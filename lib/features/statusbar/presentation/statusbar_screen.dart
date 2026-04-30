@@ -2374,35 +2374,39 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     final leftPaddingSetting = _resizeSetting('status_bar_element_cutout_padding_left_camera');
     final leftCalcSetting = _resizeSetting('status_bar_element_cutout_left_not_calculate');
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgTop = isDark ? const Color(0xFF020817) : const Color(0xFFF2F8FF);
+    final bgBottom = isDark ? const Color(0xFF041427) : const Color(0xFFEAF4FF);
     return Scaffold(
-      backgroundColor: const Color(0xFF060B17),
-      appBar: AppBar(title: const Text('Resize statusbar')),
-      body: ListView(
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: <Color>[bgTop, bgBottom])),
+        child: ListView(
         physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         padding: EdgeInsets.only(
           left: 16,
           right: 16,
-          top: 12,
-          bottom: MediaQuery.paddingOf(context).bottom + 140,
+          top: 8,
+          bottom: MediaQuery.paddingOf(context).bottom + 120,
         ),
         children: <Widget>[
+          SafeArea(
+            bottom: false,
+            child: _ResizePremiumHeader(onBack: () => Navigator.of(context).maybePop()),
+          ),
+          const SizedBox(height: 14),
           if (_isLoadingResize || _isLoadingStoredValues)
             const Padding(
               padding: EdgeInsets.only(bottom: 12),
               child: LinearProgressIndicator(minHeight: 2),
             ),
-          const SectionHeader(
-            title: 'Resize statusbar',
-            subtitle: 'Adjust height, margins, and camera cutout behavior.',
-          ),
-          const SizedBox(height: 12),
           _ResizeHeroSizeCard(
             value: ((_values[sizeSetting.legacyKey] as num?) ?? 99).toDouble(),
             subtitle: sizeSetting.subtitle ?? 'Reboot device after adjustment',
             onTap: () => _openResizeSliderSheet(setting: sizeSetting, title: 'Status bar size'),
           ),
           const SizedBox(height: 14),
-          const SectionHeader(title: 'Layout spacing'),
+          const _ResizeSectionBadge(label: 'LAYOUT SPACING', icon: Icons.dashboard_customize_rounded),
           const SizedBox(height: 8),
           MezoGlassPanel(
             child: Column(
@@ -2458,7 +2462,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
             ),
           ),
           const SizedBox(height: 14),
-          const SectionHeader(title: 'Camera cutout'),
+          const _ResizeSectionBadge(label: 'CAMERA CUTOUT', icon: Icons.photo_camera_outlined),
           const SizedBox(height: 8),
           MezoGlassPanel(
             child: Column(
@@ -2528,6 +2532,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -2590,6 +2595,8 @@ class _ResizeHeroSizeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF0B1F33);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(22),
@@ -2597,26 +2604,30 @@ class _ResizeHeroSizeCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(22),
-          gradient: const LinearGradient(colors: <Color>[Color(0xFF123750), Color(0xFF291B48)]),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+          gradient: LinearGradient(colors: isDark ? <Color>[const Color(0xFF123750), const Color(0xFF09172D)] : <Color>[const Color(0xFFD9F7F8), const Color(0xFFE8F0FF)]),
+          border: Border.all(color: (isDark ? const Color(0xFF6AFCFF) : const Color(0xFF1A8794)).withValues(alpha: 0.25)),
         ),
         child: Row(
           children: <Widget>[
-            const Icon(Icons.height_rounded, color: Color(0xFF8DE8FF)),
+            CircleAvatar(
+              radius: 22,
+              backgroundColor: Colors.black.withValues(alpha: isDark ? 0.26 : 0.08),
+              child: const Icon(Icons.height_rounded, color: Color(0xFF53E5DF)),
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  const Text('Status bar size', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+                  Text('Status bar size', style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 22)),
                   SizedBox(height: 4),
-                  Text(subtitle, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                  Text('Adjust the height of the status bar', style: TextStyle(color: textColor.withValues(alpha: 0.7), fontSize: 13)),
                 ],
               ),
             ),
             Text(
               value.toStringAsFixed(0),
-              style: const TextStyle(color: Color(0xFFC4FDFF), fontSize: 28, fontWeight: FontWeight.w900),
+              style: const TextStyle(color: Color(0xFF53E5DF), fontSize: 46, fontWeight: FontWeight.w900),
             ),
           ],
         ),
@@ -2624,6 +2635,59 @@ class _ResizeHeroSizeCard extends StatelessWidget {
     );
   }
 }
+
+class _ResizePremiumHeader extends StatelessWidget {
+  const _ResizePremiumHeader({required this.onBack});
+  final VoidCallback onBack;
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fg = isDark ? Colors.white : const Color(0xFF0A2339);
+    return Row(children: <Widget>[
+      _ResizeHeaderButton(icon: Icons.arrow_back_rounded, onTap: onBack),
+      Expanded(
+        child: Column(children: <Widget>[
+          Text('Resize Statusbar', style: TextStyle(color: fg, fontSize: 40, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 8),
+          const _ResizeSectionBadge(label: 'STATUSBAR MODULE', icon: null),
+        ]),
+      ),
+      const _ResizeHeaderButton(icon: Icons.info_outline_rounded),
+    ]);
+  }
+}
+
+class _ResizeHeaderButton extends StatelessWidget {
+  const _ResizeHeaderButton({required this.icon, this.onTap});
+  final IconData icon;
+  final VoidCallback? onTap;
+  @override
+  Widget build(BuildContext context) => InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          width: 46, height: 46,
+          decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.black.withValues(alpha: 0.18), border: Border.all(color: const Color(0xFF4DE4E0).withValues(alpha: 0.45))),
+          child: Icon(icon, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0A2339)),
+        ),
+      );
+}
+
+class _ResizeSectionBadge extends StatelessWidget {
+  const _ResizeSectionBadge({required this.label, required this.icon});
+  final String label;
+  final IconData? icon;
+  @override
+  Widget build(BuildContext context) => Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(999), border: Border.all(color: const Color(0xFF4DE4E0).withValues(alpha: 0.5)), color: const Color(0xFF0A1F34).withValues(alpha: 0.45)),
+          child: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[
+            if (icon != null) ...<Widget>[Icon(icon, size: 14, color: const Color(0xFF4DE4E0)), const SizedBox(width: 8)],
+            Text(label, style: const TextStyle(color: Color(0xFF4DE4E0), letterSpacing: 1.1, fontWeight: FontWeight.w700)),
+          ]),
+        ),
+      );
 
 class _ResizeSwitchCard extends StatelessWidget {
   const _ResizeSwitchCard({required this.title, required this.value, required this.onChanged});
@@ -2634,9 +2698,12 @@ class _ResizeSwitchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textColor = Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0B1F33);
     return Row(
       children: <Widget>[
-        Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+        CircleAvatar(radius: 18, backgroundColor: const Color(0xFF4DE4E0).withValues(alpha: 0.2), child: const Icon(Icons.phone_android_outlined, color: Color(0xFF4DE4E0), size: 18)),
+        const SizedBox(width: 10),
+        Expanded(child: Text(title, style: TextStyle(color: textColor, fontWeight: FontWeight.w600))),
         Switch(value: value, onChanged: onChanged),
       ],
     );
@@ -2679,19 +2746,23 @@ class _ResizeInlineSliderCardState extends State<_ResizeInlineSliderCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF0B1F33);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Row(
           children: <Widget>[
-            Expanded(child: Text(widget.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+            CircleAvatar(radius: 18, backgroundColor: const Color(0xFF4DE4E0).withValues(alpha: 0.18), child: const Icon(Icons.tune_rounded, color: Color(0xFF4DE4E0), size: 18)),
+            const SizedBox(width: 10),
+            Expanded(child: Text(widget.title, style: TextStyle(color: textColor, fontWeight: FontWeight.w600))),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
+                color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(99),
               ),
-              child: Text(_localValue.toStringAsFixed(0), style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700)),
+              child: Text(_localValue.toStringAsFixed(0), style: TextStyle(color: textColor, fontWeight: FontWeight.w700)),
             ),
             const SizedBox(width: 8),
             TextButton(
@@ -2713,14 +2784,15 @@ class _ResizeInlineSliderCardState extends State<_ResizeInlineSliderCard> {
                 widget.onLiveChanged(next);
                 widget.onCommitted(next);
               },
-              icon: const Icon(Icons.remove_rounded, color: Colors.white70),
+              icon: Icon(Icons.remove_rounded, color: textColor.withValues(alpha: 0.8)),
             ),
             Expanded(
               child: Slider(
                 value: _localValue,
                 min: widget.min,
                 max: widget.max,
-                activeColor: const Color(0xFF8DE8FF),
+                activeColor: const Color(0xFF4DE4E0),
+                inactiveColor: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.24),
                 onChanged: (value) {
                   setState(() => _localValue = value);
                   widget.onLiveChanged(value);
@@ -2735,7 +2807,7 @@ class _ResizeInlineSliderCardState extends State<_ResizeInlineSliderCard> {
                 widget.onLiveChanged(next);
                 widget.onCommitted(next);
               },
-              icon: const Icon(Icons.add_rounded, color: Colors.white70),
+              icon: Icon(Icons.add_rounded, color: textColor.withValues(alpha: 0.8)),
             ),
           ],
         ),
@@ -2763,6 +2835,7 @@ class _ResizeSelectCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final label = options.firstWhere((option) => option.value == value, orElse: () => options.first).label;
+    final textColor = Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0B1F33);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
@@ -2770,18 +2843,20 @@ class _ResizeSelectCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
           children: <Widget>[
-            Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+            CircleAvatar(radius: 18, backgroundColor: const Color(0xFF4DE4E0).withValues(alpha: 0.18), child: const Icon(Icons.photo_camera_outlined, color: Color(0xFF4DE4E0), size: 18)),
+            const SizedBox(width: 10),
+            Expanded(child: Text(title, style: TextStyle(color: textColor, fontWeight: FontWeight.w600))),
             Flexible(
               child: Text(
                 label,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.right,
-                style: const TextStyle(color: Colors.white70),
+                style: TextStyle(color: textColor.withValues(alpha: 0.75)),
               ),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white60),
+            Icon(Icons.keyboard_arrow_down_rounded, color: textColor.withValues(alpha: 0.6)),
           ],
         ),
       ),
@@ -2873,14 +2948,16 @@ class _ResizeSelectSheet extends StatelessWidget {
         child: Container(
           constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.72),
           decoration: BoxDecoration(
-            color: const Color(0xFF0B1522).withValues(alpha: 0.96),
+            color: (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0B1522) : Colors.white).withValues(alpha: 0.96),
             border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
           ),
           child: ListView(
             padding: EdgeInsets.fromLTRB(16, 14, 16, MediaQuery.paddingOf(context).bottom + 18),
             shrinkWrap: true,
             children: <Widget>[
-              Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 17)),
+              Text(title, style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0B1F33), fontWeight: FontWeight.w700, fontSize: 28)),
+              const SizedBox(height: 8),
+              const _ResizeSectionBadge(label: 'CAMERA CUTOUT', icon: null),
               const SizedBox(height: 12),
               for (final option in options) ...<Widget>[
                 InkWell(
@@ -2895,12 +2972,14 @@ class _ResizeSelectSheet extends StatelessWidget {
                     ),
                     child: Row(
                       children: <Widget>[
+                        CircleAvatar(radius: 18, backgroundColor: const Color(0xFF4DE4E0).withValues(alpha: 0.2), child: const Icon(Icons.adjust_rounded, color: Color(0xFF4DE4E0), size: 18)),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             option.label,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                            style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0B1F33), fontSize: 15, fontWeight: FontWeight.w600),
                           ),
                         ),
                         const SizedBox(width: 10),
