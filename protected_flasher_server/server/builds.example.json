@@ -1,0 +1,9 @@
+{
+  "builds": [
+    {
+      "build": "CN_3.0.303",
+      "active": true,
+      "notes": "Base Alpha release"
+    }
+  ]
+}

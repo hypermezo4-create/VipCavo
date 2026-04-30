@@ -1,0 +1,10 @@
+{
+  "devices": [
+    {
+      "serial": "ABC123XYZ",
+      "active": true,
+      "expiresAt": "2027-12-31T23:59:59Z",
+      "allowedBuilds": ["CN_3.0.303"]
+    }
+  ]
+}
