@@ -1,6 +1,10 @@
 package com.mezo.deadzon
 
 import android.app.WallpaperManager
+import android.app.ActivityManager
+import android.os.BatteryManager
+import android.os.Environment
+import android.os.StatFs
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -151,6 +155,10 @@ class MainActivity : FlutterActivity() {
                     "writeMountBridgeConfig" -> {
                         result.success(writeMountBridgeConfig(args?.get("config")))
                     }
+
+                    "getDeviceSummary" -> result.success(getDeviceSummary())
+                    "canDrawOverlays" -> result.success(canDrawOverlays())
+                    "openOverlayPermissionPanel" -> result.success(openOverlayPermissionPanel())
 
                     else -> result.notImplemented()
                 }
@@ -516,4 +524,46 @@ class MainActivity : FlutterActivity() {
             )
         }
     }
+
+    private fun getDeviceSummary(): Map<String, Any> {
+        val am = getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+        val memInfo = ActivityManager.MemoryInfo().also { info -> am?.getMemoryInfo(info) }
+        val batteryManager = getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
+        val batteryPct = batteryManager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY) ?: -1
+        val stat = StatFs(Environment.getDataDirectory().path)
+        val totalStorageMb = (stat.totalBytes / (1024 * 1024)).toInt()
+        val freeStorageMb = (stat.availableBytes / (1024 * 1024)).toInt()
+
+        return mapOf(
+            "brand" to Build.BRAND,
+            "manufacturer" to Build.MANUFACTURER,
+            "model" to Build.MODEL,
+            "device" to Build.DEVICE,
+            "release" to (Build.VERSION.RELEASE ?: ""),
+            "sdk" to Build.VERSION.SDK_INT,
+            "batteryPercent" to batteryPct,
+            "totalRamMb" to ((memInfo.totalMem / (1024 * 1024)).toInt()),
+            "usedRamMb" to (((memInfo.totalMem - memInfo.availMem) / (1024 * 1024)).toInt()),
+            "freeStorageMb" to freeStorageMb,
+            "totalStorageMb" to totalStorageMb
+        )
+    }
+
+    private fun canDrawOverlays(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) Settings.canDrawOverlays(this) else true
+    }
+
+    private fun openOverlayPermissionPanel(): Boolean {
+        return try {
+            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION).apply {
+                data = Uri.parse("package:${applicationContext.packageName}")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(intent)
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
 }
