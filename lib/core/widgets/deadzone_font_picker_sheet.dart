@@ -62,7 +62,7 @@ class _DeadZoneFontPickerSheetState extends State<DeadZoneFontPickerSheet> {
                           title: Text(item.label),
                           subtitle: item.exists ? null : const Text('Missing from /product/media/fonts'),
                           trailing: Icon(item.value == selected ? Icons.check_circle : Icons.circle_outlined, color: item.value == selected ? DeadzonThemeTokens.checkboxActive(context) : DeadzonThemeTokens.checkboxInactive(context)),
-                          onTap: () => Navigator.of(context).pop(item.value),
+                          onTap: () => Navigator.of(context).maybePop(item.value),
                         );
                       },
                     ),

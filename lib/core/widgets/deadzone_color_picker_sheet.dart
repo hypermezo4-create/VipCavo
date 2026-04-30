@@ -195,14 +195,14 @@ class _DeadZoneColorPickerSheetState extends State<DeadZoneColorPickerSheet> {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => Navigator.of(context).pop(null),
+                  onPressed: () => Navigator.of(context).maybePop(null),
                   child: const Text('Cancel'),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: FilledButton(
-                  onPressed: () => Navigator.of(context).pop(_argb),
+                  onPressed: () => Navigator.of(context).maybePop(_argb),
                   child: const Text('Apply'),
                 ),
               ),

@@ -1,5 +1,6 @@
 import 'package:deadzon/features/mount/domain/mount_config.dart';
 import 'package:deadzon/features/mount/domain/mount_palette.dart';
+import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/features/mount/presentation/widgets/mount_glass_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -73,15 +74,15 @@ class _MountColorTabState extends State<MountColorTab> {
         MountGlassCard(
           tint: color,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-            const Text('Accent color studio', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+            Text('Accent color studio', style: TextStyle(color: DeadzonThemeTokens.textPrimary(context), fontSize: 18, fontWeight: FontWeight.w700)),
             const SizedBox(height: 12),
             Row(children: <Widget>[
-              Container(width: 44, height: 44, decoration: BoxDecoration(color: color, shape: BoxShape.circle, border: Border.all(color: Colors.white70))),
+              Container(width: 44, height: 44, decoration: BoxDecoration(color: color, shape: BoxShape.circle, border: Border.all(color: DeadzonThemeTokens.cardBorder(context)))),
               const SizedBox(width: 10),
               Expanded(
                 child: TextField(
                   controller: _hexController,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: DeadzonThemeTokens.textPrimary(context)),
                   decoration: const InputDecoration(labelText: 'Hex', hintText: '#79E3CB'),
                   onSubmitted: (value) {
                     final parsed = _fromHex(value);
@@ -89,8 +90,8 @@ class _MountColorTabState extends State<MountColorTab> {
                   },
                 ),
               ),
-              IconButton(onPressed: () => Clipboard.setData(ClipboardData(text: widget.config.selectedColorHex)), icon: const Icon(Icons.copy_rounded, color: Colors.white)),
-              IconButton(onPressed: () => widget.onToggleFavorite(color), icon: Icon(favorite ? Icons.favorite_rounded : Icons.favorite_outline_rounded, color: Colors.white)),
+              IconButton(onPressed: () => Clipboard.setData(ClipboardData(text: widget.config.selectedColorHex)), icon: Icon(Icons.copy_rounded, color: DeadzonThemeTokens.iconAccent(context))),
+              IconButton(onPressed: () => widget.onToggleFavorite(color), icon: Icon(favorite ? Icons.favorite_rounded : Icons.favorite_outline_rounded, color: DeadzonThemeTokens.iconAccent(context))),
             ]),
             _rgbSlider('R', r.toDouble(), (v) => widget.onSeedChanged(Color.fromARGB(255, v.round(), g, b))),
             _rgbSlider('G', g.toDouble(), (v) => widget.onSeedChanged(Color.fromARGB(255, r, v.round(), b))),
@@ -116,7 +117,7 @@ class _MountColorTabState extends State<MountColorTab> {
                         child: Container(
                           width: 24,
                           height: 24,
-                          decoration: BoxDecoration(color: Color(value), shape: BoxShape.circle, border: Border.all(color: Colors.white38)),
+                          decoration: BoxDecoration(color: Color(value), shape: BoxShape.circle, border: Border.all(color: DeadzonThemeTokens.cardBorder(context))),
                         ),
                       ))
                   .toList(),
@@ -132,7 +133,7 @@ class _MountColorTabState extends State<MountColorTab> {
                           child: Container(
                             width: 20,
                             height: 20,
-                            decoration: BoxDecoration(color: Color(value), shape: BoxShape.circle, border: Border.all(color: Colors.white70)),
+                            decoration: BoxDecoration(color: Color(value), shape: BoxShape.circle, border: Border.all(color: DeadzonThemeTokens.cardBorder(context))),
                           ),
                         ))
                     .toList(),
@@ -144,7 +145,7 @@ class _MountColorTabState extends State<MountColorTab> {
         MountGlassCard(
           tint: color,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-            const Text('Palette Library', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            Text('Palette Library', style: TextStyle(color: DeadzonThemeTokens.textPrimary(context), fontWeight: FontWeight.w700)),
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,
@@ -155,8 +156,8 @@ class _MountColorTabState extends State<MountColorTab> {
                         label: Text(p.name),
                         onSelected: (_) => widget.onPaletteSelected(p),
                         selectedColor: p.primary.withValues(alpha: 0.35),
-                        backgroundColor: Colors.white.withValues(alpha: 0.08),
-                        labelStyle: const TextStyle(color: Colors.white),
+                        backgroundColor: DeadzonThemeTokens.cardBackground(context),
+                        labelStyle: TextStyle(color: DeadzonThemeTokens.textPrimary(context)),
                       ))
                   .toList(),
             ),
@@ -166,12 +167,12 @@ class _MountColorTabState extends State<MountColorTab> {
         MountGlassCard(
           tint: color,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-            const Text('Generated tonal palette', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            Text('Generated tonal palette', style: TextStyle(color: DeadzonThemeTokens.textPrimary(context), fontWeight: FontWeight.w700)),
             const SizedBox(height: 10),
             ...widget.config.generatedPalettes.entries.map((entry) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(entry.key, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                    Text(entry.key, style: TextStyle(color: DeadzonThemeTokens.textSecondary(context), fontSize: 12)),
                     const SizedBox(height: 6),
                     Wrap(
                       spacing: 6,
@@ -181,7 +182,7 @@ class _MountColorTabState extends State<MountColorTab> {
                                 width: 34,
                                 height: 34,
                                 alignment: Alignment.center,
-                                decoration: BoxDecoration(color: Color(tone.value), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white24)),
+                                decoration: BoxDecoration(color: Color(tone.value), borderRadius: BorderRadius.circular(10), border: Border.all(color: DeadzonThemeTokens.cardBorder(context))),
                                 child: Text(tone.key, style: const TextStyle(color: Colors.black, fontSize: 8, fontWeight: FontWeight.w700)),
                               ))
                           .toList(),
@@ -194,17 +195,17 @@ class _MountColorTabState extends State<MountColorTab> {
         MountGlassCard(
           tint: color,
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
-            const Text('Wallpaper palette', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+            Text('Wallpaper palette', style: TextStyle(color: DeadzonThemeTokens.textPrimary(context), fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             if (!wallpaperExtractionAvailable)
-              const Text(
+              Text(
                 'Wallpaper palette unavailable on this ROM.',
-                style: TextStyle(color: Colors.white70),
+                style: TextStyle(color: DeadzonThemeTokens.textSecondary(context)),
               )
             else
               ...widget.wallpaperSets.where((set) => set.available).map((set) {
                 return Row(children: [
-                  SizedBox(width: 52, child: Text(set.source.toUpperCase(), style: const TextStyle(color: Colors.white70, fontSize: 12))),
+                  SizedBox(width: 52, child: Text(set.source.toUpperCase(), style: TextStyle(color: DeadzonThemeTokens.textSecondary(context), fontSize: 12))),
                   _dot(set.primary),
                   _dot(set.secondary),
                   _dot(set.tertiary),
@@ -236,19 +237,19 @@ class _MountColorTabState extends State<MountColorTab> {
           decoration: BoxDecoration(
             color: color ?? Colors.transparent,
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white54),
+            border: Border.all(color: DeadzonThemeTokens.cardBorder(context)),
           ),
         ),
       );
 
   Widget _rgbSlider(String label, double value, ValueChanged<double> onChanged) => Row(children: [
-        SizedBox(width: 20, child: Text(label, style: const TextStyle(color: Colors.white70))),
+        SizedBox(width: 20, child: Text(label, style: TextStyle(color: DeadzonThemeTokens.textSecondary(context)))),
         Expanded(child: Slider(min: 0, max: 255, value: value, onChanged: onChanged)),
-        SizedBox(width: 28, child: Text(value.round().toString(), style: const TextStyle(color: Colors.white70, fontSize: 11))),
+        SizedBox(width: 28, child: Text(value.round().toString(), style: TextStyle(color: DeadzonThemeTokens.textSecondary(context), fontSize: 11))),
       ]);
 
   Widget _hsvSlider(String label, double value, double max, ValueChanged<double> onChanged) => Row(children: [
-        SizedBox(width: 20, child: Text(label, style: const TextStyle(color: Colors.white70))),
+        SizedBox(width: 20, child: Text(label, style: TextStyle(color: DeadzonThemeTokens.textSecondary(context)))),
         Expanded(child: Slider(min: 0, max: max, value: value.clamp(0, max), onChanged: onChanged)),
       ]);
 

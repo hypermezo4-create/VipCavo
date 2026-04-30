@@ -3,6 +3,7 @@ import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:deadzon/core/widgets/deadzone_settings_widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -44,7 +45,7 @@ class SettingsScreen extends StatelessWidget {
                     icon: Icons.tune_rounded,
                     title: 'Customize appearance',
                     subtitle: 'Open DeadZone Mount Studio',
-                    onTap: () => Navigator.of(context).maybePop(),
+                    onTap: () => context.go('/mount'),
                     trailing: Icon(Icons.chevron_right_rounded, color: DeadzonThemeTokens.iconAccent(context).withValues(alpha: 0.74)),
                   ),
                 ],
