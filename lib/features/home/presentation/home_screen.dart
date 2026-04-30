@@ -1,5 +1,4 @@
 import 'package:deadzon/core/constants/app_identity.dart';
-import 'package:deadzon/core/services/android_intent_bridge.dart';
 import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/core/widgets/deadzone_settings_widgets.dart';
 import 'package:deadzon/core/widgets/premium_top_bar.dart';
@@ -8,13 +7,10 @@ import 'package:go_router/go_router.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-  static const String _kaoriosPackage = 'com.kousei.kaorios';
-
   static const List<_QuickAccess> _entries = <_QuickAccess>[
     _QuickAccess('Statusbar Adjustment', 'Resize, battery, clock, icons and backgrounds', Icons.signal_cellular_alt_rounded, '/statusbar'),
     _QuickAccess('Mount', 'Monet colors, effect tuning, live component previews', Icons.palette_rounded, '/mount'),
     _QuickAccess('DeadZone Toolbox', 'DeadZone dashboard and premium system modules', Icons.dashboard_customize_rounded, '/toolbox'),
-    _QuickAccess('Spoof device', 'Open Kaorios Toolbox for profiles and presets', Icons.smartphone_rounded, 'external:kaorios'),
     _QuickAccess('Settings', 'Appearance, build info, reset preferences', Icons.settings_rounded, '/settings'),
     _QuickAccess('Control center', 'Quick toggles board and grouped utility actions', Icons.tune_rounded, '/control-center'),
     _QuickAccess('Notifications', 'Heads-up, compact icons, and stack behavior', Icons.notifications_active_rounded, '/notifications'),
@@ -46,11 +42,7 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 children: _entries.map((entry) => Column(children: [
                   DeadZoneNavigationRow(icon: entry.icon, title: entry.title, subtitle: entry.subtitle, onTap: () {
-                    if (entry.route == 'external:kaorios') {
-                      launchKaorios(context);
-                    } else {
-                      context.go(entry.route);
-                    }
+                    context.go(entry.route);
                   }),
                   if (entry != _entries.last) const Divider(height: 1),
                 ])).toList(),
@@ -62,11 +54,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  static Future<void> launchKaorios(BuildContext context) async {
-    final opened = await AndroidIntentBridge.openExternalApp(_kaoriosPackage);
-    if (!context.mounted || opened) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kaorios Toolbox is not installed.')));
-  }
+
 }
 
 class _QuickAccess {
