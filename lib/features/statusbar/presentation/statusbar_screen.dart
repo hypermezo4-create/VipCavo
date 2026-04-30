@@ -2688,6 +2688,7 @@ class _ResizeSectionBadge extends StatelessWidget {
           ]),
         ),
       );
+}
 
 class _ResizeSwitchCard extends StatelessWidget {
   const _ResizeSwitchCard({required this.title, required this.value, required this.onChanged});
