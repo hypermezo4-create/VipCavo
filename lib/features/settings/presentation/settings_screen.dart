@@ -45,7 +45,7 @@ class SettingsScreen extends StatelessWidget {
                     icon: Icons.tune_rounded,
                     title: 'Customize appearance',
                     subtitle: 'Open DeadZone Mount Studio',
-                    onTap: () => context.go('/mount'),
+                    onTap: () => context.push('/mount'),
                     trailing: Icon(Icons.chevron_right_rounded, color: DeadzonThemeTokens.iconAccent(context).withValues(alpha: 0.74)),
                   ),
                 ],
