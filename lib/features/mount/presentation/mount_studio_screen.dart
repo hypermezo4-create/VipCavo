@@ -24,14 +24,15 @@ class MountStudioScreen extends StatelessWidget {
     'Profiles',
   ];
 
+  static const double _actionBarHeight = 124.0;
+  static const double _bottomNavHeight = 104.0;
+  static const double _extraSpacing = 40.0;
+
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<MountStudioController>();
-    const bottomNavHeight = 92.0;
-    const actionBarHeight = 184.0;
-    const extraSpacing = 40.0;
     final safeBottom = MediaQuery.paddingOf(context).bottom;
-    final contentBottomPadding = actionBarHeight + bottomNavHeight + safeBottom + extraSpacing;
+    final contentBottomPadding = _actionBarHeight + _bottomNavHeight + safeBottom + _extraSpacing;
 
     return Container(
       decoration: const BoxDecoration(gradient: DesignTokens.baseGradient),
@@ -73,7 +74,7 @@ class MountStudioScreen extends StatelessWidget {
                     await controller.apply();
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: const Text('Mount applied successfully. Theme tokens and targets are now active.'), behavior: SnackBarBehavior.floating, margin: EdgeInsets.fromLTRB(16, 0, 16, bottomNavHeight + actionBarHeight - 18 + safeBottom)),
+                      SnackBar(content: const Text('Mount applied successfully. Theme tokens and targets are now active.'), behavior: SnackBarBehavior.floating, margin: EdgeInsets.fromLTRB(16, 0, 16, _bottomNavHeight + _actionBarHeight - 18 + safeBottom)),
                     );
                   },
                 ),
@@ -131,7 +132,7 @@ class MountStudioScreen extends StatelessWidget {
           onProfileTap: controller.applyProfile,
           onResetProfile: () => _showResetProfileDialog(context, controller),
           onEditProfile: () {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text('Profile editing will be added in the next iteration.'), behavior: SnackBarBehavior.floating, margin: EdgeInsets.fromLTRB(16, 0, 16, bottomNavHeight + actionBarHeight - 18 + MediaQuery.paddingOf(context).bottom)));
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: const Text('Profile editing will be added in the next iteration.'), behavior: SnackBarBehavior.floating, margin: EdgeInsets.fromLTRB(16, 0, 16, _bottomNavHeight + _actionBarHeight - 18 + MediaQuery.paddingOf(context).bottom)));
           },
         );
       default:
