@@ -198,7 +198,8 @@ class DeadZoneSliderRow extends StatelessWidget {
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
             activeTrackColor: DeadzonThemeTokens.sliderActive(context),
-            thumbColor: DeadzonThemeTokens.sliderActive(context),
+            thumbColor: DeadzonThemeTokens.sliderThumb(context),
+            overlayColor: DeadzonThemeTokens.sliderOverlay(context),
             inactiveTrackColor: DeadzonThemeTokens.sliderInactive(context),
           ),
           child: Slider(value: value, min: min, max: max, onChanged: onChanged),

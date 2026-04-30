@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/core/theme/design_tokens.dart';
 import 'package:flutter/material.dart';
 
@@ -57,9 +58,10 @@ class MezoStepSlider extends StatelessWidget {
               trackHeight: 4,
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
               overlayShape: SliderComponentShape.noOverlay,
-              activeTrackColor: const Color(0xFF89E9D3),
-              inactiveTrackColor: Colors.white.withValues(alpha: 0.18),
-              thumbColor: const Color(0xFFB8FFF2),
+              activeTrackColor: DeadzonThemeTokens.sliderActive(context),
+              inactiveTrackColor: DeadzonThemeTokens.sliderInactive(context),
+              thumbColor: DeadzonThemeTokens.sliderThumb(context),
+              overlayColor: DeadzonThemeTokens.sliderOverlay(context),
             ),
             child: Slider(value: safe, min: min, max: max, onChanged: onChanged),
           ),
@@ -145,9 +147,10 @@ class MezoSourceSeekbarRow extends StatelessWidget {
                   data: SliderTheme.of(context).copyWith(
                     trackHeight: 3.2,
                     overlayShape: SliderComponentShape.noOverlay,
-                    inactiveTrackColor: Colors.white.withValues(alpha: 0.2),
-                    activeTrackColor: const Color(0xFF8DE8FF),
-                    thumbColor: const Color(0xFFC2FFF5),
+                    inactiveTrackColor: DeadzonThemeTokens.sliderInactive(context),
+                    activeTrackColor: DeadzonThemeTokens.sliderActive(context),
+                    thumbColor: DeadzonThemeTokens.sliderThumb(context),
+                    overlayColor: DeadzonThemeTokens.sliderOverlay(context),
                     thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7.8),
                   ),
                   child: Slider(value: safe, min: min, max: max, onChanged: onChanged),
