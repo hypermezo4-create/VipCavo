@@ -528,24 +528,64 @@ class MainActivity : FlutterActivity() {
     private fun getDeviceSummary(): Map<String, Any> {
         val am = getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
         val memInfo = ActivityManager.MemoryInfo().also { info -> am?.getMemoryInfo(info) }
-        val batteryManager = getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
-        val batteryPct = batteryManager?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY) ?: -1
         val stat = StatFs(Environment.getDataDirectory().path)
-        val totalStorageMb = (stat.totalBytes / (1024 * 1024)).toInt()
-        val freeStorageMb = (stat.availableBytes / (1024 * 1024)).toInt()
+
+        val totalRamMb = (memInfo.totalMem / (1024 * 1024)).toInt()
+        val usedRamMb = ((memInfo.totalMem - memInfo.availMem) / (1024 * 1024)).toInt()
+        val totalStorageGb = stat.totalBytes / (1024.0 * 1024.0 * 1024.0)
+        val freeStorageGb = stat.availableBytes / (1024.0 * 1024.0 * 1024.0)
+
+        val wm = applicationContext.resources.displayMetrics
+        val resolution = "${wm.widthPixels}x${wm.heightPixels}"
+        val refreshRate = try {
+            windowManager?.defaultDisplay?.refreshRate?.let { "${it} Hz" } ?: "Unknown"
+        } catch (_: Exception) {
+            "Unknown"
+        }
+
+        val securityPatch = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Build.VERSION.SECURITY_PATCH ?: ""
+        } else {
+            ""
+        }
+
+        val radioVersion = try {
+            Build.getRadioVersion() ?: ""
+        } catch (_: Exception) {
+            ""
+        }
 
         return mapOf(
             "brand" to Build.BRAND,
             "manufacturer" to Build.MANUFACTURER,
+            "product" to Build.PRODUCT,
+            "codename" to Build.DEVICE,
             "model" to Build.MODEL,
-            "device" to Build.DEVICE,
+            "androidVersion" to (Build.VERSION.RELEASE ?: ""),
             "release" to (Build.VERSION.RELEASE ?: ""),
             "sdk" to Build.VERSION.SDK_INT,
-            "batteryPercent" to batteryPct,
-            "totalRamMb" to ((memInfo.totalMem / (1024 * 1024)).toInt()),
-            "usedRamMb" to (((memInfo.totalMem - memInfo.availMem) / (1024 * 1024)).toInt()),
-            "freeStorageMb" to freeStorageMb,
-            "totalStorageMb" to totalStorageMb
+            "securityPatch" to securityPatch,
+            "kernel" to (System.getProperty("os.version") ?: ""),
+            "buildId" to Build.ID,
+            "buildDisplay" to Build.DISPLAY,
+            "buildType" to Build.TYPE,
+            "buildTags" to Build.TAGS,
+            "buildTime" to Build.TIME,
+            "buildHost" to Build.HOST,
+            "buildUser" to Build.USER,
+            "incremental" to (Build.VERSION.INCREMENTAL ?: ""),
+            "radioVersion" to radioVersion,
+            "javaVm" to (System.getProperty("java.vm.version") ?: ""),
+            "locale" to java.util.Locale.getDefault().toLanguageTag(),
+            "timezone" to java.util.TimeZone.getDefault().id,
+            "fingerprint" to Build.FINGERPRINT,
+            "supportedAbis" to Build.SUPPORTED_ABIS.joinToString(", "),
+            "totalRamMb" to totalRamMb,
+            "usedRamMb" to usedRamMb,
+            "ram" to "${usedRamMb} MB / ${totalRamMb} MB",
+            "storage" to String.format("%.1f GB free / %.1f GB total", freeStorageGb, totalStorageGb),
+            "resolution" to resolution,
+            "refreshRate" to refreshRate,
         )
     }
 
