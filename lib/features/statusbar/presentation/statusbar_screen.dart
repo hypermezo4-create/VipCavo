@@ -2793,7 +2793,7 @@ class _ResizeSwitchCard extends StatelessWidget {
         Expanded(child: Text(title, style: TextStyle(color: textColor, fontWeight: FontWeight.w600))),
         Switch(
           value: value,
-          activeColor: const Color(0xFF4DE4E0),
+          activeThumbColor: const Color(0xFF4DE4E0),
           activeTrackColor: const Color(0xFF4DE4E0).withValues(alpha: 0.34),
           inactiveTrackColor: (isDark ? Colors.white : const Color(0xFF27415A)).withValues(alpha: 0.2),
           onChanged: onChanged,
@@ -3443,40 +3443,6 @@ class _BatteryColorTile extends StatelessWidget {
           onTap: onTap,
         ),
       ],
-    );
-  }
-}
-
-class _BatteryInfoTile extends StatelessWidget {
-  const _BatteryInfoTile({required this.title, required this.subtitle});
-
-  final String title;
-  final String subtitle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-      ),
-      child: Row(
-        children: <Widget>[
-          const Icon(Icons.info_outline_rounded, color: Color(0xFF8DE8FF), size: 18),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                Text(subtitle, style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12)),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
