@@ -2375,8 +2375,8 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     final leftCalcSetting = _resizeSetting('status_bar_element_cutout_left_not_calculate');
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgTop = isDark ? const Color(0xFF020817) : const Color(0xFFF2F8FF);
-    final bgBottom = isDark ? const Color(0xFF041427) : const Color(0xFFEAF4FF);
+    final bgTop = isDark ? const Color(0xFF020817) : const Color(0xFFF6FBFF);
+    final bgBottom = isDark ? const Color(0xFF041427) : const Color(0xFFE5F1FF);
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
@@ -2497,7 +2497,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
             ),
           ),
           const SizedBox(height: 14),
-          const SectionHeader(title: 'Left camera notch settings'),
+          const _ResizeSectionBadge(label: 'LEFT CAMERA NOTCH SETTINGS', icon: Icons.camera_rear_rounded),
           const SizedBox(height: 8),
           MezoGlassPanel(
             child: Column(
@@ -2546,7 +2546,8 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     if (!mounted) return;
     final selected = await showModalBottomSheet<double>(
       context: context,
-      backgroundColor: const Color(0xFF0D1424),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (context) => _ResizeSliderSheet(
         title: title,
@@ -2568,12 +2569,12 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      useRootNavigator: false,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (sheetContext) => _ResizeSelectSheet(
         title: setting.title ?? setting.legacyKey,
         current: current,
         options: setting.options,
-        sheetContext: sheetContext,
       ),
     );
     if (!context.mounted) return;
@@ -2596,7 +2597,7 @@ class _ResizeHeroSizeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : const Color(0xFF0B1F33);
+    final textColor = isDark ? Colors.white : const Color(0xFF0D2238);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(22),
@@ -2604,8 +2605,8 @@ class _ResizeHeroSizeCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(22),
-          gradient: LinearGradient(colors: isDark ? <Color>[const Color(0xFF123750), const Color(0xFF09172D)] : <Color>[const Color(0xFFD9F7F8), const Color(0xFFE8F0FF)]),
-          border: Border.all(color: (isDark ? const Color(0xFF6AFCFF) : const Color(0xFF1A8794)).withValues(alpha: 0.25)),
+          gradient: LinearGradient(colors: isDark ? <Color>[const Color(0xFF123750), const Color(0xFF09172D)] : <Color>[const Color(0xFFF2FCFF), const Color(0xFFDDECFF)]),
+          border: Border.all(color: (isDark ? const Color(0xFF6AFCFF) : const Color(0xFF1E8899)).withValues(alpha: 0.42)),
         ),
         child: Row(
           children: <Widget>[
@@ -2643,11 +2644,12 @@ class _ResizePremiumHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final fg = isDark ? Colors.white : const Color(0xFF0A2339);
-    return Row(children: <Widget>[
+    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: <Widget>[
       _ResizeHeaderButton(icon: Icons.arrow_back_rounded, onTap: onBack),
       Expanded(
         child: Column(children: <Widget>[
-          Text('Resize Statusbar', style: TextStyle(color: fg, fontSize: 40, fontWeight: FontWeight.w800)),
+          Text('Resize', style: TextStyle(color: fg, fontSize: 36, fontWeight: FontWeight.w800)),
+          Text('Statusbar', style: TextStyle(color: fg.withValues(alpha: 0.92), fontSize: 34, fontWeight: FontWeight.w800)),
           const SizedBox(height: 8),
           const _ResizeSectionBadge(label: 'STATUSBAR MODULE', icon: null),
         ]),
@@ -2662,15 +2664,22 @@ class _ResizeHeaderButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onTap;
   @override
-  Widget build(BuildContext context) => InkWell(
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(999),
         child: Container(
           width: 46, height: 46,
-          decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.black.withValues(alpha: 0.18), border: Border.all(color: const Color(0xFF4DE4E0).withValues(alpha: 0.45))),
-          child: Icon(icon, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0A2339)),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isDark ? Colors.black.withValues(alpha: 0.18) : Colors.white.withValues(alpha: 0.74),
+            border: Border.all(color: const Color(0xFF4DE4E0).withValues(alpha: isDark ? 0.45 : 0.72)),
+          ),
+          child: Icon(icon, color: isDark ? Colors.white : const Color(0xFF0A2339)),
         ),
       );
+  }
 }
 
 class _ResizeSectionBadge extends StatelessWidget {
@@ -2678,16 +2687,23 @@ class _ResizeSectionBadge extends StatelessWidget {
   final String label;
   final IconData? icon;
   @override
-  Widget build(BuildContext context) => Center(
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Center(
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(999), border: Border.all(color: const Color(0xFF4DE4E0).withValues(alpha: 0.5)), color: const Color(0xFF0A1F34).withValues(alpha: 0.45)),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: const Color(0xFF4DE4E0).withValues(alpha: isDark ? 0.5 : 0.72)),
+            color: (isDark ? const Color(0xFF0A1F34) : const Color(0xFFF5FCFF)).withValues(alpha: isDark ? 0.45 : 0.9),
+          ),
           child: Row(mainAxisSize: MainAxisSize.min, children: <Widget>[
             if (icon != null) ...<Widget>[Icon(icon, size: 14, color: const Color(0xFF4DE4E0)), const SizedBox(width: 8)],
-            Text(label, style: const TextStyle(color: Color(0xFF4DE4E0), letterSpacing: 1.1, fontWeight: FontWeight.w700)),
+            Text(label, style: TextStyle(color: isDark ? const Color(0xFF4DE4E0) : const Color(0xFF137B8C), letterSpacing: 1.1, fontWeight: FontWeight.w700)),
           ]),
         ),
       );
+  }
 }
 
 class _ResizeSwitchCard extends StatelessWidget {
@@ -2699,13 +2715,20 @@ class _ResizeSwitchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0B1F33);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : const Color(0xFF0B1F33);
     return Row(
       children: <Widget>[
         CircleAvatar(radius: 18, backgroundColor: const Color(0xFF4DE4E0).withValues(alpha: 0.2), child: const Icon(Icons.phone_android_outlined, color: Color(0xFF4DE4E0), size: 18)),
         const SizedBox(width: 10),
         Expanded(child: Text(title, style: TextStyle(color: textColor, fontWeight: FontWeight.w600))),
-        Switch(value: value, onChanged: onChanged),
+        Switch(
+          value: value,
+          activeColor: const Color(0xFF4DE4E0),
+          activeTrackColor: const Color(0xFF4DE4E0).withValues(alpha: 0.34),
+          inactiveTrackColor: (isDark ? Colors.white : const Color(0xFF27415A)).withValues(alpha: 0.2),
+          onChanged: onChanged,
+        ),
       ],
     );
   }
@@ -2889,14 +2912,23 @@ class _ResizeSliderSheetState extends State<_ResizeSliderSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fg = isDark ? Colors.white : const Color(0xFF0D2238);
     return SafeArea(
-      child: Padding(
+      child: Container(
         padding: EdgeInsets.fromLTRB(18, 14, 18, MediaQuery.of(context).padding.bottom + 16),
+        decoration: BoxDecoration(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          color: (isDark ? const Color(0xFF0B1522) : const Color(0xFFF7FCFF)).withValues(alpha: 0.97),
+          border: Border.all(color: (isDark ? Colors.white : const Color(0xFF1F88A0)).withValues(alpha: 0.2)),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(widget.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
+            Center(child: Container(width: 44, height: 4, decoration: BoxDecoration(color: fg.withValues(alpha: 0.28), borderRadius: BorderRadius.circular(99)))),
+            const SizedBox(height: 12),
+            Text(widget.title, style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 18)),
             const SizedBox(height: 8),
             Text(_value.toStringAsFixed(0), style: const TextStyle(color: Color(0xFF8DE8FF), fontSize: 28, fontWeight: FontWeight.w800)),
             Slider(
@@ -2933,13 +2965,11 @@ class _ResizeSelectSheet extends StatelessWidget {
     required this.title,
     required this.current,
     required this.options,
-    required this.sheetContext,
   });
 
   final String title;
   final String current;
   final List<StatusBarOption> options;
-  final BuildContext sheetContext;
 
   @override
   Widget build(BuildContext context) {
@@ -2958,18 +2988,18 @@ class _ResizeSelectSheet extends StatelessWidget {
             children: <Widget>[
               Text(title, style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF0B1F33), fontWeight: FontWeight.w700, fontSize: 28)),
               const SizedBox(height: 8),
-              const _ResizeSectionBadge(label: 'CAMERA CUTOUT', icon: null),
+              const _ResizeSectionBadge(label: 'DEADZONE PICKER', icon: null),
               const SizedBox(height: 12),
               for (final option in options) ...<Widget>[
                 InkWell(
                   borderRadius: BorderRadius.circular(16),
-                  onTap: () => Navigator.of(sheetContext).pop(option.value),
+                  onTap: () => Navigator.of(context).pop(option.value),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.06),
+                      color: option.value == current ? const Color(0xFF4DE4E0).withValues(alpha: 0.16) : Colors.white.withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+                      border: Border.all(color: option.value == current ? const Color(0xFF4DE4E0).withValues(alpha: 0.72) : Colors.white.withValues(alpha: 0.14)),
                     ),
                     child: Row(
                       children: <Widget>[
