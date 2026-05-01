@@ -1251,10 +1251,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
               _batteryToggle(byKey['elem_bat_element_visible']),
               _batterySelect(byKey['battery_indicator_style']),
               _batterySelect(byKey['use_legacy_drawable']),
-              _BatteryInfoTile(
-                title: byKey['android.theme.customization.battery_icon']?.title ?? 'Battery icon pack',
-                subtitle: 'Icon-pack picker opens from the source overlay module.',
-              ),
+              _batteryIconThemeRow(byKey['android.theme.customization.battery_icon']),
             ],
           ),
           const SizedBox(height: 12),
@@ -1783,6 +1780,63 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     );
   }
 
+  Widget _batteryIconThemeRow(StatusBarSettingItem? setting) {
+    if (setting == null) return const SizedBox.shrink();
+    final currentPackage = _stringSettingValue(setting, 'com.android.systemui');
+    return _BatterySelectTile(
+      icon: _batteryIconForKey(setting.legacyKey),
+      title: _batteryLabel(setting),
+      subtitle: 'Select battery icon overlay pack.',
+      valueLabel: _networkStyleLabel(currentPackage),
+      onTap: () async {
+        final pageContext = context;
+        final options = await _batteryIconOptions(currentPackage);
+        if (!pageContext.mounted) return;
+        final selected = await showModalBottomSheet<String>(
+          context: pageContext,
+          useRootNavigator: false,
+          useSafeArea: true,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (sheetContext) => _BatteryOptionSheet(
+            title: 'Battery icon theme',
+            selectedValue: currentPackage,
+            options: options,
+            onSelected: (value) => Navigator.of(sheetContext).pop(value),
+          ),
+        );
+        if (!pageContext.mounted || selected == null || selected == currentPackage) return;
+        _handleSettingChanged(setting, selected);
+      },
+    );
+  }
+
+  Future<List<StatusBarOption>> _batteryIconOptions(String currentPackage) async {
+    final options = <StatusBarOption>[const StatusBarOption(label: 'Default SystemUI', value: 'com.android.systemui')];
+    final payload = await _readInstalledPackages();
+    if (payload != null) {
+      final discovered = <StatusBarOption>[];
+      for (final item in payload) {
+        if (item is! Map<Object?, Object?>) continue;
+        final packageName = '${item['packageName'] ?? ''}'.trim();
+        final label = '${item['name'] ?? packageName}'.trim();
+        if (packageName.isEmpty || packageName == 'com.android.systemui') continue;
+        if (_isMatchingNetworkOverlay(packageName, const ['battery','batt','icon'])) {
+          discovered.add(StatusBarOption(label: label.isEmpty ? packageName : label, value: packageName));
+        }
+      }
+      discovered.sort((a,b)=>a.label.toLowerCase().compareTo(b.label.toLowerCase()));
+      options.addAll(discovered);
+    }
+    if (options.length == 1) {
+      options.add(const StatusBarOption(label: 'Battery icon picker is prepared for ROM integration.', value: 'com.android.systemui'));
+    }
+    if (options.every((entry) => entry.value != currentPackage)) {
+      options.add(StatusBarOption(label: _networkStyleLabel(currentPackage), value: currentPackage));
+    }
+    return options;
+  }
+
   Future<List<StatusBarOption>> _networkStyleOptions(
     _NetworkIconStyleBinding binding,
     String currentPackage,
@@ -2059,6 +2113,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
   Widget _batteryToggle(StatusBarSettingItem? setting) {
     if (setting == null) return const SizedBox.shrink();
     return _BatteryToggleTile(
+      icon: _batteryIconForKey(setting.legacyKey),
       title: _batteryLabel(setting),
       subtitle: _batterySubtitle(setting),
       value: (_values[setting.legacyKey] as bool?) ?? (setting.defaultValue as bool? ?? false),
@@ -2072,6 +2127,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     final max = setting.max ?? 100;
     final value = ((_values[setting.legacyKey] as num?)?.toDouble() ?? (setting.defaultValue as num?)?.toDouble() ?? min).clamp(min, max).toDouble();
     return _BatterySliderTile(
+      icon: _batteryIconForKey(setting.legacyKey),
       title: _batteryLabel(setting),
       subtitle: _batterySubtitle(setting),
       value: value,
@@ -2090,6 +2146,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     final selectedOption = options.where((o) => o.value == current);
     final label = selectedOption.isEmpty ? options.first.label : selectedOption.first.label;
     return _BatterySelectTile(
+      icon: _batteryIconForKey(setting.legacyKey),
       title: _batteryLabel(setting),
       subtitle: _batterySubtitle(setting),
       valueLabel: label,
@@ -2118,6 +2175,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     if (setting == null) return const SizedBox.shrink();
     final current = _stringSettingValue(setting, 'Default');
     return _BatterySelectTile(
+      icon: _batteryIconForKey(setting.legacyKey),
       title: _batteryLabel(setting),
       subtitle: _batterySubtitle(setting),
       valueLabel: _fontDisplayLabel(current),
@@ -2168,6 +2226,7 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
     if (setting == null) return const SizedBox.shrink();
     final current = _colorIntValue(setting, (setting.defaultValue as int?) ?? 0);
     return _BatteryColorTile(
+      icon: _batteryIconForKey(setting.legacyKey),
       title: _batteryLabel(setting),
       subtitle: _batterySubtitle(setting),
       colorValue: current,
@@ -2184,6 +2243,16 @@ class _StatusbarDetailScreenState extends State<StatusbarDetailScreen> {
         }
       },
     );
+  }
+
+  IconData _batteryIconForKey(String key) {
+    if (key.contains('color')) return Icons.palette_outlined;
+    if (key.contains('zoom') || key.contains('scale') || key.contains('division')) return Icons.tune_rounded;
+    if (key.contains('typefase')) return Icons.font_download_rounded;
+    if (key.contains('enable') || key.contains('visible')) return Icons.toggle_on_rounded;
+    if (key.contains('customization.battery_icon')) return Icons.battery_charging_full_rounded;
+    if (key.contains('style') || key.contains('drawable')) return Icons.style_rounded;
+    return Icons.battery_6_bar_rounded;
   }
 
   String _batteryLabel(StatusBarSettingItem setting) {
@@ -3222,18 +3291,21 @@ class _BatterySectionCard extends StatelessWidget {
 }
 
 class _BatteryToggleTile extends StatelessWidget {
-  const _BatteryToggleTile({required this.title, required this.value, required this.onChanged, this.subtitle});
+  const _BatteryToggleTile({required this.title, required this.value, required this.onChanged, this.subtitle, this.icon = Icons.toggle_on_rounded});
 
   final String title;
   final String? subtitle;
   final bool value;
   final ValueChanged<bool> onChanged;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
     final visibleSubtitle = _cleanVisibleSubtitle(subtitle);
     return Row(
       children: <Widget>[
+        DeadZoneIconChip(icon: icon),
+        const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -3253,6 +3325,7 @@ class _BatteryToggleTile extends StatelessWidget {
 class _BatterySliderTile extends StatelessWidget {
   const _BatterySliderTile({
     required this.title,
+    this.icon = Icons.tune_rounded,
     required this.value,
     required this.min,
     required this.max,
@@ -3268,10 +3341,12 @@ class _BatterySliderTile extends StatelessWidget {
   final double max;
   final ValueChanged<double> onChanged;
   final VoidCallback onReset;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
     return MezoSourceSeekbarRow(
+      icon: icon,
       title: title,
       subtitle: subtitle,
       value: value,
@@ -3284,12 +3359,13 @@ class _BatterySliderTile extends StatelessWidget {
 }
 
 class _BatterySelectTile extends StatelessWidget {
-  const _BatterySelectTile({required this.title, required this.valueLabel, required this.onTap, this.subtitle});
+  const _BatterySelectTile({required this.title, required this.valueLabel, required this.onTap, this.subtitle, this.icon = Icons.arrow_drop_down_circle_outlined});
 
   final String title;
   final String? subtitle;
   final String valueLabel;
   final VoidCallback onTap;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -3301,6 +3377,8 @@ class _BatterySelectTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
           children: <Widget>[
+            DeadZoneIconChip(icon: icon),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -3335,18 +3413,21 @@ class _BatterySelectTile extends StatelessWidget {
 }
 
 class _BatteryColorTile extends StatelessWidget {
-  const _BatteryColorTile({required this.title, required this.colorValue, required this.onTap, this.subtitle});
+  const _BatteryColorTile({required this.title, required this.colorValue, required this.onTap, this.subtitle, this.icon = Icons.palette_outlined});
 
   final String title;
   final String? subtitle;
   final int colorValue;
   final VoidCallback onTap;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
     final visibleSubtitle = _cleanVisibleSubtitle(subtitle);
     return Row(
       children: <Widget>[
+        DeadZoneIconChip(icon: icon),
+        const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
