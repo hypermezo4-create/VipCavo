@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:deadzon/core/theme/deadzon_theme_controller.dart';
 import 'package:deadzon/core/theme/design_tokens.dart';
+import 'package:deadzon/core/widgets/deadzone_settings_widgets.dart';
 import 'package:flutter/material.dart';
 
 class MezoAdjustButton extends StatelessWidget {
@@ -87,6 +88,7 @@ class MezoSourceSeekbarRow extends StatelessWidget {
     required this.onChanged,
     required this.onReset,
     this.subtitle,
+    this.icon = Icons.tune_rounded,
     super.key,
   });
 
@@ -97,6 +99,7 @@ class MezoSourceSeekbarRow extends StatelessWidget {
   final double max;
   final ValueChanged<double> onChanged;
   final VoidCallback onReset;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -108,6 +111,8 @@ class MezoSourceSeekbarRow extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
+              DeadZoneIconChip(icon: icon),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
