@@ -56,11 +56,12 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
           child: FilledButton(
             onPressed: _saving ? null : () async {
+              final messenger = ScaffoldMessenger.of(context);
               setState(() => _saving = true);
               final applied = await _service.saveAndApplyConfig(_config);
-              if (!mounted) return;
+              if (!context.mounted) return;
               setState(() => _saving = false);
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(applied ? 'Changes saved.' : 'Saved in DeadZone. System apply requires ROM integration.')));
+              messenger.showSnackBar(SnackBar(content: Text(applied ? 'Changes saved.' : 'Saved in DeadZone. System apply requires ROM integration.')));
             },
             style: FilledButton.styleFrom(backgroundColor: const Color(0xFF2D7CF6), padding: const EdgeInsets.symmetric(vertical: 18), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24))),
             child: Text(_saving ? 'APPLYING...' : 'APPLY CHANGES', style: const TextStyle(fontWeight: FontWeight.w700,letterSpacing: .6)),
@@ -77,9 +78,9 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
-          decoration: BoxDecoration(color: dark ? Colors.white.withOpacity(.12) : Colors.white.withOpacity(.86), borderRadius: BorderRadius.circular(24), border: Border.all(color: dark ? Colors.white12 : const Color(0xFFD5E4F6))),
+          decoration: BoxDecoration(color: dark ? Colors.white.withValues(alpha: .12) : Colors.white.withValues(alpha: .86), borderRadius: BorderRadius.circular(24), border: Border.all(color: dark ? Colors.white12 : const Color(0xFFD5E4F6))),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          child: Row(children: [Container(width: 54,height: 54,decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), color: Colors.white.withOpacity(.1)), clipBehavior: Clip.antiAlias, child: Icon(item.icon, color: accent, size: 30)), const SizedBox(width: 12), Expanded(child: Text(item.label, style: const TextStyle(fontSize: 18,fontWeight: FontWeight.w500))), Switch(value: value, activeColor: Colors.white, activeTrackColor: const Color(0xFF2D7CF6), onChanged: (v){ final map = Map<String, bool>.from(_config.values); map[item.key]=v; setState(() => _config = _config.copyWith(values: map)); })]),
+          child: Row(children: [Container(width: 54,height: 54,decoration: BoxDecoration(borderRadius: BorderRadius.circular(16), color: Colors.white.withValues(alpha: .1)), clipBehavior: Clip.antiAlias, child: Icon(item.icon, color: accent, size: 30)), const SizedBox(width: 12), Expanded(child: Text(item.label, style: const TextStyle(fontSize: 18,fontWeight: FontWeight.w500))), Switch(value: value, activeThumbColor: Colors.white, activeTrackColor: const Color(0xFF2D7CF6), onChanged: (v){ final map = Map<String, bool>.from(_config.values); map[item.key]=v; setState(() => _config = _config.copyWith(values: map)); })]),
         ),
       ),
     );
