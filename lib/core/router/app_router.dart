@@ -1,10 +1,10 @@
 import 'package:deadzon/core/widgets/deadzon_shell.dart';
+import 'package:deadzon/features/call/presentation/call_screen.dart';
 import 'package:deadzon/features/control_center/presentation/control_center_screen.dart';
 import 'package:deadzon/features/home/presentation/home_screen.dart';
 import 'package:deadzon/features/hub/presentation/additional_pages.dart';
 import 'package:deadzon/features/mount/presentation/mount_screen.dart';
 import 'package:deadzon/features/settings/presentation/settings_screen.dart';
-import 'package:deadzon/features/spoof_device/presentation/spoof_device_screen.dart';
 import 'package:deadzon/features/statusbar/presentation/statusbar_screen.dart';
 import 'package:deadzon/features/toolbox/presentation/toolbox_screen.dart';
 import 'package:go_router/go_router.dart';
@@ -22,11 +22,6 @@ final GoRouter appRouter = GoRouter(
         ),
         StatefulShellBranch(
           routes: <RouteBase>[
-            GoRoute(path: '/statusbar', builder: (context, state) => const StatusbarScreen()),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: <RouteBase>[
             GoRoute(path: '/mount', builder: (context, state) => const MountScreen()),
           ],
         ),
@@ -37,11 +32,13 @@ final GoRouter appRouter = GoRouter(
         ),
       ],
     ),
-    GoRoute(path: '/spoof-device', builder: (context, state) => const SpoofDeviceScreen()),
     GoRoute(path: '/control-center', builder: (context, state) => const ControlCenterScreen()),
+    GoRoute(path: '/statusbar', builder: (context, state) => const StatusbarScreen()),
     GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
     GoRoute(path: '/lockscreen', builder: (context, state) => const LockscreenScreen()),
-    GoRoute(path: '/more-tools', builder: (context, state) => const MoreToolsScreen()),
+    GoRoute(path: '/call', builder: (context, state) => const CallScreen()),
+    GoRoute(path: '/gaming', builder: (context, state) => const GamingScreen()),
+    GoRoute(path: '/other-favorite', builder: (context, state) => const OtherFavoriteScreen()),
     GoRoute(path: '/toolbox', builder: (context, state) => const ToolboxScreen()),
   ],
 );

@@ -8,14 +8,16 @@ import 'package:go_router/go_router.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
   static const List<_QuickAccess> _entries = <_QuickAccess>[
-    _QuickAccess('Statusbar Adjustment', 'Resize, battery, clock, icons and backgrounds', Icons.signal_cellular_alt_rounded, '/statusbar'),
-    _QuickAccess('Mount', 'Monet colors, effect tuning, live component previews', Icons.palette_rounded, '/mount'),
-    _QuickAccess('DeadZone Toolbox', 'DeadZone dashboard and premium system modules', Icons.dashboard_customize_rounded, '/toolbox'),
-    _QuickAccess('Settings', 'Appearance, build info, reset preferences', Icons.settings_rounded, '/settings'),
+    _QuickAccess('Statusbar', 'Resize statusbar, battery, clock, network and icons', Icons.signal_cellular_alt_rounded, '/statusbar'),
     _QuickAccess('Control center', 'Quick toggles board and grouped utility actions', Icons.tune_rounded, '/control-center'),
-    _QuickAccess('Notifications', 'Heads-up, compact icons, and stack behavior', Icons.notifications_active_rounded, '/notifications'),
-    _QuickAccess('Lockscreen', 'Clock and shortcuts composition', Icons.lock_outline_rounded, '/lockscreen'),
-    _QuickAccess('More tools', 'Extra ROM utility features', Icons.auto_awesome_rounded, '/more-tools'),
+    _QuickAccess('Notification', 'Heads-up, compact icons, and stack behavior', Icons.notifications_active_rounded, '/notifications'),
+    _QuickAccess('Lock screen', 'Clock, shortcuts and lockscreen composition', Icons.lock_outline_rounded, '/lockscreen'),
+    _QuickAccess('Call', 'Call window, contact colors and call history styles', Icons.call_rounded, '/call'),
+    _QuickAccess('Gaming', 'Performance and game-focused utility experiences', Icons.sports_esports_rounded, '/gaming'),
+    _QuickAccess('Mount', 'Monet colors, effect tuning, live component previews', Icons.palette_rounded, '/mount'),
+    _QuickAccess('DeadZone toolbox', 'DeadZone dashboard and premium system modules', Icons.dashboard_customize_rounded, '/toolbox'),
+    _QuickAccess('Settings', 'Appearance, build info, reset preferences', Icons.settings_rounded, '/settings'),
+    _QuickAccess('Other Favorite', 'Extra ROM utility features', Icons.auto_awesome_rounded, '/other-favorite'),
   ];
 
   @override
