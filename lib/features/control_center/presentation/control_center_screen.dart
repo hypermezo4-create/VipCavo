@@ -152,36 +152,34 @@ class _ControlCenterScreenState extends State<ControlCenterScreen> {
                   ),
           ),
         ),
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-            child: FilledButton(
-              onPressed: _saving
-                  ? null
-                  : () async {
-                      final messenger = ScaffoldMessenger.of(context);
-                      setState(() => _saving = true);
-                      final applied = await _service.saveAndApplyConfig(_config);
-                      if (!context.mounted) return;
-                      setState(() => _saving = false);
-                      messenger.showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            applied
-                                ? 'Applied. Refresh after wallpaper change.'
-                                : 'Saved in DeadZone. System apply requires ROM integration.',
-                          ),
-                        ),
-                      );
-                    },
-              style: FilledButton.styleFrom(
-                backgroundColor: dark ? const Color(0xFF2D7CF6) : const Color(0xFF1D6EF2),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              ),
-              child: Text(_saving ? 'APPLYING...' : 'APPLY CHANGES', style: const TextStyle(fontWeight: FontWeight.w700, letterSpacing: .6)),
-            ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        floatingActionButton: SafeArea(
+          minimum: const EdgeInsets.only(right: 16, bottom: 12),
+          child: FloatingActionButton.extended(
+            onPressed: _saving
+                ? null
+                : () async {
+                    final messenger = ScaffoldMessenger.of(context);
+                    setState(() => _saving = true);
+                    final applyResult = await _service.saveAndApplyConfig(_config);
+                    if (!context.mounted) return;
+                    setState(() => _saving = false);
+
+                    final message = switch (applyResult) {
+                      ControlCenterApplyResult.applied => 'Applied. SystemUI refresh requested.',
+                      ControlCenterApplyResult.writeFailed => 'Saved in DeadZone. System apply requires ROM integration.',
+                      ControlCenterApplyResult.broadcastFailed => 'Saved. Refresh action could not be sent.',
+                    };
+
+                    messenger.showSnackBar(SnackBar(content: Text(message)));
+                  },
+            icon: Icon(_saving ? Icons.sync_rounded : Icons.refresh_rounded, size: 18),
+            label: Text(_saving ? 'Applying...' : 'Apply'),
+            backgroundColor: dark ? const Color(0xAA1C9DBA) : const Color(0xDD1A86C8),
+            foregroundColor: Colors.white,
+            elevation: 10,
+            extendedPadding: const EdgeInsets.symmetric(horizontal: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           ),
         ),
       ),
