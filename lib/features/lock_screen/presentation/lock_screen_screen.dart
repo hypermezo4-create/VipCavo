@@ -117,7 +117,7 @@ class _LockScreenScreenState extends State<LockScreenScreen> {
               ),
               const SizedBox(height: 12),
               const DeadZoneSectionHeader(title: 'Identity'),
-              DeadZoneSettingsCard(child: DeadZoneSelectRow(icon: Icons.fingerprint_rounded, title: 'FOD icon', subtitle: 'Fingerprint unlock icon style', valueLabel: _friendlyFod(_selectedFod), onTap: _openFodPicker)),
+              DeadZoneSettingsCard(child: DeadZoneSelectRow(icon: Icons.fingerprint_rounded, title: 'FOD icon', subtitle: 'Fingerprint unlock icon style', valueLabel: _friendlyFod(_selectedFod), onTap: () => _openFodPicker(sourcePath: _fodSourcePath))),
               const SizedBox(height: 12),
               const DeadZoneSectionHeader(title: 'Lock Behavior'),
               DeadZoneSettingsCard(child: Column(children: <Widget>[
@@ -201,11 +201,14 @@ class _LockScreenScreenState extends State<LockScreenScreen> {
     );
   }
 
-  Future<void> _openFodPicker() async {
+  Future<void> _openFodPicker({required String sourcePath}) async {
+    final pickerSourcePath = sourcePath;
+
     await showModalBottomSheet<void>(
       context: context,
       useRootNavigator: false,
       builder: (context) {
+        assert(pickerSourcePath.isNotEmpty);
         if (_fodOptions.isEmpty) {
           return const Padding(
             padding: EdgeInsets.all(20),
