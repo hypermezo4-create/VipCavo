@@ -112,7 +112,15 @@ class _CallScreenState extends State<CallScreen> {
                 : ListView(
                     padding: EdgeInsets.fromLTRB(14, 10, 14, MediaQuery.paddingOf(context).bottom + 120),
                     children: [
-                      PremiumTopBar(title: 'Call', subtitle: 'Call window, contact colors and call history styles', onBack: () => context.go('/home')),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: IconButton(
+                          tooltip: 'Back',
+                          onPressed: () => context.go('/home'),
+                          icon: const Icon(Icons.arrow_back_rounded),
+                        ),
+                      ),
+                      PremiumTopBar(title: 'Call', subtitle: 'Call window, contact colors and call history styles'),
                       const SizedBox(height: 12),
                       const DeadZoneSectionHeader(title: 'Call Window', subtitle: 'In-call layout behavior'),
                       DeadZoneSettingsCard(
