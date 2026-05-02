@@ -75,3 +75,30 @@ class MoreToolsScreen extends StatelessWidget {
     );
   }
 }
+
+
+class GamingScreen extends StatelessWidget {
+  const GamingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const HubToolScreen(
+      title: 'Gaming',
+      subtitle: 'Performance and gaming utility controls',
+      modules: <HubModuleDefinition>[],
+    );
+  }
+}
+
+class OtherFavoriteScreen extends StatelessWidget {
+  const OtherFavoriteScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const HubToolScreen(
+      title: 'Other Favorite',
+      subtitle: 'Extra favorite modules and utilities',
+      modules: <HubModuleDefinition>[],
+    );
+  }
+}

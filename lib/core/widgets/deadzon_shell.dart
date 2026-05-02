@@ -22,7 +22,6 @@ class _DeadzonShellState extends State<DeadzonShell> with SingleTickerProviderSt
 
   static const List<DeadzonFloatingTabItem> _items = <DeadzonFloatingTabItem>[
     DeadzonFloatingTabItem(label: 'Home', icon: Icons.home_rounded),
-    DeadzonFloatingTabItem(label: 'Statusbar', icon: Icons.signal_cellular_alt_rounded),
     DeadzonFloatingTabItem(label: 'Mount', icon: Icons.palette_rounded),
     DeadzonFloatingTabItem(label: 'Settings', icon: Icons.settings_rounded),
   ];
