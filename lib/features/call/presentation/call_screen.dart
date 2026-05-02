@@ -164,18 +164,25 @@ class _CallScreenState extends State<CallScreen> {
       opacity: enabled ? 1 : 0.48,
       child: IgnorePointer(
         ignoring: !enabled,
-        child: DeadZoneSelectRow(
+        child: DeadZoneNavigationRow(
           icon: icon,
           title: title,
-          valueLabel: DeadzoneColorUtils.toArgbHex(argb),
-          leading: Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: Color(argb),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: DeadzonThemeTokens.border(context)),
-            ),
+          subtitle: DeadzoneColorUtils.toArgbHex(argb),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: Color(argb),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: DeadzonThemeTokens.border(context)),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(Icons.chevron_right_rounded, color: DeadzonThemeTokens.iconAccent(context).withValues(alpha: 0.74)),
+            ],
           ),
           onTap: () => _pickColor(title, argb, onChanged),
         ),
