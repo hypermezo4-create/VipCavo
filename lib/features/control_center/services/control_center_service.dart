@@ -12,7 +12,7 @@ class ControlCenterService {
 
   Future<void> saveConfig(ControlCenterConfig config) => _storage.saveConfig(config.copyWith(lastUpdatedAt: DateTime.now()));
 
-  Future<bool> saveAndApplyConfig(ControlCenterConfig config) async {
+  Future<ControlCenterApplyResult> saveAndApplyConfig(ControlCenterConfig config) async {
     final saved = config.copyWith(lastUpdatedAt: DateTime.now());
     await _storage.saveConfig(saved);
     final writes = await Future.wait<bool>(
@@ -20,6 +20,15 @@ class ControlCenterService {
         (entry) => AndroidIntentBridge.writeBool(entry.key, entry.value, storeType: mezoSettingsStoreType),
       ),
     );
-    return writes.any((value) => value);
+    final writesSucceeded = writes.isNotEmpty && writes.every((value) => value);
+    if (!writesSucceeded) return ControlCenterApplyResult.writeFailed;
+    final broadcastSent = await AndroidIntentBridge.sendSystemUiRefresh();
+    return broadcastSent ? ControlCenterApplyResult.applied : ControlCenterApplyResult.broadcastFailed;
   }
+}
+
+enum ControlCenterApplyResult {
+  applied,
+  writeFailed,
+  broadcastFailed,
 }
