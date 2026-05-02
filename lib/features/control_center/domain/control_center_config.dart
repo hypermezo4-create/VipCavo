@@ -2,79 +2,45 @@ import 'dart:convert';
 
 class ControlCenterConfig {
   const ControlCenterConfig({
-    required this.squareMezoTiles,
-    required this.controlCenterStyle,
-    required this.extraTwoMezoTiles,
-    required this.ccBlurRatio,
+    required this.values,
     required this.lastUpdatedAt,
   });
 
-  final bool squareMezoTiles;
-  final int controlCenterStyle;
-  final List<String> extraTwoMezoTiles;
-  final int ccBlurRatio;
+  final Map<String, bool> values;
   final DateTime lastUpdatedAt;
 
+  static const List<String> supportedKeys = <String>[
+    'monetmode','glass_effect','bgblur','CustomCornerRadius','compactdpi','4tile','style2','largemedia','largemedia1','circlecard','cardtouch','hidesound','devicesize','squaretiles','custom_clock','defaultedit','traffic','slidericon','percent','smallvolume','columndown','circlebuttons','HideButtons','hidemore','extended_hyper_island','powermenu',
+  ];
+
   static ControlCenterConfig defaults() => ControlCenterConfig(
-        squareMezoTiles: true,
-        controlCenterStyle: 0,
-        extraTwoMezoTiles: const <String>['wifi', 'cell'],
-        ccBlurRatio: 100,
+        values: {for (final key in supportedKeys) key: false},
         lastUpdatedAt: DateTime.now(),
       );
 
-  static const String squareMezoTilesKey = 'square_mezo_tiles';
-  static const String controlCenterStyleKey = 'swap_tiles_1';
-  static const String extraTwoMezoTilesKey = 'extra_two_mezo_tiles';
-  static const String ccBlurRatioKey = 'cc_blur_ratio';
+  bool read(String key) => values[key] ?? false;
 
-  ControlCenterConfig copyWith({
-    bool? squareMezoTiles,
-    int? controlCenterStyle,
-    List<String>? extraTwoMezoTiles,
-    int? ccBlurRatio,
-    DateTime? lastUpdatedAt,
-  }) {
-    return ControlCenterConfig(
-      squareMezoTiles: squareMezoTiles ?? this.squareMezoTiles,
-      controlCenterStyle: controlCenterStyle ?? this.controlCenterStyle,
-      extraTwoMezoTiles: extraTwoMezoTiles ?? this.extraTwoMezoTiles,
-      ccBlurRatio: ccBlurRatio ?? this.ccBlurRatio,
-      lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
-    );
-  }
+  ControlCenterConfig copyWith({Map<String, bool>? values, DateTime? lastUpdatedAt}) => ControlCenterConfig(
+        values: values ?? this.values,
+        lastUpdatedAt: lastUpdatedAt ?? this.lastUpdatedAt,
+      );
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        squareMezoTilesKey: squareMezoTiles,
-        controlCenterStyleKey: controlCenterStyle,
-        extraTwoMezoTilesKey: extraTwoAsBridgeString,
-        ccBlurRatioKey: ccBlurRatio,
+        'values': values,
         'lastUpdatedAt': lastUpdatedAt.toIso8601String(),
       };
 
   String encode() => jsonEncode(toJson());
 
-  String get extraTwoAsBridgeString => extraTwoMezoTiles.take(2).join(',');
-
-  static List<String> decodeExtraTiles(Object? value) {
-    List<String> normalized = const <String>[];
-    if (value is String && value.trim().isNotEmpty) {
-      normalized = value.split(',').map((entry) => entry.trim()).where((entry) => entry.isNotEmpty).take(2).toList();
-    } else if (value is List<dynamic>) {
-      normalized = value.map((dynamic entry) => '$entry').where((entry) => entry.isNotEmpty).take(2).toList();
-    }
-    return normalized.length == 2 ? normalized : const <String>['wifi', 'cell'];
-  }
-
   static ControlCenterConfig decode(String raw) {
     final map = jsonDecode(raw) as Map<String, dynamic>;
-    final extraTiles = decodeExtraTiles(map[extraTwoMezoTilesKey]);
-    return ControlCenterConfig(
-      squareMezoTiles: map[squareMezoTilesKey] as bool? ?? true,
-      controlCenterStyle: (map[controlCenterStyleKey] as num?)?.toInt() ?? 0,
-      extraTwoMezoTiles: extraTiles,
-      ccBlurRatio: (map[ccBlurRatioKey] as num?)?.toInt() ?? 100,
-      lastUpdatedAt: DateTime.tryParse(map['lastUpdatedAt'] as String? ?? '') ?? DateTime.now(),
-    );
+    final valuesRaw = (map['values'] as Map<String, dynamic>? ?? <String, dynamic>{});
+    final merged = <String, bool>{for (final k in supportedKeys) k: false};
+    for (final entry in valuesRaw.entries) {
+      if (supportedKeys.contains(entry.key)) {
+        merged[entry.key] = entry.value == true || entry.value == 1 || entry.value == '1';
+      }
+    }
+    return ControlCenterConfig(values: merged, lastUpdatedAt: DateTime.tryParse(map['lastUpdatedAt'] as String? ?? '') ?? DateTime.now());
   }
 }
