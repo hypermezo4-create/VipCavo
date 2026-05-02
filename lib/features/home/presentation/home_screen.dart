@@ -11,7 +11,7 @@ class HomeScreen extends StatelessWidget {
     _QuickAccess('Statusbar', 'Resize statusbar, battery, clock, network and icons', Icons.signal_cellular_alt_rounded, '/statusbar'),
     _QuickAccess('Control center', 'Quick toggles board and grouped utility actions', Icons.tune_rounded, '/control-center'),
     _QuickAccess('Notification', 'Heads-up, compact icons, and stack behavior', Icons.notifications_active_rounded, '/notifications'),
-    _QuickAccess('Lock screen', 'Clock, shortcuts and lockscreen composition', Icons.lock_outline_rounded, '/lockscreen'),
+    _QuickAccess('Lock screen', 'Clock, shortcuts and lockscreen composition', Icons.lock_outline_rounded, '/lock-screen'),
     _QuickAccess('Call', 'Call window, contact colors and call history styles', Icons.call_rounded, '/call'),
     _QuickAccess('Gaming', 'Performance and game-focused utility experiences', Icons.sports_esports_rounded, '/gaming'),
     _QuickAccess('Mount', 'Monet colors, effect tuning, live component previews', Icons.palette_rounded, '/mount'),
