@@ -228,7 +228,6 @@ class _LockScreenScreenState extends State<LockScreenScreen> {
         );
       },
     );
-    _ = _fodSourcePath;
   }
 
   Future<void> _openSelectSheet(String title, List<_SelectOption> options, ValueChanged<String> onSelect) async {
